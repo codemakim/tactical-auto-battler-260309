@@ -1,4 +1,5 @@
 # Tactical Auto Battler
+
 ## Action Card System Specification (MVP)
 
 This document defines the system for acquiring and managing temporary actions during a run.

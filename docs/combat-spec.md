@@ -1,4 +1,5 @@
 # Tactical Auto Battler
+
 ## Combat System Specification (MVP)
 
 This document defines the detailed combat system rules for the game.
