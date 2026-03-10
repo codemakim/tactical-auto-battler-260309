@@ -15,6 +15,7 @@ function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
     turnOrder: [],
     phase: BattlePhase.ACTION_RESOLVE,
     events: [],
+    delayedEffects: [],
     isFinished: false,
     winner: null,
     seed: 12345,

@@ -5,6 +5,7 @@ import { calculateFullTurnOrder, calculateTurnOrder } from './TurnOrderManager';
 import { selectAction, executeAction } from '../systems/ActionResolver';
 import { processStatusEffects, tickBuffs } from '../systems/BuffSystem';
 import { executeIntervention } from '../systems/HeroInterventionSystem';
+import { resolveDelayedEffects } from '../systems/DelayedEffectSystem';
 
 /**
  * 라운드 시작: 턴 순서 계산, 유닛 상태 초기화
@@ -121,6 +122,12 @@ export function executeTurn(state: BattleState): BattleState {
     if (result.turnOrder) {
       currentState = { ...currentState, turnOrder: result.turnOrder };
     }
+    if (result.delayedEffects) {
+      currentState = {
+        ...currentState,
+        delayedEffects: [...(currentState.delayedEffects ?? []), ...result.delayedEffects],
+      };
+    }
     allEvents.push(...result.events);
   } else {
     // 턴 손실
@@ -179,12 +186,22 @@ export function endRound(state: BattleState): BattleState {
   const buffEvents: BattleEvent[] = [];
 
   // §7.1: 버프/디버프 지속시간 감소
-  const units = state.units.map(u => {
+  let units = state.units.map(u => {
     if (!u.isAlive || u.buffs.length === 0) return u;
     const result = tickBuffs(u, state.round, state.turn);
     buffEvents.push(...result.events);
     return result.unit;
   });
+
+  // §7.2: 지연 효과 카운트다운 및 발동
+  let delayedEffects = state.delayedEffects ?? [];
+  const delayedEvents: BattleEvent[] = [];
+  if (delayedEffects.length > 0) {
+    const result = resolveDelayedEffects({ ...state, units, delayedEffects });
+    units = result.state.units;
+    delayedEffects = result.state.delayedEffects;
+    delayedEvents.push(...result.events);
+  }
 
   const event: BattleEvent = {
     id: uid(),
@@ -197,8 +214,9 @@ export function endRound(state: BattleState): BattleState {
   return {
     ...state,
     units,
+    delayedEffects,
     phase: BattlePhase.ROUND_END,
-    events: [...state.events, ...buffEvents, event],
+    events: [...state.events, ...buffEvents, ...delayedEvents, event],
   };
 }
 

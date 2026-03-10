@@ -62,6 +62,7 @@ export function createBattleState(
     turnOrder: [],
     phase: BattlePhase.ROUND_START,
     events: [],
+    delayedEffects: [],
     isFinished: false,
     winner: null,
     seed: seed ?? Date.now(),

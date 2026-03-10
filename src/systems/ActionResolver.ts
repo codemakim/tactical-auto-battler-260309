@@ -1,5 +1,5 @@
 import { Position, Team } from '../types';
-import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent } from '../types';
+import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent, DelayedEffect } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
 import { calculateDamage, applyDamage, applyShield, applyHeal } from './DamageSystem';
@@ -89,10 +89,11 @@ export function executeAction(
   source: BattleUnit,
   slot: ActionSlot,
   state: BattleState,
-): { units: BattleUnit[]; events: BattleEvent[]; turnOrder?: string[] } {
+): { units: BattleUnit[]; events: BattleEvent[]; turnOrder?: string[]; delayedEffects?: DelayedEffect[] } {
   let units = [...state.units];
   let turnOrder: string[] | undefined;
   const allEvents: BattleEvent[] = [];
+  const newDelayedEffects: DelayedEffect[] = [];
 
   allEvents.push({
     id: uid(),
@@ -118,6 +119,38 @@ export function executeAction(
           turnOrder = accelerateUnit(currentOrder, target.id);
         }
       }
+    } else if (effect.type === 'DELAYED') {
+      // §7.2: 지연 효과 생성
+      const targetType = effect.target ?? 'ENEMY_FRONT';
+      const target = selectTarget(source, targetType, units);
+      if (target) {
+        const delayedEffect: DelayedEffect = {
+          id: uid(),
+          sourceId: source.id,
+          targetId: target.id,
+          effectType: effect.delayedType ?? 'DAMAGE',
+          value: effect.value ?? 0,
+          remainingRounds: effect.delayRounds ?? 1,
+          ...(effect.buffType && { buffType: effect.buffType }),
+          ...(effect.duration && { buffDuration: effect.duration }),
+        };
+        newDelayedEffects.push(delayedEffect);
+        allEvents.push({
+          id: uid(),
+          type: 'DELAYED_EFFECT_APPLIED',
+          round: state.round,
+          turn: state.turn,
+          timestamp: Date.now(),
+          sourceId: source.id,
+          targetId: target.id,
+          data: {
+            delayedEffectId: delayedEffect.id,
+            effectType: delayedEffect.effectType,
+            value: delayedEffect.value,
+            delayRounds: delayedEffect.remainingRounds,
+          },
+        });
+      }
     } else {
       const result = applyEffect(source, effect, units, state.round, state.turn);
       units = result.units;
@@ -130,7 +163,12 @@ export function executeAction(
     }
   }
 
-  return { units, events: allEvents, ...(turnOrder !== undefined && { turnOrder }) };
+  return {
+    units,
+    events: allEvents,
+    ...(turnOrder !== undefined && { turnOrder }),
+    ...(newDelayedEffects.length > 0 && { delayedEffects: newDelayedEffects }),
+  };
 }
 
 /**

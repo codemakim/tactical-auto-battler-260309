@@ -88,13 +88,15 @@ export interface ActionCondition {
 export type ActionTargetType = 'SELF' | 'ENEMY_FRONT' | 'ENEMY_BACK' | 'ENEMY_ANY' | 'ALLY_LOWEST_HP' | 'ALLY_ANY';
 
 export interface ActionEffect {
-  type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN' | 'REPOSITION';
+  type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN' | 'REPOSITION' | 'DELAYED';
   value?: number;      // multiplier or flat value
   stat?: keyof Stats;  // which stat to reference
   target?: ActionTargetType;
   position?: Position; // for MOVE/PUSH/REPOSITION effects
   buffType?: BuffType; // for BUFF/DEBUFF effects
   duration?: number;   // buff 지속 라운드 수
+  delayedType?: 'DAMAGE' | 'HEAL' | 'BUFF';  // DELAYED 효과 시 발동할 효과 종류
+  delayRounds?: number;   // DELAYED 효과 시 몇 라운드 후 발동
 }
 
 export const Rarity = {
@@ -141,6 +143,19 @@ export interface CharacterDefinition {
   trainingLevel: number;
 }
 
+// === Delayed Effect ===
+
+export interface DelayedEffect {
+  id: string;              // 고유 식별자
+  sourceId: string;        // 효과를 생성한 유닛 ID
+  targetId: string;        // 효과 대상 유닛 ID
+  effectType: 'DAMAGE' | 'HEAL' | 'BUFF';  // 발동 시 적용할 효과
+  value: number;           // 데미지량 / 힐량 / 버프 수치
+  remainingRounds: number; // 남은 라운드 수 (0이 되면 발동)
+  buffType?: BuffType;     // effectType이 BUFF일 때 버프 종류
+  buffDuration?: number;   // effectType이 BUFF일 때 버프 지속시간
+}
+
 // === Battle Unit (runtime) ===
 
 export interface BattleUnit {
@@ -169,6 +184,7 @@ export interface BattleState {
   turnOrder: string[];     // unit id 순서
   phase: BattlePhase;
   events: BattleEvent[];   // 리플레이용 전체 로그
+  delayedEffects: DelayedEffect[];  // §7.2 지연 효과
   isFinished: boolean;
   winner: Team | null;
   seed: number;            // 결정론적 재현을 위한 랜덤 시드
@@ -221,6 +237,8 @@ export type BattleEventType =
   | 'DEBUFF_APPLIED'
   | 'BUFF_EXPIRED'
   | 'STATUS_EFFECT_TICK'
+  | 'DELAYED_EFFECT_APPLIED'
+  | 'DELAYED_EFFECT_RESOLVED'
   | 'ROUND_END'
   | 'BATTLE_END';
 
