@@ -3,13 +3,14 @@ import { BattlePhase, Team, Position } from '../types';
 import { uid } from '../utils/uid';
 import { calculateFullTurnOrder, calculateTurnOrder } from './TurnOrderManager';
 import { selectAction, executeAction } from '../systems/ActionResolver';
+import { processStatusEffects, tickBuffs } from '../systems/BuffSystem';
 
 /**
  * 라운드 시작: 턴 순서 계산, 유닛 상태 초기화
  */
 export function startRound(state: BattleState): BattleState {
   const newRound = state.round + 1;
-  const units = state.units.map(u => ({ ...u, hasActedThisRound: false }));
+  let units = state.units.map(u => ({ ...u, hasActedThisRound: false }));
   const turnOrder = calculateFullTurnOrder(units);
 
   const event: BattleEvent = {
@@ -20,6 +21,16 @@ export function startRound(state: BattleState): BattleState {
     timestamp: Date.now(),
     data: { turnOrder },
   };
+
+  const statusEvents: BattleEvent[] = [];
+
+  // §6.5: 라운드 시작 시 상태이상 처리 (POISON, REGEN)
+  units = units.map(u => {
+    if (!u.isAlive || u.buffs.length === 0) return u;
+    const result = processStatusEffects(u, newRound, 0);
+    statusEvents.push(...result.events);
+    return result.unit;
+  });
 
   return {
     ...state,
@@ -32,7 +43,7 @@ export function startRound(state: BattleState): BattleState {
       ...state.hero,
       interventionsRemaining: state.hero.maxInterventionsPerRound,
     },
-    events: [...state.events, event],
+    events: [...state.events, event, ...statusEvents],
   };
 }
 
@@ -74,7 +85,18 @@ export function executeTurn(state: BattleState): BattleState {
   // 액션 선택
   const selectedSlot = selectAction(actor, currentState);
 
-  if (selectedSlot) {
+  if (selectedSlot === 'STUNNED') {
+    // 스턴 상태: 행동 불가
+    allEvents.push({
+      id: uid(),
+      type: 'ACTION_SKIPPED',
+      round: currentState.round,
+      turn: newTurn,
+      timestamp: Date.now(),
+      sourceId: actor.id,
+      data: { reason: 'stunned' },
+    });
+  } else if (selectedSlot) {
     const result = executeAction(actor, selectedSlot, currentState);
     currentState = { ...currentState, units: result.units };
     if (result.turnOrder) {
@@ -135,6 +157,16 @@ export function executeTurn(state: BattleState): BattleState {
  * 라운드 종료
  */
 export function endRound(state: BattleState): BattleState {
+  const buffEvents: BattleEvent[] = [];
+
+  // §7.1: 버프/디버프 지속시간 감소
+  const units = state.units.map(u => {
+    if (!u.isAlive || u.buffs.length === 0) return u;
+    const result = tickBuffs(u, state.round, state.turn);
+    buffEvents.push(...result.events);
+    return result.unit;
+  });
+
   const event: BattleEvent = {
     id: uid(),
     type: 'ROUND_END',
@@ -145,8 +177,9 @@ export function endRound(state: BattleState): BattleState {
 
   return {
     ...state,
+    units,
     phase: BattlePhase.ROUND_END,
-    events: [...state.events, event],
+    events: [...state.events, ...buffEvents, event],
   };
 }
 

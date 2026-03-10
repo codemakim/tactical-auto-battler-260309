@@ -5,6 +5,7 @@ import { selectTarget } from './TargetSelector';
 import { calculateDamage, applyDamage, applyShield, applyHeal } from './DamageSystem';
 import { moveUnit, pushUnit } from './PositionSystem';
 import { accelerateUnit, delayUnit } from '../core/TurnOrderManager';
+import { applyBuff, isStunned } from './BuffSystem';
 
 /**
  * 조건 평가: 유닛의 현재 상태와 전체 전투 상태를 보고 조건 충족 여부 판단
@@ -64,11 +65,14 @@ export function evaluateCondition(
  * 액션 슬롯을 우선순위대로 평가하여 실행할 액션을 선택.
  * 스펙: 첫 번째로 조건이 맞는 액션을 실행하고 평가 종료.
  * 조건이 맞는 액션이 없으면 null 반환 (턴 손실).
+ * 스턴 상태면 'STUNNED' 반환.
  */
 export function selectAction(
   unit: BattleUnit,
   state: BattleState,
-): ActionSlot | null {
+): ActionSlot | null | 'STUNNED' {
+  if (isStunned(unit)) return 'STUNNED';
+
   for (const slot of unit.actionSlots) {
     if (evaluateCondition(slot, unit, state)) {
       return slot;
@@ -193,7 +197,31 @@ function applyEffect(
       break;
     }
 
-    // BUFF, DEBUFF는 추후 구현
+    case 'BUFF':
+    case 'DEBUFF': {
+      const buffType = effect.buffType;
+      if (!buffType) break;
+      const buff = {
+        id: uid(),
+        type: buffType,
+        value: effect.value ?? 0,
+        duration: effect.duration ?? 1,
+        sourceId: source.id,
+      };
+      const result = applyBuff(actualTarget, buff, round, turn);
+      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      allEvents.push(...result.events);
+      break;
+    }
+
+    case 'REPOSITION': {
+      const pos = effect.position ?? Position.FRONT;
+      const result = moveUnit(actualTarget, pos, round, turn);
+      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      allEvents.push(...result.events);
+      break;
+    }
+
     default:
       break;
   }

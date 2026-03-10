@@ -59,6 +59,7 @@ export function createUnit(
       agi: trainedStats.agi,
     },
     shield: 0,
+    buffs: [],
     actionSlots: [
       ...extraSlots,
       // 기본 액션은 항상 마지막 (fallback)

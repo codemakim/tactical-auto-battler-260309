@@ -40,6 +40,29 @@ export const Difficulty = {
 } as const;
 export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
 
+// === Buff Types ===
+
+export const BuffType = {
+  ATK_UP: 'ATK_UP',
+  ATK_DOWN: 'ATK_DOWN',
+  DEF_UP: 'DEF_UP',
+  DEF_DOWN: 'DEF_DOWN',
+  AGI_UP: 'AGI_UP',
+  AGI_DOWN: 'AGI_DOWN',
+  POISON: 'POISON',
+  REGEN: 'REGEN',
+  STUN: 'STUN',
+} as const;
+export type BuffType = (typeof BuffType)[keyof typeof BuffType];
+
+export interface Buff {
+  id: string;
+  type: BuffType;
+  value: number;       // 스탯 수정량 또는 틱 데미지/힐량
+  duration: number;    // 남은 라운드 수 (라운드 종료 시 감소)
+  sourceId: string;    // 버프를 부여한 유닛 ID
+}
+
 // === Condition Types ===
 
 export type ConditionType =
@@ -65,11 +88,13 @@ export interface ActionCondition {
 export type ActionTargetType = 'SELF' | 'ENEMY_FRONT' | 'ENEMY_BACK' | 'ENEMY_ANY' | 'ALLY_LOWEST_HP' | 'ALLY_ANY';
 
 export interface ActionEffect {
-  type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN';
+  type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN' | 'REPOSITION';
   value?: number;      // multiplier or flat value
   stat?: keyof Stats;  // which stat to reference
   target?: ActionTargetType;
-  position?: Position; // for MOVE/PUSH effects
+  position?: Position; // for MOVE/PUSH/REPOSITION effects
+  buffType?: BuffType; // for BUFF/DEBUFF effects
+  duration?: number;   // buff 지속 라운드 수
 }
 
 export const Rarity = {
@@ -127,6 +152,7 @@ export interface BattleUnit {
   position: Position;
   stats: Stats;
   shield: number;
+  buffs: Buff[];
   actionSlots: ActionSlot[];
   isAlive: boolean;
   hasActedThisRound: boolean;
@@ -191,6 +217,10 @@ export type BattleEventType =
   | 'UNIT_DIED'
   | 'RESERVE_ENTERED'
   | 'HERO_INTERVENTION'
+  | 'BUFF_APPLIED'
+  | 'DEBUFF_APPLIED'
+  | 'BUFF_EXPIRED'
+  | 'STATUS_EFFECT_TICK'
   | 'ROUND_END'
   | 'BATTLE_END';
 

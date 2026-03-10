@@ -1,16 +1,19 @@
 import type { BattleUnit, BattleEvent } from '../types';
 import { uid } from '../utils/uid';
+import { getEffectiveStats } from './BuffSystem';
 
 /**
- * 데미지 계산: ATK 기반 배율 - DEF 감산, 최소 1
+ * 데미지 계산: 유효 ATK 기반 배율 - 유효 DEF 감산, 최소 1
  */
 export function calculateDamage(
   attacker: BattleUnit,
   defender: BattleUnit,
   multiplier: number,
 ): number {
-  const raw = Math.floor(attacker.stats.atk * multiplier);
-  const reduced = raw - defender.stats.def;
+  const atkStats = getEffectiveStats(attacker);
+  const defStats = getEffectiveStats(defender);
+  const raw = Math.floor(atkStats.atk * multiplier);
+  const reduced = raw - defStats.def;
   return Math.max(1, reduced);
 }
 

@@ -33,8 +33,8 @@
 - [x] 라운드 시작: hasActedThisRound 리셋
 - [x] 라운드 시작: 턴 순서 재계산
 - [x] 라운드 시작: 히어로 개입 횟수 충전
-- [ ] 라운드 시작: 상태이상 처리 (§6.5)
-- [ ] 라운드 종료: 버프/디버프 지속시간 감소 (§7.1)
+- [x] 라운드 시작: 상태이상 처리 (§6.5) — POISON/REGEN 틱, 사망 처리
+- [x] 라운드 종료: 버프/디버프 지속시간 감소 (§7.1) — 만료 시 제거 + 이벤트
 - [ ] 라운드 종료: 지연 효과 해석 (§7.2)
 - [x] 라운드 종료: 예비 유닛 투입 (항상 BACK 진입)
 
@@ -64,8 +64,8 @@
 - [x] MoveForward / MoveBack (MOVE)
 - [x] PushEnemy (PUSH)
 - [x] ChargeAttack (복합 효과 순서 검증 완료)
-- [ ] Reposition (아군 위치 변경)
-- [ ] ApplyBuff
+- [x] Reposition (아군 위치 변경 — ALLY_ANY, ALLY_LOWEST_HP 타겟팅)
+- [x] ApplyBuff (BUFF/DEBUFF 효과, BuffType 기반, 지속시간)
 - [x] DelayTurn (액션 효과로 연결 완료)
 - [x] AdvanceTurn (액션 효과로 연결 완료)
 
@@ -96,7 +96,7 @@
 - [x] 라운드 시작 시 충전
 - [x] 횟수 소진 시 사용 불가
 - [x] 턴 사이에 끼어들기 (효과 즉시 적용)
-- [ ] 개입 큐잉 (QUEUED 상태)
+- [~] 개입 큐잉 (QUEUED 상태) — 타입 정의 있음, 큐 실행 로직 미구현
 - [ ] 개입 UI 상태 (READY / USED / QUEUED)
 
 ## 결정론 (§19 / data-model-spec)
@@ -148,3 +148,15 @@
 - [x] 액션 교체 로직 — 기본 액션 보호 (테스트 있음)
 - [x] 런 종료 시 임시 액션 제거 (테스트 있음)
 - [~] 액션 카드 예시 데이터 (ActionPool에 기본 데이터 있음)
+
+## 버프/디버프 시스템
+
+- [x] BuffType 타입 정의 (ATK_UP/DOWN, DEF_UP/DOWN, AGI_UP/DOWN, POISON, REGEN, STUN)
+- [x] Buff 인터페이스 (id, type, value, duration, sourceId)
+- [x] BattleUnit.buffs 필드
+- [x] getEffectiveStats — 버프 반영 스탯 계산
+- [x] 데미지 계산에 유효 스탯 반영
+- [x] applyBuff — 버프 적용 + 이벤트 (BUFF_APPLIED / DEBUFF_APPLIED)
+- [x] tickBuffs — 라운드 종료 시 duration 감소, 만료 제거 + BUFF_EXPIRED 이벤트
+- [x] processStatusEffects — 라운드 시작 시 POISON/REGEN 틱 + 사망 처리
+- [x] isStunned — 스턴 판별, 스턴 시 턴 스킵 (ACTION_SKIPPED reason: stunned)

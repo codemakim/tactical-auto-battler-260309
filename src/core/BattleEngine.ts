@@ -29,6 +29,7 @@ export function createBattleUnit(
       agi: def.baseStats.agi,
     },
     shield: 0,
+    buffs: [],
     actionSlots: [
       // 기본 액션은 항상 마지막 슬롯 (ALWAYS 조건)
       { condition: { type: 'ALWAYS' }, action: def.basicAction },
