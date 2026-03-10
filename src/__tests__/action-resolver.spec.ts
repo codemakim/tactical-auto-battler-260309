@@ -46,7 +46,8 @@ describe('액션 해석 시스템', () => {
 
     // 유닛이 FRONT에 있으므로 첫 번째 액션 선택
     expect(selected).not.toBeNull();
-    expect(selected!.action.id).toBe('atk');
+    expect(selected).not.toBe('STUNNED');
+    expect((selected as ActionSlot).action.id).toBe('atk');
   });
 
   it('첫 번째 조건이 안 맞으면 다음 액션을 평가한다', () => {
@@ -68,7 +69,8 @@ describe('액션 해석 시스템', () => {
     const selected = selectAction(unit, state);
 
     // BACK 위치이므로 두 번째 액션 선택
-    expect(selected!.action.id).toBe('back_move');
+    expect(selected).not.toBe('STUNNED');
+    expect((selected as ActionSlot).action.id).toBe('back_move');
   });
 
   it('모든 조건이 안 맞으면 턴이 손실된다 (null 반환)', () => {

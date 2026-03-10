@@ -30,7 +30,7 @@ describe('히어로 개입 큐잉 (§18)', () => {
     id: 'hero_strike',
     name: 'Strike',
     description: 'Damage an enemy',
-    effects: [{ type: 'DAMAGE', value: 1, target: 'ENEMY_LOWEST_HP' }],
+    effects: [{ type: 'DAMAGE', value: 1, target: 'ENEMY_ANY' }],
   };
 
   // === 큐잉 기본 동작 ===

@@ -36,6 +36,7 @@ export function createBattleUnit(
     ],
     isAlive: true,
     hasActedThisRound: false,
+    trainingLevel: def.trainingLevel,
   };
 }
 

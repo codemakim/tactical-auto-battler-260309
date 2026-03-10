@@ -24,6 +24,7 @@ function makeFinishedState(overrides: Partial<BattleState> = {}): BattleState {
     turnOrder: [],
     phase: 'BATTLE_END',
     events: [],
+    delayedEffects: [],
     isFinished: true,
     winner: Team.PLAYER,
     seed: 42,
