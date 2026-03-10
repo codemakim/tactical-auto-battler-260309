@@ -171,6 +171,7 @@ export interface BattleUnit {
   actionSlots: ActionSlot[];
   isAlive: boolean;
   hasActedThisRound: boolean;
+  trainingLevel: number;  // 현재 훈련 레벨 (§24)
 }
 
 // === Battle State (전체 전투 상태를 하나의 객체로 관리) ===
@@ -269,6 +270,14 @@ export interface RunState {
 export interface BattleReward {
   gold: number;
   actionOptions: Action[];
+}
+
+// === Character Reward ===
+
+export interface CharacterReward {
+  characterClass: CharacterClass;
+  trainingLevel: number;
+  probability: number; // 이 보상이 생성된 확률 (0~1, 디버그/UI용)
 }
 
 // === Game Config ===

@@ -67,6 +67,7 @@ export function createUnit(
     ],
     isAlive: true,
     hasActedThisRound: false,
+    trainingLevel: def.trainingLevel,
   };
 }
 

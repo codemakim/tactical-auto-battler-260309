@@ -130,12 +130,12 @@
 
 - [x] 골드 — calculateGoldReward (기본 + 라운드 보너스 + 난이도 배율, 패배 시 감소)
 - [x] 임시 액션 보상 — generateBattleRewards / applyReward (5개 옵션, seed 결정론적)
-- [ ] 캐릭터 획득 기회
+- [x] 캐릭터 획득 기회 — generateCharacterReward (확률 30%+난이도보너스-로스터패널티, seed 결정론, 11개 테스트)
 
 ## 캐릭터 훈련 (§24)
 
 - [x] 훈련 레벨에 따른 스탯 증가 (테스트 있음)
-- [ ] 골드 소비
+- [x] 골드 소비 — calculateTrainingCost / canAffordTraining / trainCharacter (21개 테스트)
 - [x] 액션 슬롯 변경 없음
 
 ## 액션 카드 시스템 (action-card-spec.md)

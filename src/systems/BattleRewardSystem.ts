@@ -1,5 +1,5 @@
-import type { BattleState, RunState, BattleReward, Action, BattleUnit, ActionCondition } from '../types';
-import { Difficulty, Team } from '../types';
+import type { BattleState, RunState, BattleReward, Action, BattleUnit, ActionCondition, CharacterReward } from '../types';
+import { Difficulty, Team, CharacterClass } from '../types';
 import { generateRewardOptions, replaceActionSlot } from './ActionCardSystem';
 import { ACTION_POOL } from '../data/ActionPool';
 
@@ -62,6 +62,70 @@ export function generateBattleRewards(
     : [];
 
   return { gold, actionOptions };
+}
+
+// 캐릭터 획득 기본 확률
+const BASE_CHARACTER_CHANCE = 0.30;
+// 난이도별 확률 보너스
+const DIFFICULTY_CHARACTER_BONUS: Record<string, number> = {
+  [Difficulty.EASY]: 0.0,
+  [Difficulty.STANDARD]: 0.05,
+  [Difficulty.HARD]: 0.10,
+  [Difficulty.NIGHTMARE]: 0.15,
+};
+// 로스터 크기당 확률 감소 (팀 크기 초과분에만 적용)
+const ROSTER_PENALTY_PER_UNIT = 0.05;
+const ROSTER_PENALTY_THRESHOLD = 3;
+
+// 선택 가능한 클래스 목록
+const CHARACTER_CLASSES = Object.values(CharacterClass);
+
+/**
+ * 시드 기반 간단한 난수 (mulberry32)
+ */
+function seededRand(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * 캐릭터 획득 기회 계산
+ * 전투 승리 시 새 캐릭터를 획득할 확률을 계산하고, 보상 생성
+ * 결정론적: seed 기반
+ *
+ * @param seed 랜덤 시드
+ * @param difficulty 현재 난이도
+ * @param currentRosterSize 현재 로스터 크기
+ */
+export function generateCharacterReward(
+  seed: number,
+  difficulty: Difficulty,
+  currentRosterSize: number,
+): CharacterReward | null {
+  const rand = seededRand(seed);
+
+  // 확률 계산
+  const diffBonus = DIFFICULTY_CHARACTER_BONUS[difficulty] ?? 0;
+  const rosterPenalty = Math.max(0, currentRosterSize - ROSTER_PENALTY_THRESHOLD) * ROSTER_PENALTY_PER_UNIT;
+  const probability = Math.max(0, BASE_CHARACTER_CHANCE + diffBonus - rosterPenalty);
+
+  // 확률 판정
+  if (rand() >= probability) return null;
+
+  // 클래스 랜덤 선택
+  const classIdx = Math.floor(rand() * CHARACTER_CLASSES.length);
+  const characterClass = CHARACTER_CLASSES[classIdx];
+
+  // 훈련 레벨: 기본 0
+  const trainingLevel = 0;
+
+  return { characterClass, trainingLevel, probability };
 }
 
 /**
