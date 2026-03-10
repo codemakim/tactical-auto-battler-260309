@@ -55,10 +55,10 @@ export function generateRewardOptions(
 }
 
 /**
- * 액션 슬롯 교체
- * 마지막 슬롯(기본 액션)은 교체 불가 → null 반환
- * 유효하지 않은 인덱스도 null 반환
- * 불변성: 새 BattleUnit 객체 반환
+ * 액션 슬롯 교체.
+ * §6: 런 중 획득한 액션으로 기존 3개 슬롯 중 어떤 슬롯이든 교체 가능.
+ * 유효하지 않은 인덱스이면 null 반환.
+ * 불변성: 새 BattleUnit 객체 반환.
  */
 export function replaceActionSlot(
   unit: BattleUnit,
@@ -66,10 +66,8 @@ export function replaceActionSlot(
   newAction: Action,
   newCondition: ActionCondition,
 ): BattleUnit | null {
-  const lastIndex = unit.actionSlots.length - 1;
-
-  // 유효하지 않은 인덱스 또는 마지막 슬롯(기본 액션) 교체 시도
-  if (slotIndex < 0 || slotIndex >= unit.actionSlots.length || slotIndex === lastIndex) {
+  // 유효하지 않은 인덱스
+  if (slotIndex < 0 || slotIndex >= unit.actionSlots.length) {
     return null;
   }
 
@@ -84,18 +82,13 @@ export function replaceActionSlot(
 }
 
 /**
- * 런 리셋: 기본 액션만 남기고 임시 액션 제거
- * 기본 액션은 actionSlots의 마지막 슬롯 (isBasic: true)
- * 스탯은 변경하지 않음
+ * 런 리셋: baseActionSlots로 액션 슬롯 복원.
+ * 런 중 교체한 액션은 모두 제거되고 캐릭터 원래 3개 슬롯으로 돌아온다.
+ * 스탯은 변경하지 않음.
  */
 export function resetRunActions(unit: BattleUnit): BattleUnit {
-  const basicSlot = unit.actionSlots.find((slot) => slot.action.isBasic);
-
-  // 기본 액션이 없으면 빈 슬롯으로 (방어적 처리)
-  const resetSlots = basicSlot ? [{ ...basicSlot }] : [];
-
   return {
     ...unit,
-    actionSlots: resetSlots,
+    actionSlots: unit.baseActionSlots.map(slot => ({ ...slot })),
   };
 }

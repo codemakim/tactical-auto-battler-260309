@@ -87,7 +87,7 @@
 
 - [x] 사망 시 예비 유닛 투입
 - [x] 진입 위치: 항상 BACK
-- [x] 투입 라운드에는 행동 불가
+- [x] 투입 라운드에는 행동 불가 (hasActedThisRound: true로 진입) — battle-flow 테스트로 검증
 - [x] 다음 라운드부터 참전
 
 ## 히어로 개입 (§17, §18, §19)
@@ -95,9 +95,9 @@
 - [x] 라운드당 최소 1회
 - [x] 라운드 시작 시 충전
 - [x] 횟수 소진 시 사용 불가
-- [x] 턴 사이에 끼어들기 (효과 즉시 적용)
-- [x] 개입 큐잉 (QUEUED 상태) — queueIntervention() 추가, executeTurn() 내 자동 실행 + 11개 테스트
-- [ ] 개입 UI 상태 (READY / USED / QUEUED)
+- [x] 개입 큐잉 (§18 스펙 일치): heroIntervene() = queueIntervention() 래퍼, 다음 유닛 행동 직전 자동 발동 (executeTurn 내), 24개 테스트
+- [ ] 개입 UI 상태 전환 (READY → QUEUED → USED) 실제 렌더링
+- [ ] 개입 UI 상태 (READY / QUEUED / USED) — BattlePhase/Hero 상태 기반 렌더링
 
 ## 결정론 (§19 / data-model-spec)
 
@@ -141,12 +141,14 @@
 ## 액션 카드 시스템 (action-card-spec.md)
 
 - [x] 3 액션 슬롯, 우선순위 평가
+- [x] 각 클래스별 기본 3개 슬롯 정의 (ClassDefinitions.baseActionSlots)
+- [x] BattleUnit.baseActionSlots — 런 리셋 참조용
 - [x] Action 타입에 rarity 필드
 - [x] Action 타입에 classRestriction 필드
 - [x] 클래스 제한 필터링 (테스트 있음)
 - [x] 보상 생성 로직 — 5개 옵션, 결정론적 (테스트 있음)
-- [x] 액션 교체 로직 — 기본 액션 보호 (테스트 있음)
-- [x] 런 종료 시 임시 액션 제거 (테스트 있음)
+- [x] 액션 교체 로직 — 모든 슬롯(0~2) 교체 가능, 유효하지 않은 인덱스만 차단 (테스트 있음)
+- [x] 런 종료 시 baseActionSlots로 원래 3개 슬롯 복원 (테스트 있음)
 - [~] 액션 카드 예시 데이터 (ActionPool에 기본 데이터 있음)
 
 ## 버프/디버프 시스템

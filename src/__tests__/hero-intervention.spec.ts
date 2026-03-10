@@ -42,12 +42,17 @@ describe('히어로 개입 시스템', () => {
     expect(state.hero.interventionsRemaining).toBe(1);
   });
 
-  it('개입을 사용하면 남은 횟수가 줄어든다', () => {
+  it('개입을 큐잉 후 발동하면 남은 횟수가 줄어든다', () => {
     let state = setup();
     state = stepBattle(state).state; // 라운드 시작
 
+    // §18: heroIntervene는 큐잉 → 다음 유닛 행동 직전 발동
     state = heroIntervene(state, shieldAbility);
+    // 큐잉 직후에는 아직 차감 안 됨
+    expect(state.hero.interventionsRemaining).toBe(1);
 
+    // 다음 stepBattle에서 개입 발동 → 횟수 차감
+    state = stepBattle(state).state;
     expect(state.hero.interventionsRemaining).toBe(0);
     expect(canIntervene(state)).toBe(false);
   });
@@ -56,12 +61,16 @@ describe('히어로 개입 시스템', () => {
     let state = setup();
     state = stepBattle(state).state;
 
-    // 1회 사용
+    // 1회 큐잉 + 발동 (횟수 차감)
     state = heroIntervene(state, shieldAbility);
-    // 2회째 시도 → 상태 변화 없어야 함
+    state = stepBattle(state).state; // 발동 → 차감
+
+    // 2회째 시도 → 차단됨
+    expect(state.hero.interventionsRemaining).toBe(0);
     const before = state.hero.interventionsRemaining;
     state = heroIntervene(state, shieldAbility);
     expect(state.hero.interventionsRemaining).toBe(before);
+    expect(state.hero.queuedAbility).toBeUndefined(); // 큐잉 안 됨
   });
 
   it('새 라운드가 시작되면 개입 횟수가 초기화된다', () => {
@@ -69,8 +78,9 @@ describe('히어로 개입 시스템', () => {
 
     // 라운드 1 시작
     state = stepBattle(state).state;
-    // 개입 사용
+    // 개입 큐잉 + 발동으로 소진
     state = heroIntervene(state, shieldAbility);
+    state = stepBattle(state).state; // 발동 → 차감
     expect(state.hero.interventionsRemaining).toBe(0);
 
     // 라운드 1의 모든 턴 진행
@@ -85,29 +95,41 @@ describe('히어로 개입 시스템', () => {
     }
   });
 
-  it('개입은 전투 이벤트 로그에 기록된다', () => {
+  it('개입은 전투 이벤트 로그에 HERO_INTERVENTION으로 기록된다', () => {
     let state = setup();
     state = stepBattle(state).state;
 
     const eventsBefore = state.events.length;
-    state = heroIntervene(state, shieldAbility);
+    state = heroIntervene(state, shieldAbility); // 큐잉
+    state = stepBattle(state).state; // 발동 → 이벤트 기록
 
-    const heroEvents = state.events.filter(e => e.type === 'HERO_INTERVENTION');
+    const heroEvents = state.events
+      .slice(eventsBefore)
+      .filter(e => e.type === 'HERO_INTERVENTION');
     expect(heroEvents.length).toBeGreaterThan(0);
   });
 
-  it('히어로 실드 개입: 아군에게 실드를 부여한다', () => {
+  it('히어로 실드 개입: 다음 유닛 행동 직전에 아군에게 실드를 부여한다', () => {
     let state = setup();
     state = stepBattle(state).state;
 
     const targetUnit = state.units.find(u => u.team === Team.PLAYER)!;
-    state = heroIntervene(state, shieldAbility, targetUnit.id);
+    const eventsBefore = state.events.length;
 
-    const updatedUnit = state.units.find(u => u.id === targetUnit.id)!;
-    expect(updatedUnit.shield).toBeGreaterThan(0);
+    // 큐잉: 즉시 실드 적용 안 됨
+    state = heroIntervene(state, shieldAbility, targetUnit.id);
+    const allyAfterQueue = state.units.find(u => u.id === targetUnit.id)!;
+    expect(allyAfterQueue.shield).toBe(0); // 아직 미적용
+
+    // 다음 stepBattle에서 발동 → SHIELD_APPLIED 이벤트 확인
+    state = stepBattle(state).state;
+    const shieldEvents = state.events
+      .slice(eventsBefore)
+      .filter(e => e.type === 'SHIELD_APPLIED');
+    expect(shieldEvents.length).toBeGreaterThan(0);
   });
 
-  it('히어로 밀기 개입: 적을 BACK으로 밀 수 있다', () => {
+  it('히어로 밀기 개입: 다음 유닛 행동 직전에 적을 BACK으로 민다', () => {
     let state = setup();
     state = stepBattle(state).state;
 
@@ -115,10 +137,23 @@ describe('히어로 개입 시스템', () => {
       u => u.team === Team.ENEMY && u.position === Position.FRONT,
     )!;
 
+    const eventsBefore = state.events.length;
+    // 큐잉
     state = heroIntervene(state, pushAbility, frontEnemy.id);
+    // 발동
+    state = stepBattle(state).state;
 
-    const pushed = state.units.find(u => u.id === frontEnemy.id)!;
-    expect(pushed.position).toBe(Position.BACK);
+    // HERO_INTERVENTION 이벤트 확인 (push 발동됨)
+    const heroEvents = state.events
+      .slice(eventsBefore)
+      .filter(e => e.type === 'HERO_INTERVENTION');
+    expect(heroEvents.length).toBeGreaterThan(0);
+
+    // 밀린 유닛의 포지션 확인 (이후 유닛 행동에 의해 변경되지 않았다면 BACK)
+    const pushed = state.units.find(u => u.id === frontEnemy.id);
+    if (pushed?.isAlive) {
+      expect(pushed.position).toBe(Position.BACK);
+    }
   });
 
   // === 핵심 스펙: 개입 타이밍 ===
@@ -135,20 +170,20 @@ describe('히어로 개입 시스템', () => {
     // 이 시점에서 히어로 개입 가능
     expect(canIntervene(state)).toBe(true);
 
-    // 개입 실행
+    // 개입 큐잉 (§18: 즉시 발동이 아닌 큐잉)
     const targetAlly = state.units.find(u => u.team === Team.PLAYER && u.isAlive)!;
     state = heroIntervene(state, shieldAbility, targetAlly.id);
 
-    // 개입 후에도 전투가 계속 진행 가능
+    // 큐잉 후에도 전투가 계속 진행 가능
     expect(state.isFinished).toBe(false);
 
-    // 다음 유닛이 행동할 수 있음
+    // 다음 유닛이 행동할 수 있음 (개입은 그 직전에 발동)
     state = stepBattle(state).state;
     // 턴이 진행되었거나 라운드가 끝남
     expect(state.turn >= afterFirstAction || state.phase === BattlePhase.ROUND_END).toBe(true);
   });
 
-  it('전투가 진행 중일 때(캐릭터들이 행동 중) 개입하면 다음 캐릭터 행동 전에 효과 적용', () => {
+  it('전투가 진행 중일 때 개입을 큐잉하면 다음 유닛 행동 직전에 발동된다', () => {
     let state = setup();
     state = stepBattle(state).state; // 라운드 시작
 
@@ -160,18 +195,24 @@ describe('히어로 개입 시스템', () => {
     const unactedCount = state.units.filter(u => u.isAlive && !u.hasActedThisRound).length;
 
     if (unactedCount > 0 && canIntervene(state)) {
-      // 개입: 아군에 실드
       const ally = state.units.find(u => u.team === Team.PLAYER && u.isAlive)!;
-      const shieldBefore = ally.shield;
+
+      // §18: 큐잉 직후에는 아직 효과 미적용
       state = heroIntervene(state, shieldAbility, ally.id);
+      const allyAfterQueue = state.units.find(u => u.id === ally.id)!;
+      expect(allyAfterQueue.shield).toBe(0); // 아직 미적용
 
-      const allyAfter = state.units.find(u => u.id === ally.id)!;
-      // 실드가 즉시 적용되어 있음 → 다음 행동 전에 이미 효과 반영
-      expect(allyAfter.shield).toBeGreaterThan(shieldBefore);
+      // 다음 스텝에서 개입이 유닛 행동 직전에 발동 → HERO_INTERVENTION 이벤트 기록
+      const prevEventCount = state.events.length;
+      state = stepBattle(state).state;
 
-      // 이후 적의 공격이 와도 실드가 보호
-      const nextStep = stepBattle(state).state;
-      expect(nextStep.turn).toBeGreaterThanOrEqual(state.turn);
+      const heroEvents = state.events
+        .slice(prevEventCount)
+        .filter(e => e.type === 'HERO_INTERVENTION');
+      expect(heroEvents.length).toBe(1);
+
+      // 이후 전투가 계속 진행됨
+      expect(state.turn).toBeGreaterThan(0);
     }
   });
 });

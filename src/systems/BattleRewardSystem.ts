@@ -152,7 +152,7 @@ export function applyReward(
   const condition: ActionCondition = newCondition ?? { type: 'ALWAYS' };
   const updatedUnit = replaceActionSlot(targetUnit, slotIndex, selectedAction, condition);
 
-  // 슬롯 교체 실패 시(마지막 슬롯 등) 골드만 반영
+  // 슬롯 교체 실패 시(유효하지 않은 인덱스 등) 골드만 반영
   if (!updatedUnit) {
     return { ...runState, gold: newGold };
   }

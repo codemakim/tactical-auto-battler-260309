@@ -139,7 +139,8 @@ export interface CharacterDefinition {
   name: string;
   characterClass: CharacterClass;
   baseStats: Omit<Stats, 'maxHp'>;
-  basicAction: Action;
+  /** 클래스의 기본 3개 액션 슬롯. 런 리셋 시 이 슬롯으로 복원된다. */
+  baseActionSlots: ActionSlot[];
   trainingLevel: number;
 }
 
@@ -168,7 +169,10 @@ export interface BattleUnit {
   stats: Stats;
   shield: number;
   buffs: Buff[];
+  /** 현재 액션 슬롯 (런 중 교체 가능) */
   actionSlots: ActionSlot[];
+  /** 런 시작 시의 기본 3개 슬롯 — 런 리셋 시 이 슬롯으로 복원된다 */
+  baseActionSlots: ActionSlot[];
   isAlive: boolean;
   hasActedThisRound: boolean;
   trainingLevel: number;  // 현재 훈련 레벨 (§24)

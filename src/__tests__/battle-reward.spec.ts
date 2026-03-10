@@ -189,7 +189,6 @@ describe('전투 보상 시스템 (BattleRewardSystem)', () => {
         createCharacterDef('Hero', CharacterClass.WARRIOR),
         Team.PLAYER,
         Position.FRONT,
-        [{ condition: { type: 'POSITION_FRONT' }, action: { id: 'slot0', name: 'Slot0', description: '', effects: [] } }],
       );
 
       const runState = makeRunState({ gold: 100, temporaryActions: [] });
@@ -213,20 +212,19 @@ describe('전투 보상 시스템 (BattleRewardSystem)', () => {
       expect(runState.temporaryActions).toHaveLength(0);
     });
 
-    it('마지막 슬롯(기본 액션) 교체 시도 시 골드만 반영된다', () => {
+    it('유효하지 않은 슬롯 인덱스로 교체 시도 시 골드만 반영된다', () => {
       const warrior = createUnit(
         createCharacterDef('Hero', CharacterClass.WARRIOR),
         Team.PLAYER,
         Position.FRONT,
       );
-      // warrior는 슬롯이 1개(기본 액션)이므로 index 0이 마지막 슬롯
-      const lastIndex = warrior.actionSlots.length - 1;
 
       const runState = makeRunState({ gold: 100, temporaryActions: [] });
       const selectedAction = { id: 'some_action', name: 'Action', description: '', effects: [] };
       const reward: BattleReward = { gold: 30, actionOptions: [selectedAction] };
 
-      const newRunState = applyReward(runState, reward, selectedAction, warrior, lastIndex);
+      // 존재하지 않는 슬롯 인덱스 → replaceActionSlot null 반환 → 골드만 반영
+      const newRunState = applyReward(runState, reward, selectedAction, warrior, 99);
 
       expect(newRunState.gold).toBe(130);
       // 교체 실패로 temporaryActions은 그대로

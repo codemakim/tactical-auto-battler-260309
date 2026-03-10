@@ -1,4 +1,4 @@
-import type { CharacterDefinition, BattleUnit, ActionSlot } from '../types';
+import type { CharacterDefinition, BattleUnit } from '../types';
 import { Team, Position } from '../types';
 import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
 import type { CharacterClass } from '../types';
@@ -27,22 +27,23 @@ export function createCharacterDef(
     name,
     characterClass,
     baseStats: { ...template.baseStats },
-    basicAction: template.basicAction,
+    baseActionSlots: template.baseActionSlots.map(slot => ({ ...slot })),
     trainingLevel,
   };
 }
 
 /**
- * CharacterDefinition → BattleUnit 변환
+ * CharacterDefinition → BattleUnit 변환.
+ * actionSlots는 baseActionSlots의 복사본으로 시작하며, 런 중 replaceActionSlot으로 교체 가능.
+ * 런 리셋 시 baseActionSlots를 참조해 원래 슬롯으로 복원한다.
  */
 export function createUnit(
   def: CharacterDefinition,
   team: Team,
   position: Position,
-  extraSlots: ActionSlot[] = [],
 ): BattleUnit {
-  // 훈련 보너스 적용
   const trainedStats = applyTrainingBonuses(def);
+  const baseSlots = def.baseActionSlots.map(slot => ({ ...slot }));
 
   return {
     id: nextId(team, def.name),
@@ -60,11 +61,8 @@ export function createUnit(
     },
     shield: 0,
     buffs: [],
-    actionSlots: [
-      ...extraSlots,
-      // 기본 액션은 항상 마지막 (fallback)
-      { condition: { type: 'ALWAYS' }, action: def.basicAction },
-    ],
+    actionSlots: baseSlots,
+    baseActionSlots: def.baseActionSlots.map(slot => ({ ...slot })),
     isAlive: true,
     hasActedThisRound: false,
     trainingLevel: def.trainingLevel,

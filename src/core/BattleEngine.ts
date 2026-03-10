@@ -14,6 +14,7 @@ export function createBattleUnit(
   position: Position,
   index: number,
 ): BattleUnit {
+  const baseSlots = def.baseActionSlots.map(slot => ({ ...slot }));
   return {
     id: `${team}_${index}_${def.id}`,
     definitionId: def.id,
@@ -30,10 +31,8 @@ export function createBattleUnit(
     },
     shield: 0,
     buffs: [],
-    actionSlots: [
-      // 기본 액션은 항상 마지막 슬롯 (ALWAYS 조건)
-      { condition: { type: 'ALWAYS' }, action: def.basicAction },
-    ],
+    actionSlots: baseSlots,
+    baseActionSlots: def.baseActionSlots.map(slot => ({ ...slot })),
     isAlive: true,
     hasActedThisRound: false,
     trainingLevel: def.trainingLevel,
@@ -164,18 +163,13 @@ export function queueIntervention(
 }
 
 /**
- * 히어로 개입 즉시 실행 (UI에서 호출)
+ * 히어로 개입 실행 (UI에서 호출).
+ * §18 스펙: 즉시 실행이 아닌 큐잉 방식 - 다음 유닛 행동 직전에 발동.
  */
 export function heroIntervene(
   state: BattleState,
   ability: HeroAbility,
   targetUnitId?: string,
 ): BattleState {
-  if (!canIntervene(state)) return state;
-
-  const result = executeIntervention(state, ability, targetUnitId);
-  return {
-    ...result.state,
-    events: [...state.events, ...result.events],
-  };
+  return queueIntervention(state, ability, targetUnitId);
 }

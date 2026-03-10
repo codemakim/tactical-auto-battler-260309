@@ -129,13 +129,15 @@ or
 Discard the new action
 ```
 
+All 3 slots can be replaced — including the character's original base actions.
+
 Example:
 
 ```
 Current Slots:
-1 Charge
-2 Attack
-3 Defend
+1 Charge      ← replaceable
+2 Attack      ← replaceable
+3 Defend      ← replaceable
 
 Reward:
 Backstab
@@ -270,9 +272,11 @@ At run end:
 
 ```
 All action cards are removed.
+Characters return to their original 3 base action slots.
 ```
 
-Characters return to their base configuration.
+Each character has a fixed set of 3 base action slots defined by their class.
+Run-time replacements are temporary — they do not permanently modify the character.
 
 This ensures each run remains unique.
 
