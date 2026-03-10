@@ -246,6 +246,13 @@ export interface RunState {
   temporaryActions: Action[];
 }
 
+// === Battle Reward ===
+
+export interface BattleReward {
+  gold: number;
+  actionOptions: Action[];
+}
+
 // === Game Config ===
 
 export interface GameConfig {

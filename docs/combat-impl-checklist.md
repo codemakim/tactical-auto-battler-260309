@@ -96,7 +96,7 @@
 - [x] 라운드 시작 시 충전
 - [x] 횟수 소진 시 사용 불가
 - [x] 턴 사이에 끼어들기 (효과 즉시 적용)
-- [~] 개입 큐잉 (QUEUED 상태) — 타입 정의 있음, 큐 실행 로직 미구현
+- [x] 개입 큐잉 (QUEUED 상태) — queueIntervention() 추가, executeTurn() 내 자동 실행 + 11개 테스트
 - [ ] 개입 UI 상태 (READY / USED / QUEUED)
 
 ## 결정론 (§19 / data-model-spec)
@@ -128,8 +128,8 @@
 
 ## 전투 보상 (§23)
 
-- [ ] 골드
-- [ ] 임시 액션 보상
+- [x] 골드 — calculateGoldReward (기본 + 라운드 보너스 + 난이도 배율, 패배 시 감소)
+- [x] 임시 액션 보상 — generateBattleRewards / applyReward (5개 옵션, seed 결정론적)
 - [ ] 캐릭터 획득 기회
 
 ## 캐릭터 훈련 (§24)
