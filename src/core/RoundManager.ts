@@ -4,6 +4,7 @@ import { uid } from '../utils/uid';
 import { calculateFullTurnOrder, calculateTurnOrder } from './TurnOrderManager';
 import { selectAction, executeAction } from '../systems/ActionResolver';
 import { processStatusEffects, tickBuffs } from '../systems/BuffSystem';
+import { executeIntervention } from '../systems/HeroInterventionSystem';
 
 /**
  * 라운드 시작: 턴 순서 계산, 유닛 상태 초기화
@@ -81,6 +82,24 @@ export function executeTurn(state: BattleState): BattleState {
     sourceId: actor.id,
     data: { unitName: actor.name },
   });
+
+  // §18: 큐잉된 히어로 개입이 있으면 유닛 행동 직전에 먼저 실행
+  if (currentState.hero.queuedAbility) {
+    const interventionResult = executeIntervention(
+      currentState,
+      currentState.hero.queuedAbility,
+      currentState.hero.queuedTargetId,
+    );
+    currentState = {
+      ...interventionResult.state,
+      hero: {
+        ...interventionResult.state.hero,
+        queuedAbility: undefined,
+        queuedTargetId: undefined,
+      },
+    };
+    allEvents.push(...interventionResult.events);
+  }
 
   // 액션 선택
   const selectedSlot = selectAction(actor, currentState);

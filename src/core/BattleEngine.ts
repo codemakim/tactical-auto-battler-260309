@@ -141,7 +141,28 @@ export function runFullBattle(state: BattleState): BattleState {
 }
 
 /**
- * 히어로 개입 실행 (UI에서 호출)
+ * 히어로 개입 큐잉 (§18).
+ * 즉시 실행하지 않고 다음 유닛 행동 직전에 실행되도록 대기열에 넣는다.
+ */
+export function queueIntervention(
+  state: BattleState,
+  ability: HeroAbility,
+  targetUnitId?: string,
+): BattleState {
+  if (!canIntervene(state)) return state;
+
+  return {
+    ...state,
+    hero: {
+      ...state.hero,
+      queuedAbility: ability,
+      queuedTargetId: targetUnitId,
+    },
+  };
+}
+
+/**
+ * 히어로 개입 즉시 실행 (UI에서 호출)
  */
 export function heroIntervene(
   state: BattleState,
