@@ -457,7 +457,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
         effectType: 'BUFF',
         value: 5,
         remainingRounds: 1,
-        buffType: BuffType.DEF_DOWN,
+        buffType: BuffType.GUARD_DOWN,
         buffDuration: 2,
       });
 
@@ -470,7 +470,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const target = result.state.units.find(u => u.id === enemy.id)!;
       expect(target.buffs).toHaveLength(1);
-      expect(target.buffs[0].type).toBe(BuffType.DEF_DOWN);
+      expect(target.buffs[0].type).toBe(BuffType.GUARD_DOWN);
       expect(target.buffs[0].value).toBe(5);
       expect(target.buffs[0].duration).toBe(2);
     });

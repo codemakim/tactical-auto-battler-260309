@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createBattleState, stepBattle, runFullBattle } from '../core/BattleEngine';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { CharacterClass, Team, Position, BattlePhase } from '../types';
+import type { BattleState } from '../types';
 import { resetUid } from '../utils/uid';
+import { endRound } from '../core/RoundManager';
 
 describe('전투 흐름', () => {
   beforeEach(() => resetUnitCounter());
@@ -164,6 +166,86 @@ describe('예비 유닛 투입', () => {
     }
   });
 
+  it('예비 유닛은 다음 라운드부터 행동에 참여한다 (§16)', () => {
+    // p1은 매우 약해서 round 1에 사망 → reserve 투입
+    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
+    p1.stats.hp = 1; p1.stats.maxHp = 1;
+    // p2, p3은 오래 생존 (적들이 낮은 공격력)
+    const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    p2.stats.hp = 9999; p2.stats.maxHp = 9999;
+    const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
+    p3.stats.hp = 9999; p3.stats.maxHp = 9999;
+    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
+    reserve.stats.hp = 9999; reserve.stats.maxHp = 9999;
+
+    // e1은 강해서 p1을 1격에 사망, e2/e3은 hp가 높아 전투가 여러 라운드 지속
+    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
+    e1.stats.atk = 200;
+    const e2 = createUnit(createCharacterDef('E2', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+    e2.stats.hp = 9999; e2.stats.maxHp = 9999;
+    const e3 = createUnit(createCharacterDef('E3', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+    e3.stats.hp = 9999; e3.stats.maxHp = 9999;
+
+    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [reserve], []);
+    const result = runFullBattle(state);
+
+    const reserveEvents = result.events.filter(e => e.type === 'RESERVE_ENTERED');
+    expect(reserveEvents.length).toBeGreaterThan(0); // 반드시 투입돼야 함
+
+    if (reserveEvents.length > 0) {
+      const entryRound = reserveEvents[0].round;
+
+      // §16: 다음 라운드 이후 예비 유닛의 TURN_START 이벤트가 있어야 함
+      const reserveTurnsAfterEntry = result.events.filter(
+        e => e.type === 'TURN_START' && e.round > entryRound && e.sourceId === reserve.id,
+      );
+
+      // 전투가 다음 라운드까지 지속된 경우에만 검증
+      const nextRoundExists = result.events.some(e => e.round === entryRound + 1);
+      if (nextRoundExists) {
+        expect(reserveTurnsAfterEntry.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('예비 유닛은 투입 후 다음 라운드 turnOrder에 포함된다 (§16)', () => {
+    // p1이 1HP라서 라운드 1에 사망 → reserve 투입 → 라운드 2 turnOrder에 reserve가 있어야 함
+    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
+    p1.stats.hp = 1; p1.stats.maxHp = 1;
+    const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    p2.stats.hp = 9999; p2.stats.maxHp = 9999;
+    const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
+    p3.stats.hp = 9999; p3.stats.maxHp = 9999;
+    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
+    reserve.stats.hp = 9999; reserve.stats.maxHp = 9999;
+
+    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
+    e1.stats.atk = 200;
+    const e2 = createUnit(createCharacterDef('E2', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+    e2.stats.hp = 9999; e2.stats.maxHp = 9999;
+    const e3 = createUnit(createCharacterDef('E3', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+    e3.stats.hp = 9999; e3.stats.maxHp = 9999;
+
+    let state = createBattleState([p1, p2, p3], [e1, e2, e3], [reserve], []);
+
+    // 라운드 1 끝까지 진행 (reserve 투입 대기)
+    state = stepBattle(state).state;
+    while (state.phase !== BattlePhase.ROUND_END && !state.isFinished) {
+      state = stepBattle(state).state;
+    }
+
+    if (state.isFinished) return;
+
+    const reserveInBattle = state.units.find(u => u.id === reserve.id);
+    if (!reserveInBattle) return; // p1이 살아남아 reserve 미투입 시 skip
+
+    // 라운드 2 시작
+    state = stepBattle(state).state;
+
+    // §16: 투입된 예비 유닛이 다음 라운드 turnOrder에 포함되어야 함
+    expect(state.turnOrder).toContain(reserve.id);
+  });
+
   it('예비 유닛은 원래 포지션과 관계없이 항상 BACK으로 진입한다', () => {
     const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
@@ -189,6 +271,97 @@ describe('예비 유닛 투입', () => {
       expect(enteredUnit).toBeDefined();
       expect(enteredUnit!.position).toBe(Position.BACK);
     }
+  });
+});
+
+describe('라운드 종료 - 실드 제거 (§7)', () => {
+  beforeEach(() => {
+    resetUnitCounter();
+    resetUid();
+  });
+
+  it('라운드 종료 시 모든 유닛의 실드가 0으로 초기화된다', () => {
+
+    const p1 = createUnit(createCharacterDef('P1', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+
+    // 실드 부여
+    p1.shield = 15;
+    e1.shield = 10;
+
+    const state: BattleState = {
+      units: [p1, e1],
+      reserve: [],
+      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      round: 1,
+      turn: 6,
+      turnOrder: [],
+      phase: BattlePhase.ROUND_END as BattlePhase,
+      events: [],
+      delayedEffects: [],
+      isFinished: false,
+      winner: null,
+      seed: 12345,
+    };
+
+    const afterEnd = endRound(state);
+    expect(afterEnd.units.find((u) => u.id === p1.id)!.shield).toBe(0);
+    expect(afterEnd.units.find((u) => u.id === e1.id)!.shield).toBe(0);
+  });
+
+  it('죽은 유닛의 실드는 건드리지 않는다', () => {
+
+    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
+    const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+    p1.isAlive = false;
+    p1.shield = 5;
+
+    const state: BattleState = {
+      units: [p1, e1],
+      reserve: [],
+      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      round: 1,
+      turn: 6,
+      turnOrder: [],
+      phase: BattlePhase.ROUND_END as BattlePhase,
+      events: [],
+      delayedEffects: [],
+      isFinished: false,
+      winner: null,
+      seed: 12345,
+    };
+
+    const afterEnd = endRound(state);
+    // 죽은 유닛은 실드 제거 대상이 아님
+    expect(afterEnd.units.find((u) => u.id === p1.id)!.shield).toBe(5);
+  });
+
+  it('라운드 종료 시 SHIELD_CLEARED 이벤트가 기록된다', () => {
+
+    const p1 = createUnit(createCharacterDef('P1', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+    p1.shield = 15;
+
+    const state: BattleState = {
+      units: [p1, e1],
+      reserve: [],
+      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      round: 1,
+      turn: 6,
+      turnOrder: [],
+      phase: BattlePhase.ROUND_END as BattlePhase,
+      events: [],
+      delayedEffects: [],
+      isFinished: false,
+      winner: null,
+      seed: 12345,
+    };
+
+    const afterEnd = endRound(state);
+    const shieldCleared = afterEnd.events.filter((e) => e.type === 'SHIELD_CLEARED');
+    expect(shieldCleared.length).toBe(1); // p1만 실드가 있었으므로
+    expect(shieldCleared[0].targetId).toBe(p1.id);
+    expect(shieldCleared[0].data!.shieldBefore).toBe(15);
   });
 });
 

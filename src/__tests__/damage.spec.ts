@@ -1,32 +1,32 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { calculateDamage, applyDamage, applyShield } from '../systems/DamageSystem';
+import { calculateDamage, calculateShield, applyDamage, applyShield } from '../systems/DamageSystem';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { CharacterClass, Team, Position } from '../types';
 
 describe('데미지 시스템', () => {
   beforeEach(() => resetUnitCounter());
 
-  it('데미지 = ATK × 배율 - DEF, 최소 1', () => {
+  it('데미지 = floor(ATK × 배율), DEF 감산 없음', () => {
     const attacker = createUnit(createCharacterDef('Attacker', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const defender = createUnit(createCharacterDef('Defender', CharacterClass.GUARDIAN), Team.ENEMY, Position.FRONT);
 
-    // Warrior ATK:20, 배율 1.2 → 24 - Guardian DEF:20 = 4
+    // Warrior ATK:12, 배율 1.2 → floor(14.4) = 14
     const dmg = calculateDamage(attacker, defender, 1.2);
-    expect(dmg).toBe(4);
+    expect(dmg).toBe(14);
   });
 
-  it('DEF가 공격력보다 높아도 최소 1 데미지', () => {
+  it('낮은 배율이라도 floor(ATK × 배율)만큼 데미지가 들어간다', () => {
     const weak = createUnit(createCharacterDef('Weak', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
     const tank = createUnit(createCharacterDef('Tank', CharacterClass.GUARDIAN), Team.ENEMY, Position.FRONT);
 
-    // Guardian ATK:12, 배율 0.5 → 6 - DEF:20 = -14 → 최소 1
+    // Guardian ATK:8, 배율 0.5 → floor(4) = 4
     const dmg = calculateDamage(weak, tank, 0.5);
-    expect(dmg).toBe(1);
+    expect(dmg).toBe(4);
   });
 
   it('데미지 적용 시 HP가 감소한다', () => {
     const unit = createUnit(createCharacterDef('Target', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    const initialHp = unit.stats.hp; // 110
+    const initialHp = unit.stats.hp; // 53
 
     const result = applyDamage(unit, 30, 'attacker', 1, 1);
 
@@ -38,7 +38,6 @@ describe('데미지 시스템', () => {
 
   it('HP가 0이 되면 유닛이 죽는다', () => {
     const unit = createUnit(createCharacterDef('Target', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);
-    // Archer HP:75
 
     const result = applyDamage(unit, 999, 'attacker', 1, 1);
 
@@ -68,5 +67,37 @@ describe('데미지 시스템', () => {
 
     expect(result.unit.shield).toBe(20); // 50 - 30
     expect(result.unit.stats.hp).toBe(unit.stats.hp); // HP 변화 없음
+  });
+});
+
+describe('실드 생성 공식 (§12.2)', () => {
+  beforeEach(() => resetUnitCounter());
+
+  it('실드 = floor(GRD × 배율)', () => {
+    const guardian = createUnit(createCharacterDef('G', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    // Guardian GRD: 11, 배율 1.0 → 11
+    const shield = calculateShield(guardian, 1.0);
+    expect(shield).toBe(11);
+  });
+
+  it('높은 배율로 강화 방어', () => {
+    const guardian = createUnit(createCharacterDef('G', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    // Guardian GRD: 11, 배율 1.5 → floor(16.5) = 16
+    const shield = calculateShield(guardian, 1.5);
+    expect(shield).toBe(16);
+  });
+
+  it('낮은 배율로 경미한 방어', () => {
+    const guardian = createUnit(createCharacterDef('G', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    // Guardian GRD: 11, 배율 0.8 → floor(8.8) = 8
+    const shield = calculateShield(guardian, 0.8);
+    expect(shield).toBe(8);
+  });
+
+  it('GRD가 낮은 클래스는 실드 생성량이 적다', () => {
+    const assassin = createUnit(createCharacterDef('A', CharacterClass.ASSASSIN), Team.PLAYER, Position.FRONT);
+    // Assassin GRD: 3, 배율 1.0 → 3
+    const shield = calculateShield(assassin, 1.0);
+    expect(shield).toBe(3);
   });
 });

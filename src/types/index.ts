@@ -45,8 +45,8 @@ export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
 export const BuffType = {
   ATK_UP: 'ATK_UP',
   ATK_DOWN: 'ATK_DOWN',
-  DEF_UP: 'DEF_UP',
-  DEF_DOWN: 'DEF_DOWN',
+  GUARD_UP: 'GUARD_UP',
+  GUARD_DOWN: 'GUARD_DOWN',
   AGI_UP: 'AGI_UP',
   AGI_DOWN: 'AGI_DOWN',
   POISON: 'POISON',
@@ -128,9 +128,22 @@ export interface Stats {
   hp: number;
   maxHp: number;
   atk: number;
-  def: number;
+  grd: number;
   agi: number;
 }
+
+// === Stat Range (캐릭터 생성 시 랜덤 범위) ===
+
+export interface StatRange {
+  hp: [number, number];
+  atk: [number, number];
+  grd: [number, number];
+  agi: [number, number];
+}
+
+// === Training Stat (훈련 시 선택 가능한 스탯) ===
+
+export type TrainableStat = 'hp' | 'atk' | 'grd' | 'agi';
 
 // === Character Definition (data) ===
 
@@ -141,7 +154,8 @@ export interface CharacterDefinition {
   baseStats: Omit<Stats, 'maxHp'>;
   /** 클래스의 기본 3개 액션 슬롯. 런 리셋 시 이 슬롯으로 복원된다. */
   baseActionSlots: ActionSlot[];
-  trainingLevel: number;
+  trainingsUsed: number;       // 사용한 훈련 횟수
+  trainingPotential: number;   // 최대 훈련 횟수 (2~5)
 }
 
 // === Delayed Effect ===
@@ -175,7 +189,8 @@ export interface BattleUnit {
   baseActionSlots: ActionSlot[];
   isAlive: boolean;
   hasActedThisRound: boolean;
-  trainingLevel: number;  // 현재 훈련 레벨 (§24)
+  trainingsUsed: number;       // 사용한 훈련 횟수 (§24)
+  trainingPotential: number;   // 최대 훈련 횟수 (§23.5)
 }
 
 // === Battle State (전체 전투 상태를 하나의 객체로 관리) ===
@@ -240,6 +255,7 @@ export type BattleEventType =
   | 'HERO_INTERVENTION'
   | 'BUFF_APPLIED'
   | 'DEBUFF_APPLIED'
+  | 'SHIELD_CLEARED'
   | 'BUFF_EXPIRED'
   | 'STATUS_EFFECT_TICK'
   | 'DELAYED_EFFECT_APPLIED'
@@ -280,8 +296,8 @@ export interface BattleReward {
 
 export interface CharacterReward {
   characterClass: CharacterClass;
-  trainingLevel: number;
-  probability: number; // 이 보상이 생성된 확률 (0~1, 디버그/UI용)
+  trainingPotential: number;  // 랜덤 생성된 잠재력 (2~5)
+  probability: number;        // 이 보상이 생성된 확률 (0~1, 디버그/UI용)
 }
 
 // === Game Config ===

@@ -122,10 +122,10 @@ export function generateCharacterReward(
   const classIdx = Math.floor(rand() * CHARACTER_CLASSES.length);
   const characterClass = CHARACTER_CLASSES[classIdx];
 
-  // 훈련 레벨: 기본 0
-  const trainingLevel = 0;
+  // 훈련 잠재력: 2~5 랜덤 (§23.5)
+  const trainingPotential = 2 + Math.floor(rand() * 4);
 
-  return { characterClass, trainingLevel, probability };
+  return { characterClass, trainingPotential, probability };
 }
 
 /**

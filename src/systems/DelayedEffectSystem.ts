@@ -85,12 +85,12 @@ export function resolveDelayedEffects(
       const result = applyHeal(target, effect.value, state.round, state.turn);
       units = units.map(u => u.id === target.id ? result.unit : u);
       allEvents.push(...result.events);
-    } else if (effect.effectType === 'BUFF') {
+    } else if (effect.effectType === 'BUFF' && effect.buffType && effect.buffDuration !== undefined) {
       const buff = {
         id: uid(),
-        type: effect.buffType!,
+        type: effect.buffType,
         value: effect.value,
-        duration: effect.buffDuration!,
+        duration: effect.buffDuration,
         sourceId: effect.sourceId,
       };
       const result = applyBuff(target, buff, state.round, state.turn);

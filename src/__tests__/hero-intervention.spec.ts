@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+// heroIntervene = queueIntervention의 UI용 래퍼. 즉시 실행이 아닌 큐잉 방식 (§18).
+// 타이밍·큐잉 세부 동작 테스트는 hero-intervention-queuing.spec.ts 참고.
 import { createBattleState, stepBattle, heroIntervene } from '../core/BattleEngine';
 import { canIntervene } from '../systems/HeroInterventionSystem';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';

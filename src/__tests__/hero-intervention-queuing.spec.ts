@@ -144,6 +144,24 @@ describe('히어로 개입 큐잉 (§18)', () => {
     expect(interventionEvents.length).toBe(1);
   });
 
+  it('HERO_INTERVENTION 이벤트는 같은 턴의 ACTION_EXECUTED보다 먼저 기록된다', () => {
+    let state = setup();
+    state = stepBattle(state).state; // 라운드 시작
+
+    state = queueIntervention(state, shieldAbility);
+    const eventsBefore = state.events.length;
+    state = stepBattle(state).state;
+
+    const newEvents = state.events.slice(eventsBefore);
+    const interventionIdx = newEvents.findIndex(e => e.type === 'HERO_INTERVENTION');
+    const actionIdx = newEvents.findIndex(e => e.type === 'ACTION_EXECUTED');
+
+    expect(interventionIdx).toBeGreaterThanOrEqual(0); // HERO_INTERVENTION 존재
+    if (actionIdx >= 0) {
+      expect(interventionIdx).toBeLessThan(actionIdx); // 유닛 행동보다 먼저
+    }
+  });
+
   it('큐잉된 개입(데미지)은 유닛 행동보다 먼저 적에게 적용된다', () => {
     let state = setup();
     state = stepBattle(state).state;

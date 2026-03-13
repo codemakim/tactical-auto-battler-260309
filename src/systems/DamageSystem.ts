@@ -3,18 +3,28 @@ import { uid } from '../utils/uid';
 import { getEffectiveStats } from './BuffSystem';
 
 /**
- * 데미지 계산: 유효 ATK 기반 배율 - 유효 DEF 감산, 최소 1
+ * 데미지 계산: floor(유효 ATK × 배율)
+ * §12.1: 상시 방어력 차감 없음
  */
 export function calculateDamage(
   attacker: BattleUnit,
-  defender: BattleUnit,
+  _defender: BattleUnit,
   multiplier: number,
 ): number {
   const atkStats = getEffectiveStats(attacker);
-  const defStats = getEffectiveStats(defender);
-  const raw = Math.floor(atkStats.atk * multiplier);
-  const reduced = raw - defStats.def;
-  return Math.max(1, reduced);
+  return Math.floor(atkStats.atk * multiplier);
+}
+
+/**
+ * 실드 생성량 계산: floor(유효 GRD × 배율)
+ * §12.2: GRD 스탯 기반 실드 생성
+ */
+export function calculateShield(
+  unit: BattleUnit,
+  multiplier: number,
+): number {
+  const stats = getEffectiveStats(unit);
+  return Math.floor(stats.grd * multiplier);
 }
 
 /**

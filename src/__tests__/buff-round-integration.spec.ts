@@ -104,7 +104,7 @@ describe('라운드 종료 - 버프 지속시간 감소 (§7.1)', () => {
     const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
     p1.buffs = [
       { id: '1', type: BuffType.ATK_UP, value: 5, duration: 1, sourceId: p1.id },
-      { id: '2', type: BuffType.DEF_UP, value: 3, duration: 3, sourceId: p1.id },
+      { id: '2', type: BuffType.GUARD_UP, value: 3, duration: 3, sourceId: p1.id },
     ];
 
     const state: BattleState = {
@@ -124,9 +124,9 @@ describe('라운드 종료 - 버프 지속시간 감소 (§7.1)', () => {
 
     const afterEnd = endRound(state);
     const buffedUnit = afterEnd.units.find(u => u.id === p1.id);
-    // duration 1인 ATK_UP은 제거, duration 3인 DEF_UP은 2로 감소
+    // duration 1인 ATK_UP은 제거, duration 3인 GUARD_UP은 2로 감소
     expect(buffedUnit!.buffs).toHaveLength(1);
-    expect(buffedUnit!.buffs[0].type).toBe(BuffType.DEF_UP);
+    expect(buffedUnit!.buffs[0].type).toBe(BuffType.GUARD_UP);
     expect(buffedUnit!.buffs[0].duration).toBe(2);
   });
 
@@ -213,13 +213,13 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
     const slot: ActionSlot = {
       condition: { type: 'ALWAYS' },
       action: {
-        id: 'debuff_def',
-        name: 'Armor Break',
+        id: 'debuff_guard',
+        name: 'Guard Break',
         description: '',
         effects: [{
           type: 'DEBUFF',
           target: 'ENEMY_FRONT',
-          buffType: BuffType.DEF_DOWN,
+          buffType: BuffType.GUARD_DOWN,
           value: 3,
           duration: 2,
         }],
@@ -245,7 +245,71 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
 
     const debuffedEnemy = result.units.find(u => u.id === enemy.id);
     expect(debuffedEnemy!.buffs).toHaveLength(1);
-    expect(debuffedEnemy!.buffs[0].type).toBe(BuffType.DEF_DOWN);
+    expect(debuffedEnemy!.buffs[0].type).toBe(BuffType.GUARD_DOWN);
+  });
+
+  it('ACTION_SKIPPED(stunned)된 유닛도 해당 라운드 행동 기회를 소진한다 (hasActedThisRound = true)', () => {
+    // e1(ASSASSIN, 가장 높은 AGI)에 스턴 부여 → 첫 번째로 턴을 맞이하지만 스킵
+    // 스킵 직후 e1.hasActedThisRound가 true여야 함 (턴 소멸도 기회 소진으로 취급)
+    const p1 = createUnit(createCharacterDef('P1', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    p1.stats.hp = 9999; p1.stats.maxHp = 9999;
+    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
+    e1.stats.hp = 9999; e1.stats.maxHp = 9999;
+    e1.buffs = [{ id: 'stun-1', type: BuffType.STUN, value: 0, duration: 1, sourceId: p1.id }];
+
+    let state = createBattleState([p1], [e1], [], []);
+    state = stepBattle(state).state;
+
+    while (state.phase !== BattlePhase.ROUND_END && !state.isFinished) {
+      const prevEventCount = state.events.length;
+      state = stepBattle(state).state;
+
+      const newEvents = state.events.slice(prevEventCount);
+      const stunnedEvent = newEvents.find(
+        ev => ev.type === 'ACTION_SKIPPED' && ev.sourceId === e1.id && ev.data?.reason === 'stunned',
+      );
+      if (stunnedEvent) {
+        const e1Unit = state.units.find(u => u.id === e1.id)!;
+        expect(e1Unit.hasActedThisRound).toBe(true);
+        return;
+      }
+    }
+
+    throw new Error('스턴된 유닛의 ACTION_SKIPPED 이벤트가 발생하지 않았습니다');
+  });
+
+  it('유효한 액션이 없어 ACTION_SKIPPED된 유닛도 해당 라운드 행동 기회를 소진한다 (hasActedThisRound = true)', () => {
+    // e1의 모든 액션 조건이 절대 충족되지 않도록 설정 (HP_BELOW 0% → 항상 false)
+    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
+    p1.stats.hp = 9999; p1.stats.maxHp = 9999;
+    const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+    e1.stats.hp = 9999; e1.stats.maxHp = 9999;
+    e1.actionSlots = [
+      {
+        condition: { type: 'HP_BELOW', value: 0 }, // HP 비율 * 100 < 0 → 절대 false
+        action: { id: 'noop', name: 'Never', description: '', effects: [] },
+      },
+    ];
+
+    let state = createBattleState([p1], [e1], [], []);
+    state = stepBattle(state).state;
+
+    while (state.phase !== BattlePhase.ROUND_END && !state.isFinished) {
+      const prevEventCount = state.events.length;
+      state = stepBattle(state).state;
+
+      const newEvents = state.events.slice(prevEventCount);
+      const noActionEvent = newEvents.find(
+        ev => ev.type === 'ACTION_SKIPPED' && ev.sourceId === e1.id && ev.data?.reason === 'no_valid_action',
+      );
+      if (noActionEvent) {
+        const e1Unit = state.units.find(u => u.id === e1.id)!;
+        expect(e1Unit.hasActedThisRound).toBe(true);
+        return;
+      }
+    }
+
+    throw new Error('ACTION_SKIPPED(no_valid_action) 이벤트가 발생하지 않았습니다');
   });
 
   it('STUN 디버프가 적용되면 대상이 다음 턴에 행동 불가', () => {

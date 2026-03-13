@@ -1,4 +1,4 @@
-import type { CharacterDefinition, BattleUnit } from '../types';
+import type { CharacterDefinition, BattleUnit, StatRange } from '../types';
 import { Team, Position } from '../types';
 import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
 import type { CharacterClass } from '../types';
@@ -13,12 +13,13 @@ function nextId(team: Team, name: string): string {
 }
 
 /**
- * 클래스 템플릿에서 CharacterDefinition 생성
+ * 클래스 템플릿에서 CharacterDefinition 생성 (고정 스탯, 테스트/폴백용)
  */
 export function createCharacterDef(
   name: string,
   characterClass: CharacterClass,
-  trainingLevel: number = 0,
+  trainingsUsed: number = 0,
+  trainingPotential: number = 3,
 ): CharacterDefinition {
   const template = CLASS_TEMPLATES[characterClass];
 
@@ -28,7 +29,62 @@ export function createCharacterDef(
     characterClass,
     baseStats: { ...template.baseStats },
     baseActionSlots: template.baseActionSlots.map(slot => ({ ...slot })),
-    trainingLevel,
+    trainingsUsed,
+    trainingPotential,
+  };
+}
+
+/**
+ * 시드 기반 난수 생성기 (mulberry32)
+ */
+function seededRand(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * min~max 범위 내 정수 랜덤 (inclusive)
+ */
+function randInt(rand: () => number, min: number, max: number): number {
+  return min + Math.floor(rand() * (max - min + 1));
+}
+
+/**
+ * 클래스 범위 내 랜덤 스탯으로 CharacterDefinition 생성 (§23.5)
+ * trainingPotential도 2~5 범위에서 랜덤
+ */
+export function generateCharacterDef(
+  name: string,
+  characterClass: CharacterClass,
+  seed: number,
+): CharacterDefinition {
+  const template = CLASS_TEMPLATES[characterClass];
+  const range = template.statRange;
+  const rand = seededRand(seed);
+
+  const baseStats = {
+    hp: randInt(rand, range.hp[0], range.hp[1]),
+    atk: randInt(rand, range.atk[0], range.atk[1]),
+    grd: randInt(rand, range.grd[0], range.grd[1]),
+    agi: randInt(rand, range.agi[0], range.agi[1]),
+  };
+
+  const trainingPotential = randInt(rand, 2, 5);
+
+  return {
+    id: `char_${name.toLowerCase().replace(/\s+/g, '_')}`,
+    name,
+    characterClass,
+    baseStats,
+    baseActionSlots: template.baseActionSlots.map(slot => ({ ...slot })),
+    trainingsUsed: 0,
+    trainingPotential,
   };
 }
 
@@ -42,7 +98,6 @@ export function createUnit(
   team: Team,
   position: Position,
 ): BattleUnit {
-  const trainedStats = applyTrainingBonuses(def);
   const baseSlots = def.baseActionSlots.map(slot => ({ ...slot }));
 
   return {
@@ -53,11 +108,11 @@ export function createUnit(
     team,
     position,
     stats: {
-      hp: trainedStats.hp,
-      maxHp: trainedStats.hp,
-      atk: trainedStats.atk,
-      def: trainedStats.def,
-      agi: trainedStats.agi,
+      hp: def.baseStats.hp,
+      maxHp: def.baseStats.hp,
+      atk: def.baseStats.atk,
+      grd: def.baseStats.grd,
+      agi: def.baseStats.agi,
     },
     shield: 0,
     buffs: [],
@@ -65,31 +120,9 @@ export function createUnit(
     baseActionSlots: def.baseActionSlots.map(slot => ({ ...slot })),
     isAlive: true,
     hasActedThisRound: false,
-    trainingLevel: def.trainingLevel,
+    trainingsUsed: def.trainingsUsed,
+    trainingPotential: def.trainingPotential,
   };
-}
-
-/**
- * 훈련 레벨에 따른 스탯 보너스 계산
- */
-function applyTrainingBonuses(def: CharacterDefinition): {
-  hp: number; atk: number; def: number; agi: number;
-} {
-  const base = def.baseStats;
-  let hp = base.hp;
-  let atk = base.atk;
-  let defStat = base.def;
-  let agi = base.agi;
-
-  // 훈련 레벨당 소량의 스탯 증가 (레벨에 따라 순환)
-  for (let i = 1; i <= def.trainingLevel; i++) {
-    const mod = i % 3;
-    if (mod === 1) atk += 1;
-    else if (mod === 2) hp += 3;
-    else agi += 1;
-  }
-
-  return { hp, atk, def: defStat, agi };
 }
 
 /**

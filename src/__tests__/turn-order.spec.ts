@@ -45,21 +45,45 @@ describe('턴 순서 시스템', () => {
     expect(order[0]).toBe(alive.id);
   });
 
-  it('턴 가속: 유닛을 2칸 앞으로 당길 수 있다', () => {
+  it('턴 가속: 유닛을 정확히 2칸 앞으로 당긴다', () => {
     const order = ['a', 'b', 'c', 'd', 'e'];
-    const result = accelerateUnit(order, 'd'); // d를 2칸 앞으로
+    const result = accelerateUnit(order, 'd'); // d(index 3) → index 1
 
-    expect(result.indexOf('d')).toBeLessThan(order.indexOf('d'));
-    expect(result).toContain('d');
+    // 정확한 최종 배열 검증
+    expect(result).toEqual(['a', 'd', 'b', 'c', 'e']);
     expect(result).toHaveLength(5);
   });
 
-  it('턴 지연: 유닛을 2칸 뒤로 미룰 수 있다', () => {
+  it('턴 지연: 유닛을 정확히 2칸 뒤로 미룬다', () => {
     const order = ['a', 'b', 'c', 'd', 'e'];
-    const result = delayUnit(order, 'b'); // b를 2칸 뒤로
+    const result = delayUnit(order, 'b'); // b(index 1) → index 3
 
-    expect(result.indexOf('b')).toBeGreaterThan(order.indexOf('b'));
-    expect(result).toContain('b');
+    // 정확한 최종 배열 검증
+    expect(result).toEqual(['a', 'c', 'd', 'b', 'e']);
     expect(result).toHaveLength(5);
+  });
+
+  it('가속: 이미 첫 번째 유닛은 더 앞으로 이동하지 않는다', () => {
+    const order = ['a', 'b', 'c'];
+    const result = accelerateUnit(order, 'a');
+
+    expect(result).toEqual(['a', 'b', 'c']); // 변화 없음
+  });
+
+  it('지연: 이미 마지막 유닛은 더 뒤로 이동하지 않는다', () => {
+    const order = ['a', 'b', 'c'];
+    const result = delayUnit(order, 'c');
+
+    expect(result).toEqual(['a', 'b', 'c']); // 변화 없음
+  });
+
+  it('가속/지연 후에도 모든 유닛이 순서에 포함된다 (유닛 누락 없음)', () => {
+    const order = ['a', 'b', 'c', 'd', 'e'];
+
+    const accelerated = accelerateUnit(order, 'c');
+    expect(accelerated.sort()).toEqual([...order].sort());
+
+    const delayed = delayUnit(order, 'c');
+    expect(delayed.sort()).toEqual([...order].sort());
   });
 });

@@ -203,6 +203,22 @@ export function endRound(state: BattleState): BattleState {
     delayedEvents.push(...result.events);
   }
 
+  // §7: 라운드 종료 시 모든 살아있는 유닛의 실드 제거
+  const shieldEvents: BattleEvent[] = [];
+  units = units.map(u => {
+    if (!u.isAlive || u.shield <= 0) return u;
+    shieldEvents.push({
+      id: uid(),
+      type: 'SHIELD_CLEARED',
+      round: state.round,
+      turn: state.turn,
+      timestamp: Date.now(),
+      targetId: u.id,
+      data: { shieldBefore: u.shield },
+    });
+    return { ...u, shield: 0 };
+  });
+
   const event: BattleEvent = {
     id: uid(),
     type: 'ROUND_END',
@@ -216,7 +232,7 @@ export function endRound(state: BattleState): BattleState {
     units,
     delayedEffects,
     phase: BattlePhase.ROUND_END,
-    events: [...state.events, ...buffEvents, ...delayedEvents, event],
+    events: [...state.events, ...buffEvents, ...delayedEvents, ...shieldEvents, event],
   };
 }
 
@@ -258,7 +274,7 @@ function checkReserveEntry(
           turn: state.turn,
           timestamp: Date.now(),
           targetId: reserveUnit.id,
-          data: { team, position: reserveUnit.position },
+          data: { team, position: Position.BACK },
         });
       }
     }

@@ -36,7 +36,7 @@ describe('액션 해석 시스템', () => {
     };
     const backDefend: ActionSlot = {
       condition: { type: 'POSITION_BACK' },
-      action: { id: 'def', name: 'Defend', description: '', effects: [{ type: 'SHIELD', value: 10, target: 'SELF' }] },
+      action: { id: 'defend', name: 'Defend', description: '', effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: 'SELF' }] },
     };
 
     unit.actionSlots = [frontAttack, backDefend, ...unit.actionSlots]; // 기본 액션은 마지막
@@ -91,8 +91,8 @@ describe('액션 해석 시스템', () => {
 
   it('HP_BELOW 조건: HP 비율이 임계값 미만일 때 발동', () => {
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    // HP를 25%로 설정 (110 → 27)
-    unit.stats.hp = 27;
+    // HP를 25%로 설정 (maxHp 53 → 13)
+    unit.stats.hp = 13;
 
     const healSlot: ActionSlot = {
       condition: { type: 'HP_BELOW', value: 30 }, // 30% 미만
@@ -135,7 +135,10 @@ describe('액션 해석 시스템', () => {
     expect(evaluateCondition(slot, unit, state)).toBe(true);
   });
 
-  it('FIRST_ACTION_THIS_ROUND: turn === 1일 때 true', () => {
+  it('FIRST_ACTION_THIS_ROUND: 해당 라운드의 첫 번째 행동(turn=1)일 때만 true', () => {
+    // state.turn은 라운드별 카운터 (startRound에서 0으로 리셋).
+    // turn=1 = 이번 라운드 첫 번째 행동 유닛, turn=2 = 두 번째 행동 유닛.
+    // Guardian의 Fortify처럼 "라운드 첫 행동 유닛에게만 발동"하는 조건에 사용.
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
     const slot: ActionSlot = {
@@ -143,16 +146,23 @@ describe('액션 해석 시스템', () => {
       action: { id: 'x', name: 'X', description: '', effects: [] },
     };
 
-    // turn 1이면 true
-    const state1 = makeBattleState({ units: [unit], turn: 1 });
-    expect(evaluateCondition(slot, unit, state1)).toBe(true);
+    // 라운드 내 첫 번째 행동(turn=1)이면 true
+    const stateFirst = makeBattleState({ units: [unit], turn: 1 });
+    expect(evaluateCondition(slot, unit, stateFirst)).toBe(true);
 
-    // turn 2이면 false
-    const state2 = makeBattleState({ units: [unit], turn: 2 });
-    expect(evaluateCondition(slot, unit, state2)).toBe(false);
+    // 같은 라운드의 두 번째 행동(turn=2)이면 false
+    const stateSecond = makeBattleState({ units: [unit], turn: 2 });
+    expect(evaluateCondition(slot, unit, stateSecond)).toBe(false);
+
+    // 라운드가 달라도 turn=1이면 항상 true (turn은 라운드마다 리셋됨)
+    const stateRound2First = makeBattleState({ units: [unit], turn: 1, round: 2 });
+    expect(evaluateCondition(slot, unit, stateRound2First)).toBe(true);
   });
 
-  it('HAS_HERO_BUFF: shield > 0일 때 true', () => {
+  it('HAS_HERO_BUFF: 유닛에게 실드가 있으면 true (MVP: 히어로 실드 = hero buff)', () => {
+    // MVP에서 히어로가 부여할 수 있는 버프는 실드(SHIELD)이므로
+    // HAS_HERO_BUFF는 unit.shield > 0으로 검사한다.
+    // 추후 히어로 버프 종류가 늘어나면 별도 상태 필드가 필요할 수 있음.
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
     const slot: ActionSlot = {
@@ -160,11 +170,11 @@ describe('액션 해석 시스템', () => {
       action: { id: 'x', name: 'X', description: '', effects: [] },
     };
 
-    // shield가 0이면 false
+    // 실드가 없으면 false
     const state = makeBattleState({ units: [unit] });
     expect(evaluateCondition(slot, unit, state)).toBe(false);
 
-    // shield > 0이면 true
+    // 실드가 있으면 true
     unit.shield = 15;
     expect(evaluateCondition(slot, unit, state)).toBe(true);
   });

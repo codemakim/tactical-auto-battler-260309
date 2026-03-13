@@ -43,13 +43,13 @@ describe('버프 시스템 - 버프 적용', () => {
     expect(result.unit.buffs[0].duration).toBe(2);
   });
 
-  it('DEF_DOWN 디버프가 유닛에 추가된다', () => {
+  it('GUARD_DOWN 디버프가 유닛에 추가된다', () => {
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    const buff: Buff = { id: uid(), type: BuffType.DEF_DOWN, value: 3, duration: 1, sourceId: 'src' };
+    const buff: Buff = { id: uid(), type: BuffType.GUARD_DOWN, value: 3, duration: 1, sourceId: 'src' };
 
     const result = applyBuff(unit, buff, 1, 1);
     expect(result.unit.buffs).toHaveLength(1);
-    expect(result.unit.buffs[0].type).toBe(BuffType.DEF_DOWN);
+    expect(result.unit.buffs[0].type).toBe(BuffType.GUARD_DOWN);
   });
 
   it('버프 적용 시 이벤트가 생성된다', () => {
@@ -73,7 +73,7 @@ describe('버프 시스템 - 버프 적용', () => {
   it('같은 유닛에 여러 버프가 누적된다', () => {
     let unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const buff1: Buff = { id: uid(), type: BuffType.ATK_UP, value: 5, duration: 2, sourceId: 'src' };
-    const buff2: Buff = { id: uid(), type: BuffType.DEF_UP, value: 3, duration: 1, sourceId: 'src' };
+    const buff2: Buff = { id: uid(), type: BuffType.GUARD_UP, value: 3, duration: 1, sourceId: 'src' };
 
     unit = applyBuff(unit, buff1, 1, 1).unit;
     unit = applyBuff(unit, buff2, 1, 1).unit;
@@ -103,13 +103,13 @@ describe('버프 시스템 - 유효 스탯 계산', () => {
     expect(effective.atk).toBe(baseAtk - 3);
   });
 
-  it('DEF_UP이 방어력에 반영된다', () => {
+  it('GUARD_UP이 GRD에 반영된다', () => {
     const unit = createUnit(createCharacterDef('G', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
-    const baseDef = unit.stats.def;
-    unit.buffs = [{ id: '1', type: BuffType.DEF_UP, value: 4, duration: 2, sourceId: 'src' }];
+    const baseGuard = unit.stats.grd;
+    unit.buffs = [{ id: '1', type: BuffType.GUARD_UP, value: 4, duration: 2, sourceId: 'src' }];
 
     const effective = getEffectiveStats(unit);
-    expect(effective.def).toBe(baseDef + 4);
+    expect(effective.grd).toBe(baseGuard + 4);
   });
 
   it('AGI_UP이 민첩에 반영된다', () => {
@@ -164,7 +164,7 @@ describe('버프 시스템 - 유효 스탯 계산', () => {
 
     const effective = getEffectiveStats(unit);
     expect(effective.atk).toBe(baseStats.atk);
-    expect(effective.def).toBe(baseStats.def);
+    expect(effective.grd).toBe(baseStats.grd);
     expect(effective.agi).toBe(baseStats.agi);
   });
 });
@@ -179,7 +179,7 @@ describe('버프 시스템 - 지속시간 감소 (라운드 종료)', () => {
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     unit.buffs = [
       { id: '1', type: BuffType.ATK_UP, value: 5, duration: 3, sourceId: 'src' },
-      { id: '2', type: BuffType.DEF_UP, value: 3, duration: 1, sourceId: 'src' },
+      { id: '2', type: BuffType.GUARD_UP, value: 3, duration: 1, sourceId: 'src' },
     ];
 
     const result = tickBuffs(unit, 1, 1);
@@ -192,7 +192,7 @@ describe('버프 시스템 - 지속시간 감소 (라운드 종료)', () => {
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     unit.buffs = [
       { id: '1', type: BuffType.ATK_UP, value: 5, duration: 3, sourceId: 'src' },
-      { id: '2', type: BuffType.DEF_UP, value: 3, duration: 1, sourceId: 'src' },
+      { id: '2', type: BuffType.GUARD_UP, value: 3, duration: 1, sourceId: 'src' },
     ];
 
     const result = tickBuffs(unit, 1, 1);
@@ -204,7 +204,7 @@ describe('버프 시스템 - 지속시간 감소 (라운드 종료)', () => {
   it('tickBuffs: 만료된 버프에 대해 BUFF_EXPIRED 이벤트가 생성된다', () => {
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     unit.buffs = [
-      { id: '1', type: BuffType.DEF_UP, value: 3, duration: 1, sourceId: 'src' },
+      { id: '1', type: BuffType.GUARD_UP, value: 3, duration: 1, sourceId: 'src' },
     ];
 
     const result = tickBuffs(unit, 1, 1);
@@ -313,15 +313,16 @@ describe('버프 시스템 - 데미지 계산 연동', () => {
     expect(buffedDmg).toBe(baseDmg + 10);
   });
 
-  it('DEF_UP 버프가 데미지 감소에 반영된다', () => {
+  it('GUARD_UP 버프는 데미지 계산에 영향을 주지 않는다 (GRD는 실드 생성용)', () => {
     const attacker = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const defender = createUnit(createCharacterDef('E', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
 
     const baseDmg = calculateDamage(attacker, defender, 1.0);
 
-    defender.buffs = [{ id: '1', type: BuffType.DEF_UP, value: 5, duration: 2, sourceId: 'src' }];
+    defender.buffs = [{ id: '1', type: BuffType.GUARD_UP, value: 5, duration: 2, sourceId: 'src' }];
     const buffedDmg = calculateDamage(attacker, defender, 1.0);
 
-    expect(buffedDmg).toBe(Math.max(1, baseDmg - 5));
+    // GRD는 데미지 감산에 사용되지 않으므로 동일
+    expect(buffedDmg).toBe(baseDmg);
   });
 });

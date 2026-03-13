@@ -5,7 +5,7 @@ import { uid } from '../utils/uid';
 // 디버프 타입 판별
 const DEBUFF_TYPES: ReadonlySet<string> = new Set([
   BuffType.ATK_DOWN,
-  BuffType.DEF_DOWN,
+  BuffType.GUARD_DOWN,
   BuffType.AGI_DOWN,
   BuffType.POISON,
   BuffType.STUN,
@@ -52,15 +52,15 @@ export function applyBuff(
  */
 export function getEffectiveStats(unit: BattleUnit): Stats {
   let atkMod = 0;
-  let defMod = 0;
+  let grdMod = 0;
   let agiMod = 0;
 
   for (const buff of unit.buffs) {
     switch (buff.type) {
       case BuffType.ATK_UP: atkMod += buff.value; break;
       case BuffType.ATK_DOWN: atkMod -= buff.value; break;
-      case BuffType.DEF_UP: defMod += buff.value; break;
-      case BuffType.DEF_DOWN: defMod -= buff.value; break;
+      case BuffType.GUARD_UP: grdMod += buff.value; break;
+      case BuffType.GUARD_DOWN: grdMod -= buff.value; break;
       case BuffType.AGI_UP: agiMod += buff.value; break;
       case BuffType.AGI_DOWN: agiMod -= buff.value; break;
       // POISON, REGEN, STUN은 스탯에 영향 없음
@@ -70,7 +70,7 @@ export function getEffectiveStats(unit: BattleUnit): Stats {
   return {
     ...unit.stats,
     atk: Math.max(0, unit.stats.atk + atkMod),
-    def: Math.max(0, unit.stats.def + defMod),
+    grd: Math.max(0, unit.stats.grd + grdMod),
     agi: Math.max(0, unit.stats.agi + agiMod),
   };
 }

@@ -132,8 +132,9 @@ describe('캐릭터 획득 기회 (§23)', () => {
 
       expect(reward).not.toBeNull();
       expect(reward!.characterClass).toBeDefined();
-      expect(typeof reward!.trainingLevel).toBe('number');
-      expect(reward!.trainingLevel).toBeGreaterThanOrEqual(0);
+      expect(typeof reward!.trainingPotential).toBe('number');
+      expect(reward!.trainingPotential).toBeGreaterThanOrEqual(2);
+      expect(reward!.trainingPotential).toBeLessThanOrEqual(5);
       expect(typeof reward!.probability).toBe('number');
       expect(reward!.probability).toBeGreaterThan(0);
       expect(reward!.probability).toBeLessThanOrEqual(1);

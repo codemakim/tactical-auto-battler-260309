@@ -2,7 +2,7 @@ import { Position, Team } from '../types';
 import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent, DelayedEffect } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
-import { calculateDamage, applyDamage, applyShield, applyHeal } from './DamageSystem';
+import { calculateDamage, calculateShield, applyDamage, applyShield, applyHeal } from './DamageSystem';
 import { moveUnit, pushUnit } from './PositionSystem';
 import { accelerateUnit, delayUnit } from '../core/TurnOrderManager';
 import { applyBuff, isStunned } from './BuffSystem';
@@ -204,7 +204,10 @@ function applyEffect(
     }
 
     case 'SHIELD': {
-      const amount = effect.value ?? 0;
+      // stat: 'grd'가 있으면 GRD 기반 배율 계산, 없으면 고정값
+      const amount = effect.stat === 'grd'
+        ? calculateShield(source, effect.value ?? 1.0)
+        : (effect.value ?? 0);
       const result = applyShield(actualTarget, amount, round, turn);
       updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
       allEvents.push(...result.events);

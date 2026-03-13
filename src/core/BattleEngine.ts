@@ -1,43 +1,9 @@
-import type { BattleState, BattleUnit, CharacterDefinition, HeroAbility } from '../types';
+import type { BattleState, BattleUnit, HeroAbility } from '../types';
 import { BattlePhase, Team, Position, DEFAULT_GAME_CONFIG } from '../types';
 import { uid } from '../utils/uid';
 import { startRound, executeTurn, isRoundComplete } from './RoundManager';
 import { recordSnapshot, type ReplaySnapshot } from './ReplayRecorder';
 import { canIntervene, executeIntervention } from '../systems/HeroInterventionSystem';
-
-/**
- * CharacterDefinition에서 BattleUnit 생성 (순수 함수)
- */
-export function createBattleUnit(
-  def: CharacterDefinition,
-  team: Team,
-  position: Position,
-  index: number,
-): BattleUnit {
-  const baseSlots = def.baseActionSlots.map(slot => ({ ...slot }));
-  return {
-    id: `${team}_${index}_${def.id}`,
-    definitionId: def.id,
-    name: def.name,
-    characterClass: def.characterClass,
-    team,
-    position,
-    stats: {
-      hp: def.baseStats.hp,
-      maxHp: def.baseStats.hp,
-      atk: def.baseStats.atk,
-      def: def.baseStats.def,
-      agi: def.baseStats.agi,
-    },
-    shield: 0,
-    buffs: [],
-    actionSlots: baseSlots,
-    baseActionSlots: def.baseActionSlots.map(slot => ({ ...slot })),
-    isAlive: true,
-    hasActedThisRound: false,
-    trainingLevel: def.trainingLevel,
-  };
-}
 
 /**
  * 초기 BattleState 생성

@@ -1,8 +1,11 @@
-import { CharacterClass, type Action, type ActionSlot, type Stats } from '../types';
+import { CharacterClass, type Action, type ActionSlot, type Stats, type StatRange } from '../types';
 
 interface ClassTemplate {
   characterClass: CharacterClass;
+  /** 고정 기본 스탯 (테스트/폴백용). 캐릭터 생성 시에는 statRange 사용. */
   baseStats: Omit<Stats, 'maxHp'>;
+  /** 캐릭터 생성 시 랜덤 범위 (§23.5) */
+  statRange: StatRange;
   /** 클래스 기본 3개 액션 슬롯. 우선순위 순서 (0이 최우선). */
   baseActionSlots: ActionSlot[];
 }
@@ -10,7 +13,8 @@ interface ClassTemplate {
 export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
   [CharacterClass.WARRIOR]: {
     characterClass: CharacterClass.WARRIOR,
-    baseStats: { hp: 110, atk: 20, def: 12, agi: 8 },
+    baseStats: { hp: 53, atk: 12, grd: 7, agi: 6 },
+    statRange: { hp: [48, 58], atk: [11, 13], grd: [6, 8], agi: [5, 7] },
     baseActionSlots: [
       // 슬롯 0: 전열에 있을 때 주력기
       {
@@ -18,10 +22,10 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         action: {
           id: 'warrior_shield_bash',
           name: 'Shield Bash',
-          description: 'Deal ATK x1.2 damage and gain a small shield.',
+          description: 'Deal ATK x1.2 damage and gain GRD x0.8 shield.',
           effects: [
             { type: 'DAMAGE', value: 1.2, stat: 'atk', target: 'ENEMY_FRONT' },
-            { type: 'SHIELD', value: 10, target: 'SELF' },
+            { type: 'SHIELD', value: 0.8, stat: 'grd', target: 'SELF' },
           ],
           isBasic: true,
         },
@@ -32,8 +36,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         action: {
           id: 'warrior_fortify',
           name: 'Fortify',
-          description: 'Gain a shield when health is low.',
-          effects: [{ type: 'SHIELD', value: 20, target: 'SELF' }],
+          description: 'Gain GRD x1.5 shield when health is low.',
+          effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: 'SELF' }],
           isBasic: true,
         },
       },
@@ -53,7 +57,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
 
   [CharacterClass.LANCER]: {
     characterClass: CharacterClass.LANCER,
-    baseStats: { hp: 95, atk: 24, def: 8, agi: 12 },
+    baseStats: { hp: 46, atk: 13, grd: 5, agi: 9 },
+    statRange: { hp: [42, 50], atk: [12, 15], grd: [4, 6], agi: [8, 10] },
     baseActionSlots: [
       // 슬롯 0: 후열에서 돌격
       {
@@ -63,6 +68,7 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           name: 'Charge',
           description: 'Rush forward and deal ATK x1.4 damage. Pushes enemy back.',
           effects: [
+            { type: 'MOVE', target: 'SELF', position: 'FRONT' },
             { type: 'DAMAGE', value: 1.4, stat: 'atk', target: 'ENEMY_FRONT' },
             { type: 'PUSH', target: 'ENEMY_FRONT', position: 'BACK' },
           ],
@@ -96,7 +102,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
 
   [CharacterClass.ARCHER]: {
     characterClass: CharacterClass.ARCHER,
-    baseStats: { hp: 75, atk: 28, def: 5, agi: 14 },
+    baseStats: { hp: 40, atk: 13, grd: 4, agi: 10 },
+    statRange: { hp: [36, 44], atk: [12, 14], grd: [3, 5], agi: [9, 12] },
     baseActionSlots: [
       // 슬롯 0: 후열 적 우선 저격
       {
@@ -136,7 +143,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
 
   [CharacterClass.GUARDIAN]: {
     characterClass: CharacterClass.GUARDIAN,
-    baseStats: { hp: 140, atk: 12, def: 20, agi: 5 },
+    baseStats: { hp: 60, atk: 8, grd: 11, agi: 4 },
+    statRange: { hp: [56, 65], atk: [7, 10], grd: [10, 12], agi: [4, 5] },
     baseActionSlots: [
       // 슬롯 0: 라운드 첫 행동 시 강화 방어
       {
@@ -144,8 +152,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         action: {
           id: 'guardian_fortify',
           name: 'Fortify',
-          description: 'Gain a large shield at the start of the round.',
-          effects: [{ type: 'SHIELD', value: 25, target: 'SELF' }],
+          description: 'Gain GRD x1.2 shield at the start of the round.',
+          effects: [{ type: 'SHIELD', value: 1.2, stat: 'grd', target: 'SELF' }],
           isBasic: true,
         },
       },
@@ -155,8 +163,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         action: {
           id: 'guardian_heavy_shield',
           name: 'Heavy Shield',
-          description: 'Emergency shield when low on health.',
-          effects: [{ type: 'SHIELD', value: 30, target: 'SELF' }],
+          description: 'Emergency GRD x1.5 shield when low on health.',
+          effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: 'SELF' }],
           isBasic: true,
         },
       },
@@ -166,8 +174,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         action: {
           id: 'guardian_shield_wall',
           name: 'Shield Wall',
-          description: 'Gain a basic shield.',
-          effects: [{ type: 'SHIELD', value: 15, target: 'SELF' }],
+          description: 'Gain GRD x1.0 shield.',
+          effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: 'SELF' }],
           isBasic: true,
         },
       },
@@ -176,7 +184,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
 
   [CharacterClass.CONTROLLER]: {
     characterClass: CharacterClass.CONTROLLER,
-    baseStats: { hp: 85, atk: 18, def: 10, agi: 11 },
+    baseStats: { hp: 44, atk: 9, grd: 5, agi: 8 },
+    statRange: { hp: [40, 48], atk: [8, 11], grd: [4, 6], agi: [7, 9] },
     baseActionSlots: [
       // 슬롯 0: 전열 적이 있으면 밀어내기 + 데미지
       {
@@ -219,7 +228,8 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
 
   [CharacterClass.ASSASSIN]: {
     characterClass: CharacterClass.ASSASSIN,
-    baseStats: { hp: 70, atk: 30, def: 4, agi: 16 },
+    baseStats: { hp: 38, atk: 14, grd: 3, agi: 11 },
+    statRange: { hp: [34, 42], atk: [13, 16], grd: [2, 4], agi: [10, 12] },
     baseActionSlots: [
       // 슬롯 0: 후열 적 우선 암살
       {
