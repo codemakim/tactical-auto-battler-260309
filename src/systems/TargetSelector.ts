@@ -30,17 +30,25 @@ export function selectTarget(
       return source;
 
     case 'ENEMY_FRONT': {
-      const candidates = alive(allUnits).filter(
+      const frontCandidates = alive(allUnits).filter(
         u => u.team === enemyTeam && u.position === Position.FRONT,
       );
+      // FRONT 우선, 없으면 BACK 폴백 (전열에 아무도 없으면 후열을 공격)
+      const candidates = frontCandidates.length > 0
+        ? frontCandidates
+        : alive(allUnits).filter(u => u.team === enemyTeam);
       // AGI가 가장 높은 적 (동률 시 첫 번째)
       return candidates.sort((a, b) => b.stats.agi - a.stats.agi)[0] ?? null;
     }
 
     case 'ENEMY_BACK': {
-      const candidates = alive(allUnits).filter(
+      const backCandidates = alive(allUnits).filter(
         u => u.team === enemyTeam && u.position === Position.BACK,
       );
+      // BACK 우선, 없으면 FRONT 폴백
+      const candidates = backCandidates.length > 0
+        ? backCandidates
+        : alive(allUnits).filter(u => u.team === enemyTeam);
       return candidates.sort((a, b) => b.stats.agi - a.stats.agi)[0] ?? null;
     }
 

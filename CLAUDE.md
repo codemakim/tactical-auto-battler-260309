@@ -8,25 +8,36 @@
 ```
 src/
   main.ts              - Entry point, Phaser game init
+  sim.ts               - 전투 시뮬레이션 스크립트 (npx tsx src/sim.ts)
+                         양팀 구성 → runFullBattle → 이벤트 로그 콘솔 출력
   config/              - Game & Phaser configuration
-  types/               - TypeScript type definitions (interface + as const, NO enum)
-  data/                - Static game data (class templates, etc.)
+  types/
+    index.ts           - 모든 타입 정의 (interface + as const, NO enum)
+  data/                - 정적 게임 데이터
+    ClassDefinitions.ts - 클래스별 기본 스탯, baseActionSlots 3개 정의
+    ActionPool.ts      - 보상용 액션 카드 풀 (rarity, classRestriction 포함)
   core/                - 전투 흐름 총괄 상위 엔진
-    BattleEngine.ts    - 전투 초기화, step 진행, 자동 실행
-    RoundManager.ts    - 라운드 시작/종료, 턴 실행, 예비 유닛 투입
-    TurnOrderManager.ts - AGI 기반 턴 순서, 가속/지연
-    ReplayRecorder.ts  - 리플레이 스냅샷 및 이벤트 기록
+    BattleEngine.ts    - createBattleState, stepBattle, runFullBattle
+    RoundManager.ts    - 라운드 시작/종료, executeTurn(히어로 큐 처리 포함), 예비 유닛 투입
+    TurnOrderManager.ts - AGI 기반 턴 순서 계산, advanceTurn/delayTurn
+    ReplayRecorder.ts  - 리플레이 스냅샷 및 이벤트 기록/조회
   systems/             - 실제 규칙 처리 모듈 (순수 함수)
-    ActionResolver.ts  - 조건 평가, 액션 선택, 효과 적용
-    TargetSelector.ts  - 타겟 선택 로직
-    PositionSystem.ts  - 이동/밀기 처리
-    DamageSystem.ts    - 데미지/실드/힐 계산 및 적용
-    HeroInterventionSystem.ts - 히어로 개입 처리
+    ActionResolver.ts  - 조건 평가(§11), 액션 선택, 효과 적용
+    TargetSelector.ts  - 타겟 선택 (ENEMY_FRONT/BACK/ANY, ALLY_LOWEST_HP 등)
+    PositionSystem.ts  - FRONT↔BACK 이동, 밀기(PUSH) 처리
+    DamageSystem.ts    - 데미지(ATK×배율)/실드(GRD×배율)/힐 계산 및 적용
+    BuffSystem.ts      - 버프/디버프 적용, getEffectiveStats, tickBuffs, processStatusEffects(POISON/REGEN)
+    HeroInterventionSystem.ts - 히어로 개입 큐잉/실행, 횟수 관리
+    DelayedEffectSystem.ts - 지연 효과 등록/해석 (라운드 종료 시 발동)
+    ActionCardSystem.ts - 액션 슬롯 교체(replaceActionSlot), 런 리셋(resetRunActions)
+    BattleRewardSystem.ts - 골드 보상, 액션 카드 보상 생성, 캐릭터 획득 기회
+    TrainingSystem.ts  - 캐릭터 훈련 (레벨업 스탯 증가, 골드 비용 계산)
   entities/            - 유닛 생성 팩토리 (순수 함수, 클래스 없음)
-    UnitFactory.ts     - CharacterDefinition → BattleUnit 변환, 훈련 보너스
+    UnitFactory.ts     - createCharacterDef, createUnit (CharDef→BattleUnit), resetUnitCounter
   scenes/              - Phaser scenes (Boot, MainMenu, Battle)
   ui/                  - UI 컴포넌트 (최소한으로 유지)
-  utils/               - Utility functions
+  utils/
+    uid.ts             - 결정론적 고유 ID 생성 (이벤트 id용)
   assets/              - Game assets (sprites, audio, fonts)
 ```
 
@@ -39,6 +50,7 @@ src/
 ## Spec Documents
 - `docs/combat-spec.md` - 전투 시스템 상세 명세 (MVP)
 - `docs/action-card-spec.md` - 액션 카드 시스템 명세 (런 기반 임시 액션)
+- `docs/delayed-effect-spec.md` - 지연 효과 시스템 명세 (§7.2)
 - `docs/combat-impl-checklist.md` - 구현 상태 체크리스트 (스펙 섹션별 대응)
 
 ## Key Commands
@@ -47,6 +59,7 @@ src/
 - `npm run preview` - Preview production build
 - `npm test` - Run tests (vitest)
 - `npm run test:watch` - Watch mode
+- `npx tsx src/sim.ts` - 전투 시뮬레이션 실행 (콘솔 로그 출력)
 
 ## Conventions
 - Korean comments where helpful

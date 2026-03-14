@@ -1,22 +1,27 @@
-import { CharacterClass, type Action, type ActionSlot, type Stats, type StatRange } from '../types';
+import { CharacterClass, Rarity, type Action, type ActionSlot, type Stats, type StatRange } from '../types';
 
-interface ClassTemplate {
-  characterClass: CharacterClass;
+export interface ClassTemplate {
+  characterClass: string;
   /** 고정 기본 스탯 (테스트/폴백용). 캐릭터 생성 시에는 statRange 사용. */
   baseStats: Omit<Stats, 'maxHp'>;
   /** 캐릭터 생성 시 랜덤 범위 (§23.5) */
   statRange: StatRange;
   /** 클래스 기본 3개 액션 슬롯. 우선순위 순서 (0이 최우선). */
   baseActionSlots: ActionSlot[];
+  /** 클래스 전용 보상 액션 카드 */
+  classActions: Action[];
 }
 
-export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
+/**
+ * 클래스 레지스트리 — 새 클래스 추가 시 여기에 한 블록만 추가하면 됨.
+ * 다른 파일 수정 불필요.
+ */
+export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
   [CharacterClass.WARRIOR]: {
     characterClass: CharacterClass.WARRIOR,
     baseStats: { hp: 53, atk: 12, grd: 7, agi: 6 },
     statRange: { hp: [48, 58], atk: [11, 13], grd: [6, 8], agi: [5, 7] },
     baseActionSlots: [
-      // 슬롯 0: 전열에 있을 때 주력기
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
@@ -30,7 +35,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 1: HP가 낮을 때 방어
       {
         condition: { type: 'HP_BELOW', value: 50 },
         action: {
@@ -41,7 +45,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 2: 범용 폴백
       {
         condition: { type: 'ALWAYS' },
         action: {
@@ -53,6 +56,24 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         },
       },
     ],
+    classActions: [
+      {
+        id: 'warrior_heavy_slam',
+        name: 'Heavy Slam',
+        description: 'A powerful blow dealing ATK x1.6 damage.',
+        effects: [{ type: 'DAMAGE', value: 1.6, stat: 'atk', target: 'ENEMY_FRONT' }],
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.WARRIOR,
+      },
+      {
+        id: 'warrior_iron_wall',
+        name: 'Iron Wall',
+        description: 'Gain a massive shield.',
+        effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: 'SELF' }],
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.WARRIOR,
+      },
+    ],
   },
 
   [CharacterClass.LANCER]: {
@@ -60,7 +81,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
     baseStats: { hp: 46, atk: 13, grd: 5, agi: 9 },
     statRange: { hp: [42, 50], atk: [12, 15], grd: [4, 6], agi: [8, 10] },
     baseActionSlots: [
-      // 슬롯 0: 후열에서 돌격
       {
         condition: { type: 'POSITION_BACK' },
         action: {
@@ -75,7 +95,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 1: 전열에서 찌르기
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
@@ -86,7 +105,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 2: 폴백
       {
         condition: { type: 'ALWAYS' },
         action: {
@@ -98,6 +116,27 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         },
       },
     ],
+    classActions: [
+      {
+        id: 'lancer_piercing_thrust',
+        name: 'Piercing Thrust',
+        description: 'Deal ATK x1.8 damage, ignoring some defense.',
+        effects: [{ type: 'DAMAGE', value: 1.8, stat: 'atk', target: 'ENEMY_FRONT' }],
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.LANCER,
+      },
+      {
+        id: 'lancer_sweep',
+        name: 'Sweep',
+        description: 'Push enemy back and deal damage.',
+        effects: [
+          { type: 'DAMAGE', value: 1.0, stat: 'atk', target: 'ENEMY_FRONT' },
+          { type: 'PUSH', target: 'ENEMY_FRONT', position: 'BACK' },
+        ],
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.LANCER,
+      },
+    ],
   },
 
   [CharacterClass.ARCHER]: {
@@ -105,7 +144,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
     baseStats: { hp: 40, atk: 13, grd: 4, agi: 10 },
     statRange: { hp: [36, 44], atk: [12, 14], grd: [3, 5], agi: [9, 12] },
     baseActionSlots: [
-      // 슬롯 0: 후열 적 우선 저격
       {
         condition: { type: 'ENEMY_BACK_EXISTS' },
         action: {
@@ -116,7 +154,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 1: 어느 적이든 정밀 사격
       {
         condition: { type: 'ALWAYS' },
         action: {
@@ -127,7 +164,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 2: 폴백 빠른 사격
       {
         condition: { type: 'ALWAYS' },
         action: {
@@ -139,6 +175,27 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         },
       },
     ],
+    classActions: [
+      {
+        id: 'archer_multishot',
+        name: 'Multishot',
+        description: 'Fire multiple arrows at any enemy.',
+        effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: 'ENEMY_ANY' }],
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.ARCHER,
+      },
+      {
+        id: 'archer_poison_arrow',
+        name: 'Poison Arrow',
+        description: 'Deal damage and debuff the target.',
+        effects: [
+          { type: 'DAMAGE', value: 0.9, stat: 'atk', target: 'ENEMY_ANY' },
+          { type: 'DEBUFF', value: 2, stat: 'grd', target: 'ENEMY_ANY' },
+        ],
+        rarity: Rarity.EPIC,
+        classRestriction: CharacterClass.ARCHER,
+      },
+    ],
   },
 
   [CharacterClass.GUARDIAN]: {
@@ -146,7 +203,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
     baseStats: { hp: 60, atk: 8, grd: 11, agi: 4 },
     statRange: { hp: [56, 65], atk: [7, 10], grd: [10, 12], agi: [4, 5] },
     baseActionSlots: [
-      // 슬롯 0: 라운드 첫 행동 시 강화 방어
       {
         condition: { type: 'FIRST_ACTION_THIS_ROUND' },
         action: {
@@ -157,7 +213,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 1: HP 낮을 때 긴급 방어
       {
         condition: { type: 'HP_BELOW', value: 50 },
         action: {
@@ -168,7 +223,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 2: 폴백 방패
       {
         condition: { type: 'ALWAYS' },
         action: {
@@ -180,6 +234,27 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         },
       },
     ],
+    classActions: [
+      {
+        id: 'guardian_taunt_slam',
+        name: 'Taunt Slam',
+        description: 'Deal minor damage and shield an ally.',
+        effects: [
+          { type: 'DAMAGE', value: 0.7, stat: 'atk', target: 'ENEMY_FRONT' },
+          { type: 'SHIELD', value: 0.8, stat: 'grd', target: 'ALLY_LOWEST_HP' },
+        ],
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.GUARDIAN,
+      },
+      {
+        id: 'guardian_aegis',
+        name: 'Aegis',
+        description: 'Gain a very large shield.',
+        effects: [{ type: 'SHIELD', value: 2.0, stat: 'grd', target: 'SELF' }],
+        rarity: Rarity.EPIC,
+        classRestriction: CharacterClass.GUARDIAN,
+      },
+    ],
   },
 
   [CharacterClass.CONTROLLER]: {
@@ -187,7 +262,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
     baseStats: { hp: 44, atk: 9, grd: 5, agi: 8 },
     statRange: { hp: [40, 48], atk: [8, 11], grd: [4, 6], agi: [7, 9] },
     baseActionSlots: [
-      // 슬롯 0: 전열 적이 있으면 밀어내기 + 데미지
       {
         condition: { type: 'ENEMY_FRONT_EXISTS' },
         action: {
@@ -201,7 +275,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 1: 후열에서 원거리 공격
       {
         condition: { type: 'POSITION_BACK' },
         action: {
@@ -212,7 +285,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 2: 폴백
       {
         condition: { type: 'ALWAYS' },
         action: {
@@ -224,6 +296,30 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         },
       },
     ],
+    classActions: [
+      {
+        id: 'controller_gravity_pull',
+        name: 'Gravity Pull',
+        description: 'Pull an enemy forward and delay their turn.',
+        effects: [
+          { type: 'PUSH', target: 'ENEMY_BACK', position: 'FRONT' },
+          { type: 'DELAY_TURN', value: 2, target: 'ENEMY_BACK' },
+        ],
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.CONTROLLER,
+      },
+      {
+        id: 'controller_mind_blast',
+        name: 'Mind Blast',
+        description: 'Deal damage and slow the target.',
+        effects: [
+          { type: 'DAMAGE', value: 1.0, stat: 'atk', target: 'ENEMY_ANY' },
+          { type: 'DELAY_TURN', value: 1, target: 'ENEMY_ANY' },
+        ],
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.CONTROLLER,
+      },
+    ],
   },
 
   [CharacterClass.ASSASSIN]: {
@@ -231,7 +327,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
     baseStats: { hp: 38, atk: 14, grd: 3, agi: 11 },
     statRange: { hp: [34, 42], atk: [13, 16], grd: [2, 4], agi: [10, 12] },
     baseActionSlots: [
-      // 슬롯 0: 후열 적 우선 암살
       {
         condition: { type: 'ENEMY_BACK_EXISTS' },
         action: {
@@ -242,7 +337,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 1: 전열 적에 강습
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
@@ -253,7 +347,6 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
           isBasic: true,
         },
       },
-      // 슬롯 2: 폴백 빠른 타격
       {
         condition: { type: 'ALWAYS' },
         action: {
@@ -265,5 +358,31 @@ export const CLASS_TEMPLATES: Record<CharacterClass, ClassTemplate> = {
         },
       },
     ],
+    classActions: [
+      {
+        id: 'assassin_shadow_strike',
+        name: 'Shadow Strike',
+        description: 'Deal massive damage to a back-row enemy.',
+        effects: [{ type: 'DAMAGE', value: 2.0, stat: 'atk', target: 'ENEMY_BACK' }],
+        rarity: Rarity.EPIC,
+        classRestriction: CharacterClass.ASSASSIN,
+      },
+      {
+        id: 'assassin_swift_blade',
+        name: 'Swift Blade',
+        description: 'Quick attack that advances your next turn.',
+        effects: [
+          { type: 'DAMAGE', value: 1.0, stat: 'atk', target: 'ENEMY_FRONT' },
+          { type: 'ADVANCE_TURN', value: 1, target: 'SELF' },
+        ],
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.ASSASSIN,
+      },
+    ],
   },
 };
+
+/** 등록된 모든 클래스 키 목록 */
+export function getAvailableClasses(): string[] {
+  return Object.keys(CLASS_TEMPLATES);
+}

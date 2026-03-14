@@ -22,6 +22,7 @@ export function createCharacterDef(
   trainingPotential: number = 3,
 ): CharacterDefinition {
   const template = CLASS_TEMPLATES[characterClass];
+  if (!template) throw new Error(`Unknown character class: ${characterClass}`);
 
   return {
     id: `char_${name.toLowerCase().replace(/\s+/g, '_')}`,
@@ -65,6 +66,7 @@ export function generateCharacterDef(
   seed: number,
 ): CharacterDefinition {
   const template = CLASS_TEMPLATES[characterClass];
+  if (!template) throw new Error(`Unknown character class: ${characterClass}`);
   const range = template.statRange;
   const rand = seededRand(seed);
 

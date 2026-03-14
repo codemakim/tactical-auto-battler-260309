@@ -20,7 +20,8 @@ export const CharacterClass = {
   CONTROLLER: 'CONTROLLER',
   ASSASSIN: 'ASSASSIN',
 } as const;
-export type CharacterClass = (typeof CharacterClass)[keyof typeof CharacterClass];
+// string으로 개방 — 새 클래스 추가 시 이 파일 수정 불필요
+export type CharacterClass = string;
 
 export const BattlePhase = {
   ROUND_START: 'ROUND_START',

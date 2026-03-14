@@ -1,7 +1,8 @@
 import type { BattleState, RunState, BattleReward, Action, BattleUnit, ActionCondition, CharacterReward } from '../types';
-import { Difficulty, Team, CharacterClass } from '../types';
+import { Difficulty, Team } from '../types';
 import { generateRewardOptions, replaceActionSlot } from './ActionCardSystem';
 import { ACTION_POOL } from '../data/ActionPool';
+import { getAvailableClasses } from '../data/ClassDefinitions';
 
 // 난이도별 골드 배율
 const DIFFICULTY_GOLD_MULTIPLIER: Record<string, number> = {
@@ -77,8 +78,8 @@ const DIFFICULTY_CHARACTER_BONUS: Record<string, number> = {
 const ROSTER_PENALTY_PER_UNIT = 0.05;
 const ROSTER_PENALTY_THRESHOLD = 3;
 
-// 선택 가능한 클래스 목록
-const CHARACTER_CLASSES = Object.values(CharacterClass);
+// 선택 가능한 클래스 목록 (ClassDefinitions에서 자동 파생)
+const CHARACTER_CLASSES = getAvailableClasses();
 
 /**
  * 시드 기반 간단한 난수 (mulberry32)
