@@ -14,8 +14,9 @@ src/
   types/
     index.ts           - 모든 타입 정의 (interface + as const, NO enum)
   data/                - 정적 게임 데이터
-    ClassDefinitions.ts - 클래스별 기본 스탯, baseActionSlots 3개 정의
-    ActionPool.ts      - 보상용 액션 카드 풀 (rarity, classRestriction 포함)
+    ClassDefinitions.ts - 클래스 레지스트리 (스탯, baseActionSlots, classActions 통합)
+                         새 클래스 추가 = 이 파일에 한 블록 추가만으로 완료
+    ActionPool.ts      - 범용 액션 + ClassDefinitions에서 자동 수집한 전체 풀
   core/                - 전투 흐름 총괄 상위 엔진
     BattleEngine.ts    - createBattleState, stepBattle, runFullBattle
     RoundManager.ts    - 라운드 시작/종료, executeTurn(히어로 큐 처리 포함), 예비 유닛 투입
@@ -27,6 +28,7 @@ src/
     PositionSystem.ts  - FRONT↔BACK 이동, 밀기(PUSH) 처리
     DamageSystem.ts    - 데미지(ATK×배율)/실드(GRD×배율)/힐 계산 및 적용
     BuffSystem.ts      - 버프/디버프 적용, getEffectiveStats, tickBuffs, processStatusEffects(POISON/REGEN)
+    CoverSystem.ts     - §25 커버 판정 (COVER 버프 전열 유닛이 후열 아군 대신 피격)
     HeroInterventionSystem.ts - 히어로 개입 큐잉/실행, 횟수 관리
     DelayedEffectSystem.ts - 지연 효과 등록/해석 (라운드 종료 시 발동)
     ActionCardSystem.ts - 액션 슬롯 교체(replaceActionSlot), 런 리셋(resetRunActions)
@@ -51,6 +53,7 @@ src/
 - `docs/combat-spec.md` - 전투 시스템 상세 명세 (MVP)
 - `docs/action-card-spec.md` - 액션 카드 시스템 명세 (런 기반 임시 액션)
 - `docs/delayed-effect-spec.md` - 지연 효과 시스템 명세 (§7.2)
+- `docs/cover-system-spec.md` - 커버 시스템 명세 (§25, COVER 버프 기반 대신 피격)
 - `docs/combat-impl-checklist.md` - 구현 상태 체크리스트 (스펙 섹션별 대응)
 
 ## Key Commands

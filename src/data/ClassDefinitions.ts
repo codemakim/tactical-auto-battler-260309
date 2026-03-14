@@ -1,4 +1,4 @@
-import { CharacterClass, Rarity, type Action, type ActionSlot, type Stats, type StatRange } from '../types';
+import { CharacterClass, Rarity, BuffType, type Action, type ActionSlot, type Stats, type StatRange } from '../types';
 
 export interface ClassTemplate {
   characterClass: string;
@@ -46,11 +46,11 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         },
       },
       {
-        condition: { type: 'ALWAYS' },
+        condition: { type: 'POSITION_FRONT' },
         action: {
           id: 'warrior_strike',
           name: 'Strike',
-          description: 'Basic attack.',
+          description: 'Basic melee attack.',
           effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: 'ENEMY_FRONT' }],
           isBasic: true,
         },
@@ -106,7 +106,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         },
       },
       {
-        condition: { type: 'ALWAYS' },
+        condition: { type: 'POSITION_FRONT' },
         action: {
           id: 'lancer_thrust',
           name: 'Thrust',
@@ -203,16 +203,37 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
     baseStats: { hp: 60, atk: 8, grd: 11, agi: 4 },
     statRange: { hp: [56, 65], atk: [7, 10], grd: [10, 12], agi: [4, 5] },
     baseActionSlots: [
+      // 슬롯 0: 후열일 때 전열 복귀 + 실드 + 커버 모드
       {
-        condition: { type: 'FIRST_ACTION_THIS_ROUND' },
+        condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'guardian_fortify',
-          name: 'Fortify',
-          description: 'Gain GRD x1.2 shield at the start of the round.',
-          effects: [{ type: 'SHIELD', value: 1.2, stat: 'grd', target: 'SELF' }],
+          id: 'guardian_advance_guard',
+          name: 'Advance Guard',
+          description: 'Move to front, gain GRD x1.2 shield, and enter cover mode.',
+          effects: [
+            { type: 'MOVE', target: 'SELF', position: 'FRONT' },
+            { type: 'SHIELD', value: 1.2, stat: 'grd', target: 'SELF' },
+            { type: 'BUFF', buffType: BuffType.COVER, duration: 1, value: 0, target: 'SELF' },
+          ],
           isBasic: true,
         },
       },
+      // 슬롯 1: 전열에서 자기 방어 + 아군 실드 + 커버 모드
+      {
+        condition: { type: 'POSITION_FRONT' },
+        action: {
+          id: 'guardian_shield_wall',
+          name: 'Shield Wall',
+          description: 'Gain GRD x1.0 shield, shield lowest HP ally for GRD x0.8, and enter cover mode.',
+          effects: [
+            { type: 'SHIELD', value: 1.0, stat: 'grd', target: 'SELF' },
+            { type: 'SHIELD', value: 0.8, stat: 'grd', target: 'ALLY_LOWEST_HP' },
+            { type: 'BUFF', buffType: BuffType.COVER, duration: 1, value: 0, target: 'SELF' },
+          ],
+          isBasic: true,
+        },
+      },
+      // 슬롯 2: HP 위급 시 긴급 방어
       {
         condition: { type: 'HP_BELOW', value: 50 },
         action: {
@@ -220,16 +241,6 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
           name: 'Heavy Shield',
           description: 'Emergency GRD x1.5 shield when low on health.',
           effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: 'SELF' }],
-          isBasic: true,
-        },
-      },
-      {
-        condition: { type: 'ALWAYS' },
-        action: {
-          id: 'guardian_shield_wall',
-          name: 'Shield Wall',
-          description: 'Gain GRD x1.0 shield.',
-          effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: 'SELF' }],
           isBasic: true,
         },
       },
@@ -286,11 +297,11 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         },
       },
       {
-        condition: { type: 'ALWAYS' },
+        condition: { type: 'POSITION_FRONT' },
         action: {
           id: 'controller_strike',
           name: 'Strike',
-          description: 'Basic attack.',
+          description: 'Basic melee attack.',
           effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: 'ENEMY_FRONT' }],
           isBasic: true,
         },
@@ -348,7 +359,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         },
       },
       {
-        condition: { type: 'ALWAYS' },
+        condition: { type: 'POSITION_FRONT' },
         action: {
           id: 'assassin_quick_strike',
           name: 'Quick Strike',

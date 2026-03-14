@@ -251,7 +251,7 @@ describe('예비 유닛 투입', () => {
     const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
     const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
     // 예비 유닛을 FRONT 포지션으로 생성
-    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
+    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.ARCHER), Team.PLAYER, Position.FRONT);
     expect(reserve.position).toBe(Position.FRONT); // 원래 FRONT
 
     const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);

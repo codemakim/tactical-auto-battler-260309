@@ -1,6 +1,7 @@
 import type { BattleUnit, BattleEvent } from '../types';
 import { uid } from '../utils/uid';
 import { getEffectiveStats } from './BuffSystem';
+import { findCoverUnit } from './CoverSystem';
 
 /**
  * 데미지 계산: floor(유효 ATK × 배율)
@@ -111,6 +112,45 @@ export function applyShield(
       value: amount,
     }],
   };
+}
+
+/**
+ * §25 커버 판정 포함 데미지 적용.
+ * 후열 타겟 공격 시 같은 팀 전열 COVER 유닛이 대신 피격.
+ * 순수 함수: 변경된 units 배열과 이벤트를 반환.
+ */
+export function applyDamageWithCover(
+  target: BattleUnit,
+  amount: number,
+  sourceId: string,
+  allUnits: BattleUnit[],
+  round: number,
+  turn: number,
+): { units: BattleUnit[]; events: BattleEvent[] } {
+  const coverUnit = findCoverUnit(target, allUnits);
+
+  if (coverUnit) {
+    // 커버 발동: 커버 유닛이 대신 피격
+    const coverEvent: BattleEvent = {
+      id: uid(),
+      type: 'COVER_TRIGGERED',
+      round,
+      turn,
+      timestamp: Date.now(),
+      sourceId,
+      targetId: coverUnit.id,
+      data: { originalTargetId: target.id, coverId: coverUnit.id },
+    };
+
+    const dmgResult = applyDamage(coverUnit, amount, sourceId, round, turn);
+    const units = allUnits.map(u => u.id === coverUnit.id ? dmgResult.unit : u);
+    return { units, events: [coverEvent, ...dmgResult.events] };
+  }
+
+  // 커버 없음: 원래 타겟이 피격
+  const dmgResult = applyDamage(target, amount, sourceId, round, turn);
+  const units = allUnits.map(u => u.id === target.id ? dmgResult.unit : u);
+  return { units, events: dmgResult.events };
 }
 
 /**

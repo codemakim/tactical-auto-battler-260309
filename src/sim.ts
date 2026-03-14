@@ -146,6 +146,12 @@ for (const ev of result.events) {
     continue;
   }
 
+  if (ev.type === 'COVER_TRIGGERED') {
+    const original = ev.data?.originalTargetId as string | undefined;
+    console.log(`    🛡️ ${findUnit(result, ev.targetId)}이(가) ${findUnit(result, original)} 대신 피격!`);
+    continue;
+  }
+
   if (ev.type === 'HERO_INTERVENTION') {
     console.log(`    👑 히어로 개입! → ${findUnit(result, ev.targetId)}`);
     continue;

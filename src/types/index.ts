@@ -53,6 +53,7 @@ export const BuffType = {
   POISON: 'POISON',
   REGEN: 'REGEN',
   STUN: 'STUN',
+  COVER: 'COVER',
 } as const;
 export type BuffType = (typeof BuffType)[keyof typeof BuffType];
 
@@ -261,6 +262,7 @@ export type BattleEventType =
   | 'STATUS_EFFECT_TICK'
   | 'DELAYED_EFFECT_APPLIED'
   | 'DELAYED_EFFECT_RESOLVED'
+  | 'COVER_TRIGGERED'
   | 'ROUND_END'
   | 'BATTLE_END';
 

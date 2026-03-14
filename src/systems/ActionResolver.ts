@@ -2,7 +2,7 @@ import { Position, Team } from '../types';
 import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent, DelayedEffect } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
-import { calculateDamage, calculateShield, applyDamage, applyShield, applyHeal } from './DamageSystem';
+import { calculateDamage, calculateShield, applyDamage, applyDamageWithCover, applyShield, applyHeal } from './DamageSystem';
 import { moveUnit, pushUnit } from './PositionSystem';
 import { accelerateUnit, delayUnit } from '../core/TurnOrderManager';
 import { applyBuff, isStunned } from './BuffSystem';
@@ -197,8 +197,9 @@ function applyEffect(
     case 'DAMAGE': {
       const multiplier = effect.value ?? 1.0;
       const dmg = calculateDamage(source, actualTarget, multiplier);
-      const result = applyDamage(actualTarget, dmg, source.id, round, turn);
-      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      // §25 커버 판정: 후열 타겟 공격 시 COVER 유닛이 대신 피격
+      const result = applyDamageWithCover(actualTarget, dmg, source.id, updatedUnits, round, turn);
+      updatedUnits = result.units;
       allEvents.push(...result.events);
       break;
     }

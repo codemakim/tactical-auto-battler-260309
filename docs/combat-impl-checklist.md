@@ -162,3 +162,27 @@
 - [x] tickBuffs — 라운드 종료 시 duration 감소, 만료 제거 + BUFF_EXPIRED 이벤트
 - [x] processStatusEffects — 라운드 시작 시 POISON/REGEN 틱 + 사망 처리
 - [x] isStunned — 스턴 판별, 스턴 시 턴 스킵 (ACTION_SKIPPED reason: stunned)
+
+## 커버 시스템 (§25, cover-system-spec.md)
+
+- [x] COVER BuffType 추가
+- [x] COVER_TRIGGERED BattleEventType 추가
+- [x] findCoverUnit — 후열 타겟 공격 시 같은 팀 전열 COVER 유닛 탐색 (AGI 우선)
+- [x] applyDamageWithCover — 커버 판정 포함 데미지 적용
+- [x] ActionResolver DAMAGE 처리에 커버 연결
+- [x] Guardian Advance Guard — 후열→전열 복귀 + 실드 + COVER 부여
+- [x] Guardian Shield Wall — 자기 실드 + 아군 실드 + COVER 부여
+- [x] 커버 발동 조건: 타겟 후열 + 커버 유닛 전열 + COVER 버프 + 생존
+- [x] 커버 미발동 조건: 타겟 전열, 본인이 타겟, 다른 팀
+- [x] 커버 다회 발동: duration 내 여러 번 가능
+- [x] 커버 유닛 사망 가능
+- [x] 13개 테스트 (cover-system.spec.ts)
+
+## 포지션 제약 (근접 공격)
+
+- [x] ENEMY_FRONT 타겟: 전열 우선, 없으면 후열 폴백
+- [x] ENEMY_BACK 타겟: 후열 우선, 없으면 전열 폴백
+- [x] Warrior Strike — POSITION_FRONT 조건 (후열에서 사용 불가)
+- [x] Lancer Thrust — POSITION_FRONT 조건
+- [x] Controller Strike — POSITION_FRONT 조건
+- [x] Assassin Quick Strike — POSITION_FRONT 조건
