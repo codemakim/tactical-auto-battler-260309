@@ -10,14 +10,14 @@ describe('전사 카드풀', () => {
     expect(pool).toBeDefined();
   });
 
-  it('풀 크기 = 9', () => {
-    expect(pool).toHaveLength(9);
+  it('풀 크기 = 10', () => {
+    expect(pool).toHaveLength(10);
   });
 
-  it('COMMON 6장, RARE 3장', () => {
+  it('COMMON 7장, RARE 3장', () => {
     const common = pool.filter(s => (s.action.rarity ?? 'COMMON') === Rarity.COMMON);
     const rare = pool.filter(s => s.action.rarity === Rarity.RARE);
-    expect(common).toHaveLength(6);
+    expect(common).toHaveLength(7);
     expect(rare).toHaveLength(3);
   });
 
@@ -62,8 +62,16 @@ describe('전사 카드풀', () => {
     expect(slot.action.effects[1]).toMatchObject({ type: 'PUSH', position: 'BACK' });
   });
 
-  it('Execution Cut 존재: ENEMY_HP_BELOW 30, ATK×1.3 → ENEMY_ANY (마무리기)', () => {
+  it('Execution Cut (COMMON): ENEMY_HP_BELOW 30, ATK×1.3 → ENEMY_FRONT (전열 마무리)', () => {
     const slot = pool.find(s => s.action.id === 'warrior_execution_cut')!;
+    expect(slot).toBeDefined();
+    expect(slot.action.rarity).toBe(Rarity.COMMON);
+    expect(slot.condition).toMatchObject({ type: 'ENEMY_HP_BELOW', value: 30 });
+    expect(slot.action.effects[0]).toMatchObject({ type: 'DAMAGE', value: 1.3, target: 'ENEMY_FRONT' });
+  });
+
+  it('Execution Cut (RARE): ENEMY_HP_BELOW 30, ATK×1.3 → ENEMY_ANY (후열까지 마무리)', () => {
+    const slot = pool.find(s => s.action.id === 'warrior_execution_cut_rare')!;
     expect(slot).toBeDefined();
     expect(slot.action.rarity).toBe(Rarity.RARE);
     expect(slot.condition).toMatchObject({ type: 'ENEMY_HP_BELOW', value: 30 });
@@ -77,8 +85,9 @@ describe('전사 카드풀', () => {
     expect(ironWall.effects[0].value).toBe(1.2);
   });
 
-  it('classActions에 Driving Blow, Execution Cut 추가됨', () => {
+  it('classActions에 Driving Blow, Execution Cut 두 버전 추가됨', () => {
     expect(template.classActions.find(a => a.id === 'warrior_driving_blow')).toBeDefined();
     expect(template.classActions.find(a => a.id === 'warrior_execution_cut')).toBeDefined();
+    expect(template.classActions.find(a => a.id === 'warrior_execution_cut_rare')).toBeDefined();
   });
 });

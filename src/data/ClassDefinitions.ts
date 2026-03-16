@@ -122,7 +122,19 @@ const WARRIOR_EXECUTION_CUT: ActionSlot = {
   action: {
     id: 'warrior_execution_cut',
     name: 'Execution Cut',
-    description: 'Finish off a weakened enemy with ATK x1.3 damage.',
+    description: 'Finish off a weakened front-line enemy with ATK x1.3 damage.',
+    effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: 'ENEMY_FRONT' }],
+    rarity: Rarity.COMMON,
+    classRestriction: CharacterClass.WARRIOR,
+  },
+};
+
+const WARRIOR_EXECUTION_CUT_RARE: ActionSlot = {
+  condition: { type: 'ENEMY_HP_BELOW', value: 30 },
+  action: {
+    id: 'warrior_execution_cut_rare',
+    name: 'Execution Cut',
+    description: 'Finish off any weakened enemy with ATK x1.3 damage.',
     effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: 'ENEMY_ANY' }],
     rarity: Rarity.RARE,
     classRestriction: CharacterClass.WARRIOR,
@@ -607,12 +619,14 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
       WARRIOR_HEAVY_SLAM,
       WARRIOR_DRIVING_BLOW,
       WARRIOR_EXECUTION_CUT,
+      WARRIOR_EXECUTION_CUT_RARE,
     ],
     classActions: [
       WARRIOR_HEAVY_SLAM.action,
       WARRIOR_IRON_WALL.action,
       WARRIOR_DRIVING_BLOW.action,
       WARRIOR_EXECUTION_CUT.action,
+      WARRIOR_EXECUTION_CUT_RARE.action,
     ],
   },
 

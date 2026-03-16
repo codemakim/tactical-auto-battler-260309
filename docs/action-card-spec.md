@@ -164,6 +164,28 @@ Higher rarity actions may include:
 - unique mechanics
 - complex conditions
 
+### Rarity Variants
+
+The same action concept can exist at multiple rarity tiers as variants.
+
+Higher rarity variants share the same name and condition but have upgraded effects (e.g., wider target range, higher multiplier).
+
+Example:
+
+```
+Execution Cut (Common)
+  Condition: ENEMY_HP_BELOW 30
+  Target: ENEMY_FRONT
+  Power: ATK x1.3
+
+Execution Cut (Rare)
+  Condition: ENEMY_HP_BELOW 30
+  Target: ENEMY_ANY
+  Power: ATK x1.3
+```
+
+The Rare variant targets any enemy (including back row), while the Common variant only targets the front line.
+
 ---
 
 # 8. Example Action Cards
