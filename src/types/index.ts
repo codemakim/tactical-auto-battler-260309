@@ -189,6 +189,8 @@ export interface BattleUnit {
   actionSlots: ActionSlot[];
   /** 런 시작 시의 기본 3개 슬롯 — 런 리셋 시 이 슬롯으로 복원된다 */
   baseActionSlots: ActionSlot[];
+  /** 전투 시작 시 스냅샷 — 전투 종료 후 이 슬롯으로 복원 */
+  preBattleActionSlots?: ActionSlot[];
   isAlive: boolean;
   hasActedThisRound: boolean;
   trainingsUsed: number;       // 사용한 훈련 횟수 (§24)
@@ -224,6 +226,13 @@ export interface BattleResult {
 
 // === Hero ===
 
+export const HeroType = {
+  COMMANDER: 'COMMANDER',  // 지휘(버프) 위주
+  MAGE: 'MAGE',            // 직접 타격(마법)
+  SUPPORT: 'SUPPORT',      // 회복/지원
+} as const;
+export type HeroType = (typeof HeroType)[keyof typeof HeroType];
+
 export interface HeroAbility {
   id: string;
   name: string;
@@ -232,6 +241,7 @@ export interface HeroAbility {
 }
 
 export interface HeroState {
+  heroType: HeroType;
   interventionsRemaining: number;
   maxInterventionsPerRound: number;
   abilities: HeroAbility[];
@@ -263,6 +273,7 @@ export type BattleEventType =
   | 'DELAYED_EFFECT_APPLIED'
   | 'DELAYED_EFFECT_RESOLVED'
   | 'COVER_TRIGGERED'
+  | 'ACTION_EDITED'
   | 'ROUND_END'
   | 'BATTLE_END';
 

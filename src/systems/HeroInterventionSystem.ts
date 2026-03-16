@@ -1,9 +1,10 @@
-import type { BattleState, HeroAbility, BattleEvent } from '../types';
+import type { BattleState, HeroAbility, BattleEvent, Action, ActionCondition, BattleUnit } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
 import { applyDamage, applyShield, calculateDamage } from './DamageSystem';
 import { pushUnit } from './PositionSystem';
 import { Position, Team } from '../types';
+import { replaceActionSlot } from './ActionCardSystem';
 
 /**
  * 히어로 개입이 가능한지 확인
@@ -102,5 +103,65 @@ export function executeIntervention(
   return {
     state: { ...state, units, hero: updatedHero },
     events: allEvents,
+  };
+}
+
+/**
+ * 영웅 공통 능력: 액션 카드 편집.
+ * 유닛의 액션 슬롯 하나를 전투 중 영구 교체한다.
+ * 전투 종료 후 preBattleActionSlots로 원복된다.
+ * 개입 1회 소모.
+ */
+export function heroEditAction(
+  state: BattleState,
+  targetUnitId: string,
+  slotIndex: number,
+  newAction: Action,
+  newCondition: ActionCondition,
+): { state: BattleState; events: BattleEvent[] } {
+  if (!canIntervene(state)) {
+    return { state, events: [] };
+  }
+
+  const target = state.units.find(u => u.id === targetUnitId && u.isAlive);
+  if (!target) {
+    return { state, events: [] };
+  }
+
+  // 아군만 편집 가능
+  if (target.team !== Team.PLAYER) {
+    return { state, events: [] };
+  }
+
+  const updatedUnit = replaceActionSlot(target, slotIndex, newAction, newCondition);
+  if (!updatedUnit) {
+    return { state, events: [] };
+  }
+
+  const units = state.units.map(u => u.id === targetUnitId ? updatedUnit : u);
+
+  const event: BattleEvent = {
+    id: uid(),
+    type: 'ACTION_EDITED',
+    round: state.round,
+    turn: state.turn,
+    timestamp: Date.now(),
+    targetId: targetUnitId,
+    data: {
+      slotIndex,
+      newActionId: newAction.id,
+      newActionName: newAction.name,
+      newCondition: newCondition.type,
+    },
+  };
+
+  const updatedHero = {
+    ...state.hero,
+    interventionsRemaining: state.hero.interventionsRemaining - 1,
+  };
+
+  return {
+    state: { ...state, units, hero: updatedHero },
+    events: [event],
   };
 }

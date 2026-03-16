@@ -16,7 +16,8 @@ function isDebuff(type: BuffType): boolean {
 }
 
 /**
- * 버프/디버프를 유닛에 적용
+ * 버프/디버프를 유닛에 적용.
+ * COVER 버프는 중첩되지 않고 기존 COVER를 갱신(duration 리프레시)한다.
  */
 export function applyBuff(
   unit: BattleUnit,
@@ -24,9 +25,25 @@ export function applyBuff(
   round: number,
   turn: number,
 ): { unit: BattleUnit; events: BattleEvent[] } {
+  let newBuffs: Buff[];
+
+  if (buff.type === BuffType.COVER) {
+    // COVER: 기존 COVER가 있으면 duration만 갱신, 없으면 새로 추가
+    const existing = unit.buffs.find(b => b.type === BuffType.COVER);
+    if (existing) {
+      newBuffs = unit.buffs.map(b =>
+        b.id === existing.id ? { ...b, duration: buff.duration, sourceId: buff.sourceId } : b,
+      );
+    } else {
+      newBuffs = [...unit.buffs, buff];
+    }
+  } else {
+    newBuffs = [...unit.buffs, buff];
+  }
+
   const updated: BattleUnit = {
     ...unit,
-    buffs: [...unit.buffs, buff],
+    buffs: newBuffs,
   };
 
   const eventType = isDebuff(buff.type) ? 'DEBUFF_APPLIED' : 'BUFF_APPLIED';

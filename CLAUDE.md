@@ -54,6 +54,7 @@ src/
 - `docs/action-card-spec.md` - 액션 카드 시스템 명세 (런 기반 임시 액션)
 - `docs/delayed-effect-spec.md` - 지연 효과 시스템 명세 (§7.2)
 - `docs/cover-system-spec.md` - 커버 시스템 명세 (§25, COVER 버프 기반 대신 피격)
+- `docs/hero-system-spec.md` - 영웅 시스템 명세 (§26~§28, 공통 능력 + 특화 능력)
 - `docs/combat-impl-checklist.md` - 구현 상태 체크리스트 (스펙 섹션별 대응)
 
 ## Key Commands

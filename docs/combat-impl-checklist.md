@@ -163,9 +163,22 @@
 - [x] processStatusEffects — 라운드 시작 시 POISON/REGEN 틱 + 사망 처리
 - [x] isStunned — 스턴 판별, 스턴 시 턴 스킵 (ACTION_SKIPPED reason: stunned)
 
+## 영웅 시스템 (§26~§28, hero-system-spec.md)
+
+- [x] 공통 능력: heroEditAction — 전투 중 액션 슬롯 교체 (개입 1회 소모)
+- [x] preBattleActionSlots 스냅샷 (createBattleState)
+- [x] 전투 종료 후 원복 (restorePreBattleActions)
+- [x] ACTION_EDITED 이벤트 타입
+- [x] 아군만 편집, 적군/사망 유닛 불가
+- [x] 예비 유닛도 스냅샷/원복 대상
+- [x] HeroType 타입 정의 (특화 능력 구조 준비)
+- [ ] 특화 능력 구현
+- [x] 13개 테스트 (hero-edit-action.spec.ts)
+
 ## 커버 시스템 (§25, cover-system-spec.md)
 
 - [x] COVER BuffType 추가
+- [x] COVER 중첩 불가 — 재적용 시 duration 갱신 (5개 테스트, cover-no-stack.spec.ts)
 - [x] COVER_TRIGGERED BattleEventType 추가
 - [x] findCoverUnit — 후열 타겟 공격 시 같은 팀 전열 COVER 유닛 탐색 (AGI 우선)
 - [x] applyDamageWithCover — 커버 판정 포함 데미지 적용

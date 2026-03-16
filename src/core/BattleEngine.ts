@@ -1,24 +1,41 @@
-import type { BattleState, BattleUnit, HeroAbility } from '../types';
-import { BattlePhase, Team, Position, DEFAULT_GAME_CONFIG } from '../types';
+import type { BattleState, BattleUnit, HeroAbility, HeroType } from '../types';
+import { BattlePhase, Team, Position, HeroType as HeroTypeConst, DEFAULT_GAME_CONFIG } from '../types';
 import { uid } from '../utils/uid';
 import { startRound, executeTurn, isRoundComplete } from './RoundManager';
 import { recordSnapshot, type ReplaySnapshot } from './ReplayRecorder';
 import { canIntervene, executeIntervention } from '../systems/HeroInterventionSystem';
+import { resetBattleActions } from '../systems/ActionCardSystem';
 
 /**
  * 초기 BattleState 생성
  */
+/**
+ * 유닛의 현재 actionSlots를 preBattleActionSlots에 스냅샷
+ */
+function snapshotActionSlots(unit: BattleUnit): BattleUnit {
+  return {
+    ...unit,
+    preBattleActionSlots: unit.actionSlots.map(slot => ({ ...slot })),
+  };
+}
+
 export function createBattleState(
   playerUnits: BattleUnit[],
   enemyUnits: BattleUnit[],
   playerReserve: BattleUnit[],
   enemyReserve: BattleUnit[],
   seed?: number,
+  heroType?: HeroType,
 ): BattleState {
+  // 전투 시작 시 모든 유닛의 actionSlots 스냅샷 (전투 후 원복용)
+  const allUnits = [...playerUnits, ...enemyUnits].map(snapshotActionSlots);
+  const allReserve = [...playerReserve, ...enemyReserve].map(snapshotActionSlots);
+
   return {
-    units: [...playerUnits, ...enemyUnits],
-    reserve: [...playerReserve, ...enemyReserve],
+    units: allUnits,
+    reserve: allReserve,
     hero: {
+      heroType: heroType ?? HeroTypeConst.COMMANDER,
       interventionsRemaining: DEFAULT_GAME_CONFIG.heroInterventionsPerRound,
       maxInterventionsPerRound: DEFAULT_GAME_CONFIG.heroInterventionsPerRound,
       abilities: [],
@@ -32,6 +49,18 @@ export function createBattleState(
     isFinished: false,
     winner: null,
     seed: seed ?? Date.now(),
+  };
+}
+
+/**
+ * 전투 종료 후 모든 유닛의 actionSlots를 전투 시작 전 상태로 복원.
+ * 영웅이 전투 중 편집한 카드 변경을 되돌린다.
+ */
+export function restorePreBattleActions(state: BattleState): BattleState {
+  return {
+    ...state,
+    units: state.units.map(resetBattleActions),
+    reserve: state.reserve.map(resetBattleActions),
   };
 }
 

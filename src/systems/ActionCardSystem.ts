@@ -92,3 +92,17 @@ export function resetRunActions(unit: BattleUnit): BattleUnit {
     actionSlots: unit.baseActionSlots.map(slot => ({ ...slot })),
   };
 }
+
+/**
+ * 전투 종료 후 복원: preBattleActionSlots → actionSlots.
+ * 전투 중 영웅이 편집한 액션 카드를 전투 시작 전 상태로 되돌린다.
+ * preBattleActionSlots가 없으면 변경 없이 반환.
+ */
+export function resetBattleActions(unit: BattleUnit): BattleUnit {
+  if (!unit.preBattleActionSlots) return unit;
+  return {
+    ...unit,
+    actionSlots: unit.preBattleActionSlots.map(slot => ({ ...slot })),
+    preBattleActionSlots: undefined,
+  };
+}
