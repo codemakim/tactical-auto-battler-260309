@@ -78,7 +78,8 @@ export type ConditionType =
   | 'ALLY_HP_BELOW'
   | 'LOWEST_HP_ENEMY'
   | 'FIRST_ACTION_THIS_ROUND'
-  | 'HAS_HERO_BUFF';
+  | 'HAS_HERO_BUFF'
+  | 'ENEMY_HP_BELOW';
 
 export interface ActionCondition {
   type: ConditionType;

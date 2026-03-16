@@ -1,4 +1,4 @@
-import type { CharacterDefinition, BattleUnit, StatRange } from '../types';
+import type { CharacterDefinition, BattleUnit, StatRange, ActionSlot, Rarity } from '../types';
 import { Team, Position } from '../types';
 import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
 import type { CharacterClass } from '../types';
@@ -56,9 +56,54 @@ function randInt(rand: () => number, min: number, max: number): number {
   return min + Math.floor(rand() * (max - min + 1));
 }
 
+/** 희귀도별 가중치 */
+const RARITY_WEIGHTS: Record<string, number> = {
+  COMMON: 10,
+  RARE: 3,
+  EPIC: 1,
+  LEGENDARY: 0.5,
+};
+
+/**
+ * 가중치 기반 중복 없는 액션 슬롯 추첨
+ * 순수 함수, seeded RNG 사용
+ */
+export function drawWeightedSlots(
+  pool: ActionSlot[],
+  count: number,
+  rand: () => number,
+): ActionSlot[] {
+  const remaining = pool.map((slot, i) => ({ slot, index: i }));
+  const result: ActionSlot[] = [];
+
+  for (let i = 0; i < count && remaining.length > 0; i++) {
+    const totalWeight = remaining.reduce((sum, { slot }) => {
+      const rarity = slot.action.rarity ?? 'COMMON';
+      return sum + (RARITY_WEIGHTS[rarity] ?? 10);
+    }, 0);
+
+    let roll = rand() * totalWeight;
+    let picked = remaining.length - 1; // 폴백
+    for (let j = 0; j < remaining.length; j++) {
+      const rarity = remaining[j].slot.action.rarity ?? 'COMMON';
+      roll -= RARITY_WEIGHTS[rarity] ?? 10;
+      if (roll <= 0) {
+        picked = j;
+        break;
+      }
+    }
+
+    result.push(remaining[picked].slot);
+    remaining.splice(picked, 1);
+  }
+
+  return result;
+}
+
 /**
  * 클래스 범위 내 랜덤 스탯으로 CharacterDefinition 생성 (§23.5)
  * trainingPotential도 2~5 범위에서 랜덤
+ * actionPool이 있는 클래스는 랜덤 3개 추첨, 없으면 고정 baseActionSlots
  */
 export function generateCharacterDef(
   name: string,
@@ -79,12 +124,18 @@ export function generateCharacterDef(
 
   const trainingPotential = randInt(rand, 2, 5);
 
+  // actionPool이 있으면 랜덤 추첨, 없으면 기존 고정 슬롯
+  const actionSlots = template.actionPool
+    ? drawWeightedSlots(template.actionPool, 3, rand)
+        .map(slot => ({ ...slot }))
+    : template.baseActionSlots.map(slot => ({ ...slot }));
+
   return {
     id: `char_${name.toLowerCase().replace(/\s+/g, '_')}`,
     name,
     characterClass,
     baseStats,
-    baseActionSlots: template.baseActionSlots.map(slot => ({ ...slot })),
+    baseActionSlots: actionSlots,
     trainingsUsed: 0,
     trainingPotential,
   };

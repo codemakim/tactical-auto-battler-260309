@@ -159,6 +159,28 @@ describe('액션 해석 시스템', () => {
     expect(evaluateCondition(slot, unit, stateRound2First)).toBe(true);
   });
 
+  it('ENEMY_HP_BELOW: 적 중 HP가 N% 미만인 유닛이 있을 때 발동', () => {
+    const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
+    const enemy = createUnit(createCharacterDef('E', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+
+    const slot: ActionSlot = {
+      condition: { type: 'ENEMY_HP_BELOW', value: 30 },
+      action: { id: 'execute', name: 'Execute', description: '', effects: [] },
+    };
+
+    // 적 HP 100% → false
+    const state = makeBattleState({ units: [unit, enemy] });
+    expect(evaluateCondition(slot, unit, state)).toBe(false);
+
+    // 적 HP를 25%로 설정 → true
+    enemy.stats.hp = Math.floor(enemy.stats.maxHp * 0.25);
+    expect(evaluateCondition(slot, unit, state)).toBe(true);
+
+    // 적 HP를 35%로 설정 → false (30% 미만이 아님)
+    enemy.stats.hp = Math.floor(enemy.stats.maxHp * 0.35);
+    expect(evaluateCondition(slot, unit, state)).toBe(false);
+  });
+
   it('HAS_HERO_BUFF: 유닛에게 실드가 있으면 true (MVP: 히어로 실드 = hero buff)', () => {
     // MVP에서 히어로가 부여할 수 있는 버프는 실드(SHIELD)이므로
     // HAS_HERO_BUFF는 unit.shield > 0으로 검사한다.

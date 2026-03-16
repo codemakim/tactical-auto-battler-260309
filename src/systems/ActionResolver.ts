@@ -56,6 +56,11 @@ export function evaluateCondition(
     case 'HAS_HERO_BUFF':
       return unit.shield > 0;
 
+    case 'ENEMY_HP_BELOW':
+      return value !== undefined && aliveUnits.some(
+        u => u.team === enemyTeam && (u.stats.hp / u.stats.maxHp) * 100 < value,
+      );
+
     default:
       return false;
   }
