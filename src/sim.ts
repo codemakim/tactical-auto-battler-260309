@@ -6,9 +6,9 @@
  */
 
 import { createCharacterDef, createUnit, resetUnitCounter } from './entities/UnitFactory';
-import { createBattleState, runFullBattle } from './core/BattleEngine';
+import { createBattleState, stepBattle } from './core/BattleEngine';
 import { CharacterClass, Team, Position } from './types';
-import type { BattleState, BattleEvent, BattleUnit } from './types';
+import type { BattleState, BattleEvent, BattleUnit, ActionSlot } from './types';
 
 // ── 팀 구성 ──────────────────────────────────────
 
@@ -26,7 +26,7 @@ const eLancer     = createUnit(createCharacterDef('Vex',     CharacterClass.LANC
 const eController = createUnit(createCharacterDef('Mira',    CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 const eReserve    = createUnit(createCharacterDef('Bron',    CharacterClass.WARRIOR),    Team.ENEMY, Position.BACK);
 
-// ── 전투 실행 ──────────────────────────────────────
+// ── 전투 실행 (stepBattle 루프로 중간 상태 추적) ────────
 
 const initial = createBattleState(
   [pWarrior, pArcher, pGuardian],
@@ -36,154 +36,268 @@ const initial = createBattleState(
   12345,
 );
 
-const result = runFullBattle(initial);
+// ── 유틸 함수 ──────────────────────────────────────
 
-// ── 로그 출력 ──────────────────────────────────────
+// 모든 유닛 레지스트리 (초기 + 예비 포함)
+const allInitialUnits = [...initial.units, ...initial.reserve];
 
-function findUnit(state: BattleState, id?: string): string {
+function findUnitName(state: BattleState, id?: string): string {
   if (!id) return '???';
-  const all = [...state.units, ...state.reserve, ...initial.units, ...initial.reserve];
-  const u = all.find(u => u.id === id);
+  const u = state.units.find(u => u.id === id)
+    ?? state.reserve.find(u => u.id === id)
+    ?? allInitialUnits.find(u => u.id === id);
   return u ? `${u.name}(${u.team === Team.PLAYER ? 'P' : 'E'})` : id;
 }
 
-function unitStatus(u: BattleUnit): string {
+function findUnitObj(state: BattleState, id?: string): BattleUnit | undefined {
+  if (!id) return undefined;
+  return state.units.find(u => u.id === id)
+    ?? state.reserve.find(u => u.id === id);
+}
+
+function posTag(pos: string): string {
+  return pos === Position.FRONT ? '전열' : '후열';
+}
+
+/** 유닛 상태 한줄 요약: HP/실드/포지션 */
+function briefStatus(u: BattleUnit): string {
+  const alive = u.isAlive ? '' : '💀';
+  const shield = u.shield > 0 ? ` 🛡${u.shield}` : '';
+  const buffs = u.buffs.length > 0 ? ` [${u.buffs.map(b => b.type).join(',')}]` : '';
+  return `${alive}HP:${u.stats.hp}/${u.stats.maxHp}${shield} ${posTag(u.position)}${buffs}`;
+}
+
+/** 유닛 최종 상태 출력용 */
+function unitFinalStatus(u: BattleUnit): string {
   const alive = u.isAlive ? '⚔' : '💀';
   const shield = u.shield > 0 ? ` 🛡${u.shield}` : '';
-  return `${alive} ${u.name} HP:${u.stats.hp}/${u.stats.maxHp}${shield} [${u.position}]`;
+  return `${alive} ${u.name} HP:${u.stats.hp}/${u.stats.maxHp}${shield} [${posTag(u.position)}]`;
 }
+
+/** 조건 표시 */
+function conditionStr(slot: ActionSlot): string {
+  const c = slot.condition;
+  if (c.type === 'ALWAYS') return '';
+  if (c.value !== undefined) return ` (${c.type}:${c.value})`;
+  return ` (${c.type})`;
+}
+
+/** 액션 슬롯 목록 표시 */
+function showActionSlots(slots: ActionSlot[]): string {
+  return slots.map((s, i) =>
+    `${i + 1}. ${s.action.name}${conditionStr(s)}`
+  ).join('  |  ');
+}
+
+// ── 로그 출력: 초기 상태 ──────────────────────────
 
 console.log('═══════════════════════════════════════════');
 console.log('  TACTICAL AUTO-BATTLER  SIMULATION');
 console.log('═══════════════════════════════════════════\n');
 
-// 초기 상태
 console.log('── 초기 팀 구성 ──');
 console.log('PLAYER:');
-[pWarrior, pArcher, pGuardian].forEach(u =>
-  console.log(`  ${u.name} (${u.characterClass}) [${u.position}] HP:${u.stats.hp} ATK:${u.stats.atk} GRD:${u.stats.grd} AGI:${u.stats.agi}`));
+[pWarrior, pArcher, pGuardian].forEach(u => {
+  console.log(`  ${u.name} (${u.characterClass}) [${posTag(u.position)}] HP:${u.stats.hp} ATK:${u.stats.atk} GRD:${u.stats.grd} AGI:${u.stats.agi}`);
+  console.log(`    행동: ${showActionSlots(u.actionSlots)}`);
+});
 console.log(`  [예비] ${pReserve.name} (${pReserve.characterClass})`);
+console.log(`    행동: ${showActionSlots(pReserve.actionSlots)}`);
+
 console.log('ENEMY:');
-[eAssassin, eLancer, eController].forEach(u =>
-  console.log(`  ${u.name} (${u.characterClass}) [${u.position}] HP:${u.stats.hp} ATK:${u.stats.atk} GRD:${u.stats.grd} AGI:${u.stats.agi}`));
+[eAssassin, eLancer, eController].forEach(u => {
+  console.log(`  ${u.name} (${u.characterClass}) [${posTag(u.position)}] HP:${u.stats.hp} ATK:${u.stats.atk} GRD:${u.stats.grd} AGI:${u.stats.agi}`);
+  console.log(`    행동: ${showActionSlots(u.actionSlots)}`);
+});
 console.log(`  [예비] ${eReserve.name} (${eReserve.characterClass})`);
+console.log(`    행동: ${showActionSlots(eReserve.actionSlots)}`);
 console.log('');
 
-// 이벤트 로그
-let currentRound = 0;
-let currentTurn = 0;
+// ── stepBattle 루프 + 이벤트 로그 ─────────────────
 
-for (const ev of result.events) {
+let current = initial;
+let processedEvents = 0;
+const maxSteps = 500;
+let steps = 0;
+
+while (!current.isFinished && steps < maxSteps) {
+  // 스텝 실행 전 유닛 스냅샷 저장 (TURN_START에 행동 전 상태 표시용)
+  const preStepUnits = current.units.map(u => ({ ...u, stats: { ...u.stats } }));
+  const result = stepBattle(current);
+  current = result.state;
+  steps++;
+
+  // 새로 추가된 이벤트만 처리
+  const newEvents = current.events.slice(processedEvents);
+  processedEvents = current.events.length;
+
+  for (const ev of newEvents) {
+    logEvent(ev, current, preStepUnits);
+  }
+}
+
+function logEvent(ev: BattleEvent, state: BattleState, preStepUnits?: BattleUnit[]): void {
+  // TURN_START는 행동 전 상태를 보여야 하므로 preStepUnits 사용
+  const findPreUnit = (id?: string): BattleUnit | undefined => {
+    if (!id || !preStepUnits) return findUnitObj(state, id);
+    return preStepUnits.find(u => u.id === id) ?? findUnitObj(state, id);
+  };
+
   if (ev.type === 'ROUND_START') {
-    currentRound = ev.round;
     console.log(`\n══ 라운드 ${ev.round} ══════════════════════════`);
     const order = (ev.data?.turnOrder as string[]) ?? [];
-    console.log(`  턴 순서: ${order.map(id => findUnit(result, id)).join(' → ')}`);
-    continue;
+    console.log(`  턴 순서: ${order.map(id => findUnitName(state, id)).join(' → ')}`);
+    return;
   }
 
   if (ev.type === 'TURN_START') {
-    currentTurn = ev.turn;
-    console.log(`\n  ── 턴 ${ev.turn}: ${findUnit(result, ev.sourceId)} ──`);
-    continue;
+    // 행동 전 상태 표시
+    const src = findPreUnit(ev.sourceId);
+    const srcInfo = src ? ` ${briefStatus(src)}` : '';
+    console.log(`\n  ── 턴 ${ev.turn}: ${findUnitName(state, ev.sourceId)}${srcInfo} ──`);
+    return;
   }
 
   if (ev.type === 'ACTION_EXECUTED') {
     const action = ev.data?.actionName ?? ev.actionId ?? '?';
-    const target = ev.targetId ? ` → ${findUnit(result, ev.targetId)}` : '';
+    const target = ev.targetId ? ` → ${findUnitName(state, ev.targetId)}` : '';
     console.log(`    ⚡ ${action}${target}`);
-    continue;
+    return;
   }
 
   if (ev.type === 'ACTION_SKIPPED') {
     const reason = ev.data?.reason ?? 'unknown';
     console.log(`    ⏭ 행동 불가 (${reason})`);
-    continue;
+    return;
   }
 
   if (ev.type === 'DAMAGE_DEALT') {
-    console.log(`    💥 ${findUnit(result, ev.targetId)}에게 ${ev.value} 데미지`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    💥 ${findUnitName(state, ev.targetId)}에게 ${ev.value} 데미지${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'HEAL_APPLIED') {
-    console.log(`    💚 ${findUnit(result, ev.targetId)} ${ev.value} 회복`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    💚 ${findUnitName(state, ev.targetId)} ${ev.value} 회복${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'SHIELD_APPLIED') {
-    console.log(`    🛡 ${findUnit(result, ev.targetId)} 실드 +${ev.value}`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    🛡 ${findUnitName(state, ev.targetId)} 실드 +${ev.value}${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'SHIELD_CLEARED') {
     const before = ev.data?.shieldBefore ?? '?';
-    console.log(`    🛡❌ ${findUnit(result, ev.targetId)} 실드 ${before} → 0`);
-    continue;
+    console.log(`    🛡❌ ${findUnitName(state, ev.targetId)} 실드 ${before} → 0`);
+    return;
   }
 
   if (ev.type === 'UNIT_MOVED') {
     const from = ev.data?.from ?? '?';
     const to = ev.data?.to ?? '?';
-    console.log(`    🔄 ${findUnit(result, ev.targetId)} ${from} → ${to}`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    🔄 ${findUnitName(state, ev.targetId)} ${posTag(String(from))} → ${posTag(String(to))}${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'UNIT_PUSHED') {
     const from = ev.data?.from ?? '?';
     const to = ev.data?.to ?? '?';
-    console.log(`    ↗ ${findUnit(result, ev.targetId)} ${from} → ${to}로 밀림`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    ↗ ${findUnitName(state, ev.targetId)} ${posTag(String(from))} → ${posTag(String(to))}로 밀림${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'UNIT_DIED') {
-    console.log(`    💀 ${findUnit(result, ev.targetId)} 사망!`);
-    continue;
+    console.log(`    💀 ${findUnitName(state, ev.targetId)} 사망!`);
+    return;
   }
 
   if (ev.type === 'RESERVE_ENTERED') {
-    console.log(`    📥 ${findUnit(result, ev.targetId)} 예비에서 투입!`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    📥 ${findUnitName(state, ev.targetId)} 예비에서 투입!${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'COVER_TRIGGERED') {
     const original = ev.data?.originalTargetId as string | undefined;
-    console.log(`    🛡️ ${findUnit(result, ev.targetId)}이(가) ${findUnit(result, original)} 대신 피격!`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` ${briefStatus(tgt)}` : '';
+    console.log(`    🛡️ ${findUnitName(state, ev.targetId)}이(가) ${findUnitName(state, original)} 대신 피격!${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'HERO_INTERVENTION') {
-    console.log(`    👑 히어로 개입! → ${findUnit(result, ev.targetId)}`);
-    continue;
+    console.log(`    👑 히어로 개입! → ${findUnitName(state, ev.targetId)}`);
+    return;
   }
 
   if (ev.type === 'BUFF_APPLIED' || ev.type === 'DEBUFF_APPLIED') {
     const buffType = ev.data?.buffType ?? '?';
-    console.log(`    ✨ ${findUnit(result, ev.targetId)} ${buffType} ${ev.type === 'BUFF_APPLIED' ? '부여' : '디버프'}`);
-    continue;
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    ✨ ${findUnitName(state, ev.targetId)} ${buffType} ${ev.type === 'BUFF_APPLIED' ? '부여' : '디버프'}${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'BUFF_EXPIRED') {
-    console.log(`    ⏰ ${findUnit(result, ev.targetId)} 버프 만료`);
-    continue;
+    console.log(`    ⏰ ${findUnitName(state, ev.targetId)} 버프 만료`);
+    return;
+  }
+
+  if (ev.type === 'DELAYED_EFFECT_APPLIED') {
+    const effectType = ev.data?.effectType ?? '?';
+    const delayRounds = ev.data?.delayRounds ?? '?';
+    console.log(`    ⏳ ${findUnitName(state, ev.targetId)}에게 지연 효과 (${effectType}, ${delayRounds}라운드 후)`);
+    return;
+  }
+
+  if (ev.type === 'DELAYED_EFFECT_RESOLVED') {
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    console.log(`    💫 지연 효과 발동! ${findUnitName(state, ev.targetId)}${tgtInfo}`);
+    return;
+  }
+
+  if (ev.type === 'STATUS_EFFECT_TICK') {
+    const tgt = findUnitObj(state, ev.targetId);
+    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
+    const effectType = ev.data?.effectType ?? '?';
+    console.log(`    🔥 ${findUnitName(state, ev.targetId)} ${effectType} ${ev.value}${tgtInfo}`);
+    return;
   }
 
   if (ev.type === 'ROUND_END') {
     console.log(`\n  ── 라운드 ${ev.round} 종료 ──`);
-    continue;
+    // 라운드 종료 시 전체 유닛 현황
+    const alive = state.units.filter(u => u.isAlive);
+    const players = alive.filter(u => u.team === Team.PLAYER);
+    const enemies = alive.filter(u => u.team === Team.ENEMY);
+    console.log(`  생존: P[${players.map(u => `${u.name} ${briefStatus(u)}`).join(', ')}]`);
+    console.log(`        E[${enemies.map(u => `${u.name} ${briefStatus(u)}`).join(', ')}]`);
+    return;
   }
 
   if (ev.type === 'BATTLE_END') {
     const winner = ev.data?.winner;
     console.log(`\n══════════════════════════════════════════`);
     console.log(`  전투 종료! 승자: ${winner === Team.PLAYER ? 'PLAYER 🎉' : 'ENEMY 😈'}`);
-    console.log(`  총 라운드: ${ev.round}, 총 이벤트: ${result.events.length}`);
-    continue;
+    console.log(`  총 라운드: ${ev.round}, 총 이벤트: ${current.events.length}`);
+    return;
   }
 }
 
 // 최종 유닛 상태
 console.log('\n── 최종 유닛 상태 ──');
-result.units.forEach(u => console.log(`  ${unitStatus(u)}`));
+current.units.forEach(u => console.log(`  ${unitFinalStatus(u)}`));
 
 console.log('═══════════════════════════════════════════\n');
