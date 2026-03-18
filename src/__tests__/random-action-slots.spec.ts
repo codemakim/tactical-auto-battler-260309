@@ -4,14 +4,15 @@ import { drawInitialCards } from '../systems/ActionCardSystem';
 import { CharacterClass, Rarity, Target } from '../types';
 import type { CardTemplate } from '../types';
 import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { getAllTemplatesForClass } from '../data/ActionPool';
 
 describe('액션 슬롯 배정', () => {
-  it('전사 generateCharacterDef → 3개 슬롯이 cardTemplates에서 추첨됨', () => {
+  it('전사 generateCharacterDef → 3개 슬롯이 클래스+공용 풀에서 추첨됨', () => {
     const def = generateCharacterDef('Test', CharacterClass.WARRIOR, 42);
     expect(def.baseActionSlots).toHaveLength(3);
 
-    const template = CLASS_TEMPLATES[CharacterClass.WARRIOR];
-    const validIds = template.cardTemplates.map(t => t.id);
+    const allTemplates = getAllTemplatesForClass(CharacterClass.WARRIOR);
+    const validIds = allTemplates.map(t => t.id);
     for (const slot of def.baseActionSlots) {
       // 생성된 id는 `{templateId}_v{seed}` 형식
       const baseId = slot.action.id.replace(/_v\d+$/, '');
@@ -26,14 +27,14 @@ describe('액션 슬롯 배정', () => {
       .toEqual(def2.baseActionSlots.map(s => s.action.id));
   });
 
-  it('모든 클래스가 cardTemplates에서 슬롯 추첨됨', () => {
+  it('모든 클래스가 클래스+공용 풀에서 슬롯 추첨됨', () => {
     const classes = [CharacterClass.LANCER, CharacterClass.ARCHER, CharacterClass.GUARDIAN, CharacterClass.CONTROLLER, CharacterClass.ASSASSIN];
     for (const cls of classes) {
       const def = generateCharacterDef('Test', cls, 42);
       expect(def.baseActionSlots).toHaveLength(3);
 
-      const template = CLASS_TEMPLATES[cls];
-      const validIds = template.cardTemplates.map(t => t.id);
+      const allTemplates = getAllTemplatesForClass(cls);
+      const validIds = allTemplates.map(t => t.id);
       for (const slot of def.baseActionSlots) {
         const baseId = slot.action.id.replace(/_v\d+$/, '');
         expect(validIds).toContain(baseId);

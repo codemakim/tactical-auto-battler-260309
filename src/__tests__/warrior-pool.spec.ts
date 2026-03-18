@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { getAllTemplatesForClass, UNIVERSAL_CARD_TEMPLATES } from '../data/ActionPool';
 import { CharacterClass, Rarity, Target } from '../types';
 
 describe('전사 카드풀', () => {
@@ -10,15 +11,30 @@ describe('전사 카드풀', () => {
     expect(templates).toBeDefined();
   });
 
-  it('풀 크기 = 10', () => {
+  it('클래스 전용 풀 크기 = 10', () => {
     expect(templates).toHaveLength(10);
   });
 
-  it('COMMON 7장, RARE 3장', () => {
+  it('클래스 전용 COMMON 7장, RARE 3장', () => {
     const common = templates.filter(t => (t.rarity ?? 'COMMON') === Rarity.COMMON);
     const rare = templates.filter(t => t.rarity === Rarity.RARE);
     expect(common).toHaveLength(7);
     expect(rare).toHaveLength(3);
+  });
+
+  it('getAllTemplatesForClass는 클래스 전용 + 공용 카드 합산', () => {
+    const all = getAllTemplatesForClass(CharacterClass.WARRIOR);
+    expect(all).toHaveLength(templates.length + UNIVERSAL_CARD_TEMPLATES.length);
+  });
+
+  it('공용 카드 5종 포함', () => {
+    expect(UNIVERSAL_CARD_TEMPLATES).toHaveLength(5);
+    const ids = UNIVERSAL_CARD_TEMPLATES.map(t => t.id);
+    expect(ids).toContain('universal_quick_strike');
+    expect(ids).toContain('universal_guard');
+    expect(ids).toContain('universal_recover');
+    expect(ids).toContain('universal_rally');
+    expect(ids).toContain('universal_feint');
   });
 
   it('Shield Bash: POSITION_FRONT, ATK×[1.1~1.3] + GRD×[0.7~0.9] 실드', () => {

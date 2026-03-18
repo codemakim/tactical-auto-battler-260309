@@ -1,6 +1,7 @@
 import type { CharacterDefinition, BattleUnit, StatRange } from '../types';
 import { Team, Position } from '../types';
 import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { getAllTemplatesForClass } from '../data/ActionPool';
 import type { CharacterClass } from '../types';
 import { drawInitialCards } from '../systems/ActionCardSystem';
 
@@ -81,9 +82,10 @@ export function generateCharacterDef(
 
   const trainingPotential = randInt(rand, 2, 5);
 
-  // cardTemplates 풀에서 가중치 기반 3장 추첨 (ActionCardSystem 도메인)
+  // 클래스 전용 + 공용 카드 풀에서 가중치 기반 3장 추첨
   const slotSeed = seed + 1000; // 스탯 시드와 분리
-  const actionSlots = drawInitialCards(template.cardTemplates, 3, slotSeed);
+  const allTemplates = getAllTemplatesForClass(characterClass);
+  const actionSlots = drawInitialCards(allTemplates, 3, slotSeed);
 
   return {
     id: `char_${name.toLowerCase().replace(/\s+/g, '_')}`,
