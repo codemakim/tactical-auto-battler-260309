@@ -285,8 +285,8 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         condition: { type: 'ENEMY_BACK_EXISTS' },
         action: {
           id: 'archer_aimed_shot', name: 'Aimed Shot', isBasic: true,
-          description: 'Deal ATK x1.5 damage to a back-row enemy.',
-          effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_BACK }],
+          description: 'Deal ATK x1.2 damage to a back-row enemy.',
+          effects: [{ type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_BACK }],
           rarity: Rarity.COMMON,
         },
       },
@@ -317,7 +317,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3, 1.5], targetPool: [Target.ENEMY_BACK] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_BACK] },
         ],
       },
       {
@@ -349,13 +349,34 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       },
       // --- 특수 카드 ---
       {
-        id: 'archer_multishot',
-        name: 'Multishot',
+        id: 'archer_snipe',
+        name: 'Snipe',
         rarity: Rarity.RARE,
+        classRestriction: CharacterClass.ARCHER,
+        condition: { type: 'ENEMY_BACK_EXISTS' },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.5, 1.6, 1.7], targetPool: [Target.ENEMY_BACK, Target.ENEMY_BACK_LOWEST_HP, Target.ENEMY_BACK_HIGHEST_ATK] },
+        ],
+      },
+      {
+        id: 'archer_focus_fire',
+        name: 'Focus Fire',
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.ARCHER,
+        condition: { type: 'ENEMY_HP_BELOW', value: 30 },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.5, 1.6, 1.7], targetPool: [Target.ENEMY_ANY] },
+        ],
+      },
+      {
+        id: 'archer_suppressing_shot',
+        name: 'Suppressing Shot',
+        rarity: Rarity.COMMON,
         classRestriction: CharacterClass.ARCHER,
         condition: { type: 'ALWAYS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.4, 1.5, 1.6], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.6, 0.7, 0.8], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DELAY_TURN', multiplierPool: [1], targetPool: [Target.ENEMY_ANY] },
         ],
       },
       {
