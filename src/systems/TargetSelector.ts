@@ -71,6 +71,9 @@ function selectByStrategy(
     case TargetSelect.LOWEST_HP:
       return candidates.sort((a, b) => a.stats.hp - b.stats.hp)[0] ?? null;
 
+    case TargetSelect.HIGHEST_ATK:
+      return candidates.sort((a, b) => b.stats.atk - a.stats.atk)[0] ?? null;
+
     case TargetSelect.RANDOM:
       return candidates[Math.floor(Math.random() * candidates.length)] ?? null;
 

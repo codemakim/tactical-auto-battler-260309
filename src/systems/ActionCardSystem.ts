@@ -33,6 +33,7 @@ export function generateCardVariant(template: CardTemplate, seed: number): Actio
     if (et.position) effect.position = et.position;
     if (et.buffType) effect.buffType = et.buffType;
     if (et.duration !== undefined) effect.duration = et.duration;
+    if (et.swapTarget) effect.swapTarget = et.swapTarget;
 
     return effect;
   });
@@ -76,6 +77,9 @@ function buildDescription(name: string, effects: ActionEffect[]): string {
         break;
       case 'ADVANCE_TURN':
         parts.push('Advance own turn');
+        break;
+      case 'SWAP':
+        parts.push('Swap target positions');
         break;
       default:
         break;

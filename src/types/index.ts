@@ -105,6 +105,7 @@ export type TargetPosition = (typeof TargetPosition)[keyof typeof TargetPosition
 export const TargetSelect = {
   HIGHEST_AGI: 'HIGHEST_AGI',
   LOWEST_HP: 'LOWEST_HP',
+  HIGHEST_ATK: 'HIGHEST_ATK',
   RANDOM: 'RANDOM',
   FASTEST_TURN: 'FASTEST_TURN',
   FIRST: 'FIRST',
@@ -123,12 +124,14 @@ export const Target = {
   ENEMY_ANY:      { side: 'ENEMY', position: 'ANY',   select: 'LOWEST_HP' } as const,
   ALLY_LOWEST_HP: { side: 'ALLY',  position: 'ANY',   select: 'LOWEST_HP' } as const,
   ALLY_ANY:       { side: 'ALLY',  position: 'ANY',   select: 'FIRST' } as const,
+  ENEMY_BACK_LOWEST_HP:   { side: 'ENEMY', position: 'BACK', select: 'LOWEST_HP' } as const,
+  ENEMY_BACK_HIGHEST_ATK: { side: 'ENEMY', position: 'BACK', select: 'HIGHEST_ATK' } as const,
 } as const;
 
 // === Action Types ===
 
 export interface ActionEffect {
-  type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN' | 'REPOSITION' | 'DELAYED';
+  type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN' | 'REPOSITION' | 'DELAYED' | 'SWAP';
   value?: number;      // multiplier or flat value
   stat?: keyof Stats;  // which stat to reference
   target?: ActionTargetType;
@@ -137,6 +140,7 @@ export interface ActionEffect {
   duration?: number;   // buff 지속 라운드 수
   delayedType?: 'DAMAGE' | 'HEAL' | 'BUFF';  // DELAYED 효과 시 발동할 효과 종류
   delayRounds?: number;   // DELAYED 효과 시 몇 라운드 후 발동
+  swapTarget?: ActionTargetType;  // SWAP 효과 시 교환 상대 타겟
 }
 
 export const Rarity = {
@@ -173,6 +177,7 @@ export interface EffectTemplate {
   position?: Position;              // MOVE/PUSH용 고정값
   buffType?: BuffType;              // BUFF/DEBUFF용 고정값
   duration?: number;                // 버프 지속 라운드
+  swapTarget?: ActionTargetType;   // SWAP 효과 시 교환 상대 타겟
 }
 
 /** 카드 템플릿 — 획득 시 변형 생성의 원본 */
@@ -356,6 +361,7 @@ export type BattleEventType =
   | 'STATUS_EFFECT_TICK'
   | 'DELAYED_EFFECT_APPLIED'
   | 'DELAYED_EFFECT_RESOLVED'
+  | 'UNIT_SWAPPED'
   | 'COVER_TRIGGERED'
   | 'ACTION_EDITED'
   | 'ROUND_END'

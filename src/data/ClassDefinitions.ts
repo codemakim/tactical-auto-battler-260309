@@ -579,7 +579,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
           { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
         ],
       },
-      // --- 특수 카드 ---
+      // --- PULL 카드 ---
       {
         id: 'controller_gravity_pull',
         name: 'Gravity Pull',
@@ -588,28 +588,59 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
           { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_BACK], position: 'FRONT' },
-          { type: 'DELAY_TURN', multiplierPool: [1, 2], targetPool: [Target.ENEMY_BACK] },
         ],
       },
       {
-        id: 'controller_mind_blast',
-        name: 'Mind Blast',
-        rarity: Rarity.COMMON,
+        id: 'controller_expose_weakness',
+        name: 'Expose Weakness',
+        rarity: Rarity.RARE,
         classRestriction: CharacterClass.CONTROLLER,
-        condition: { type: 'ALWAYS' },
+        condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_ANY] },
-          { type: 'DELAY_TURN', multiplierPool: [1], targetPool: [Target.ENEMY_ANY] },
+          { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_BACK_LOWEST_HP], position: 'FRONT' },
         ],
       },
+      // --- SWAP 카드 ---
+      {
+        id: 'controller_displace',
+        name: 'Displace',
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.CONTROLLER,
+        condition: { type: 'ENEMY_BACK_EXISTS' },
+        effectTemplates: [
+          { type: 'SWAP', multiplierPool: [0], targetPool: [Target.ENEMY_BACK], swapTarget: Target.ENEMY_FRONT },
+        ],
+      },
+      {
+        id: 'controller_break_formation',
+        name: 'Break Formation',
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.CONTROLLER,
+        condition: { type: 'ENEMY_BACK_EXISTS' },
+        effectTemplates: [
+          { type: 'SWAP', multiplierPool: [0], targetPool: [Target.ENEMY_BACK_HIGHEST_ATK], swapTarget: Target.ENEMY_FRONT },
+        ],
+      },
+      // --- DELAY 카드 ---
       {
         id: 'controller_disrupt',
         name: 'Disrupt',
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.CONTROLLER,
+        condition: { type: 'POSITION_FRONT' },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.5, 0.6, 0.7], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DELAY_TURN', multiplierPool: [1], targetPool: [Target.ENEMY_FRONT] },
+        ],
+      },
+      {
+        id: 'controller_mind_jolt',
+        name: 'Mind Jolt',
         rarity: Rarity.RARE,
         classRestriction: CharacterClass.CONTROLLER,
         condition: { type: 'ALWAYS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.4, 0.5, 0.6], targetPool: [Target.ENEMY_ANY] },
           { type: 'DELAY_TURN', multiplierPool: [1, 2], targetPool: [Target.ENEMY_ANY] },
         ],
       },

@@ -3,7 +3,7 @@ import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent, De
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
 import { calculateDamage, calculateShield, applyDamage, applyDamageWithCover, applyShield, applyHeal } from './DamageSystem';
-import { moveUnit, pushUnit } from './PositionSystem';
+import { moveUnit, pushUnit, swapPositions } from './PositionSystem';
 import { accelerateUnit, delayUnit } from '../core/TurnOrderManager';
 import { applyBuff, isStunned } from './BuffSystem';
 
@@ -266,6 +266,20 @@ function applyEffect(
       const pos = effect.position ?? Position.FRONT;
       const result = moveUnit(actualTarget, pos, round, turn);
       updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      allEvents.push(...result.events);
+      break;
+    }
+
+    case 'SWAP': {
+      const swapPartnerTarget = effect.swapTarget ?? Target.ENEMY_FRONT;
+      const swapPartner = selectTarget(source, swapPartnerTarget, updatedUnits, state);
+      if (!swapPartner || swapPartner.id === actualTarget.id) break;
+      const result = swapPositions(actualTarget, swapPartner, source.id, round, turn);
+      updatedUnits = updatedUnits.map(u => {
+        if (u.id === actualTarget.id) return result.unitA;
+        if (u.id === swapPartner.id) return result.unitB;
+        return u;
+      });
       allEvents.push(...result.events);
       break;
     }
