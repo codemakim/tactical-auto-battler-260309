@@ -247,7 +247,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.LANCER,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.6, 1.8], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.4, 1.5, 1.6], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
