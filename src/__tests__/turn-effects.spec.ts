@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { executeAction } from '../systems/ActionResolver';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, Target } from '../types';
 import type { BattleState, ActionSlot } from '../types';
 
 function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
@@ -38,7 +38,7 @@ describe('턴 순서 변경 효과', () => {
         id: 'delay_action',
         name: 'Delay',
         description: 'Delay enemy turn',
-        effects: [{ type: 'DELAY_TURN', target: 'ENEMY_FRONT' }],
+        effects: [{ type: 'DELAY_TURN', target: Target.ENEMY_FRONT }],
       },
     };
 
@@ -71,7 +71,7 @@ describe('턴 순서 변경 효과', () => {
         id: 'advance_action',
         name: 'Advance',
         description: 'Advance ally turn',
-        effects: [{ type: 'ADVANCE_TURN', target: 'ALLY_LOWEST_HP' }],
+        effects: [{ type: 'ADVANCE_TURN', target: Target.ALLY_LOWEST_HP }],
       },
     };
 
@@ -105,8 +105,8 @@ describe('턴 순서 변경 효과', () => {
         name: 'Disrupt',
         description: 'Damage and delay',
         effects: [
-          { type: 'DAMAGE', value: 0.8, target: 'ENEMY_FRONT' },
-          { type: 'DELAY_TURN', target: 'ENEMY_FRONT' },
+          { type: 'DAMAGE', value: 0.8, target: Target.ENEMY_FRONT },
+          { type: 'DELAY_TURN', target: Target.ENEMY_FRONT },
         ],
       },
     };

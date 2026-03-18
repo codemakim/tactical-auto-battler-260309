@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { evaluateCondition, selectAction } from '../systems/ActionResolver';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, Target } from '../types';
 import type { BattleState, ActionSlot } from '../types';
 
 function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
@@ -32,11 +32,11 @@ describe('액션 해석 시스템', () => {
     // 액션 슬롯: FRONT → Attack, BACK → Defend, ALWAYS → BasicAction
     const frontAttack: ActionSlot = {
       condition: { type: 'POSITION_FRONT' },
-      action: { id: 'atk', name: 'Attack', description: '', effects: [{ type: 'DAMAGE', value: 1.0, target: 'ENEMY_FRONT' }] },
+      action: { id: 'atk', name: 'Attack', description: '', effects: [{ type: 'DAMAGE', value: 1.0, target: Target.ENEMY_FRONT }] },
     };
     const backDefend: ActionSlot = {
       condition: { type: 'POSITION_BACK' },
-      action: { id: 'defend', name: 'Defend', description: '', effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: 'SELF' }] },
+      action: { id: 'defend', name: 'Defend', description: '', effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF }] },
     };
 
     unit.actionSlots = [frontAttack, backDefend, ...unit.actionSlots]; // 기본 액션은 마지막

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createBattleState, stepBattle, queueIntervention } from '../core/BattleEngine';
 import { canIntervene } from '../systems/HeroInterventionSystem';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, Target } from '../types';
 import type { HeroAbility } from '../types';
 
 describe('히어로 개입 큐잉 (§18)', () => {
@@ -23,14 +23,14 @@ describe('히어로 개입 큐잉 (§18)', () => {
     id: 'hero_shield',
     name: 'Protect',
     description: 'Shield an ally',
-    effects: [{ type: 'SHIELD', value: 30, target: 'SELF' }],
+    effects: [{ type: 'SHIELD', value: 30, target: Target.SELF }],
   };
 
   const damageAbility: HeroAbility = {
     id: 'hero_strike',
     name: 'Strike',
     description: 'Damage an enemy',
-    effects: [{ type: 'DAMAGE', value: 1, target: 'ENEMY_ANY' }],
+    effects: [{ type: 'DAMAGE', value: 1, target: Target.ENEMY_ANY }],
   };
 
   // === 큐잉 기본 동작 ===

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createBattleState, stepBattle, runFullBattle } from '../core/BattleEngine';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase, BuffType } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, BuffType, Target } from '../types';
 import type { BattleState, ActionSlot } from '../types';
 import { resetUid } from '../utils/uid';
 import { startRound, endRound } from '../core/RoundManager';
@@ -174,7 +174,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
         description: '',
         effects: [{
           type: 'BUFF',
-          target: 'ALLY_ANY',
+          target: Target.ALLY_ANY,
           buffType: BuffType.ATK_UP,
           value: 5,
           duration: 2,
@@ -218,7 +218,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
         description: '',
         effects: [{
           type: 'DEBUFF',
-          target: 'ENEMY_FRONT',
+          target: Target.ENEMY_FRONT,
           buffType: BuffType.GUARD_DOWN,
           value: 3,
           duration: 2,
@@ -321,7 +321,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
 
     // 스턴된 유닛에게 커스텀 액션 부여 (항상 실행 가능한 조건)
     e1.actionSlots = [
-      { condition: { type: 'ALWAYS' }, action: { id: 'atk', name: 'Attack', description: '', effects: [{ type: 'DAMAGE', value: 1.0, target: 'ENEMY_FRONT' }] } },
+      { condition: { type: 'ALWAYS' }, action: { id: 'atk', name: 'Attack', description: '', effects: [{ type: 'DAMAGE', value: 1.0, target: Target.ENEMY_FRONT }] } },
     ];
 
     const state = createBattleState([p1], [e1], [], []);

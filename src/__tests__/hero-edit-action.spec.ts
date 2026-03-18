@@ -3,7 +3,7 @@ import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/Un
 import { createBattleState, restorePreBattleActions } from '../core/BattleEngine';
 import { heroEditAction, canIntervene } from '../systems/HeroInterventionSystem';
 import { resetBattleActions } from '../systems/ActionCardSystem';
-import { CharacterClass, Position, Team, HeroType } from '../types';
+import { CharacterClass, Position, Team, HeroType, Target } from '../types';
 import type { Action, ActionCondition, BattleState } from '../types';
 
 // 테스트용 전진 액션
@@ -11,7 +11,7 @@ const advanceAction: Action = {
   id: 'test_advance',
   name: 'Advance',
   description: 'Move to front row.',
-  effects: [{ type: 'MOVE', target: 'SELF', position: 'FRONT' }],
+  effects: [{ type: 'MOVE', target: Target.SELF, position: 'FRONT' }],
 };
 const advanceCondition: ActionCondition = { type: 'POSITION_BACK' };
 

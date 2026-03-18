@@ -86,9 +86,46 @@ export interface ActionCondition {
   value?: number; // e.g., HP threshold percentage
 }
 
-// === Action Types ===
+// === Target Types (복합 객체: side × position × select) ===
 
-export type ActionTargetType = 'SELF' | 'ENEMY_FRONT' | 'ENEMY_BACK' | 'ENEMY_ANY' | 'ALLY_LOWEST_HP' | 'ALLY_ANY';
+export const TargetSide = {
+  SELF: 'SELF',
+  ENEMY: 'ENEMY',
+  ALLY: 'ALLY',
+} as const;
+export type TargetSide = (typeof TargetSide)[keyof typeof TargetSide];
+
+export const TargetPosition = {
+  FRONT: 'FRONT',
+  BACK: 'BACK',
+  ANY: 'ANY',
+} as const;
+export type TargetPosition = (typeof TargetPosition)[keyof typeof TargetPosition];
+
+export const TargetSelect = {
+  HIGHEST_AGI: 'HIGHEST_AGI',
+  LOWEST_HP: 'LOWEST_HP',
+  RANDOM: 'RANDOM',
+  FASTEST_TURN: 'FASTEST_TURN',
+  FIRST: 'FIRST',
+} as const;
+export type TargetSelect = (typeof TargetSelect)[keyof typeof TargetSelect];
+
+export type ActionTargetType =
+  | { readonly side: 'SELF' }
+  | { readonly side: 'ENEMY' | 'ALLY'; readonly position: TargetPosition; readonly select: TargetSelect };
+
+/** 편의 상수 — 기존 문자열 타겟과 1:1 대응 */
+export const Target = {
+  SELF:           { side: 'SELF' } as const,
+  ENEMY_FRONT:    { side: 'ENEMY', position: 'FRONT', select: 'HIGHEST_AGI' } as const,
+  ENEMY_BACK:     { side: 'ENEMY', position: 'BACK',  select: 'HIGHEST_AGI' } as const,
+  ENEMY_ANY:      { side: 'ENEMY', position: 'ANY',   select: 'LOWEST_HP' } as const,
+  ALLY_LOWEST_HP: { side: 'ALLY',  position: 'ANY',   select: 'LOWEST_HP' } as const,
+  ALLY_ANY:       { side: 'ALLY',  position: 'ANY',   select: 'FIRST' } as const,
+} as const;
+
+// === Action Types ===
 
 export interface ActionEffect {
   type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN' | 'REPOSITION' | 'DELAYED';
@@ -123,6 +160,29 @@ export interface Action {
 export interface ActionSlot {
   condition: ActionCondition;
   action: Action;
+}
+
+// === Card Template (카드 변형 생성용) ===
+
+/** 효과 하나의 변형 축 정의 */
+export interface EffectTemplate {
+  type: ActionEffect['type'];
+  stat?: keyof Stats;
+  multiplierPool: number[];         // 이 중 하나 랜덤 선택
+  targetPool: ActionTargetType[];   // 이 중 하나 랜덤 선택
+  position?: Position;              // MOVE/PUSH용 고정값
+  buffType?: BuffType;              // BUFF/DEBUFF용 고정값
+  duration?: number;                // 버프 지속 라운드
+}
+
+/** 카드 템플릿 — 획득 시 변형 생성의 원본 */
+export interface CardTemplate {
+  id: string;
+  name: string;
+  rarity: Rarity;
+  classRestriction?: CharacterClass;
+  condition: ActionCondition;
+  effectTemplates: EffectTemplate[];
 }
 
 // === Character Stats ===

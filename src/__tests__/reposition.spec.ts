@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, Target } from '../types';
 import type { BattleState, ActionSlot } from '../types';
 import { resetUid } from '../utils/uid';
 import { executeAction } from '../systems/ActionResolver';
@@ -40,7 +40,7 @@ describe('Reposition 효과', () => {
         id: 'reposition',
         name: 'Reposition',
         description: '',
-        effects: [{ type: 'REPOSITION', target: 'ALLY_ANY', position: Position.FRONT }],
+        effects: [{ type: 'REPOSITION', target: Target.ALLY_ANY, position: Position.FRONT }],
       },
     };
 
@@ -62,7 +62,7 @@ describe('Reposition 효과', () => {
         id: 'reposition',
         name: 'Reposition',
         description: '',
-        effects: [{ type: 'REPOSITION', target: 'ALLY_ANY', position: Position.BACK }],
+        effects: [{ type: 'REPOSITION', target: Target.ALLY_ANY, position: Position.BACK }],
       },
     };
 
@@ -84,7 +84,7 @@ describe('Reposition 효과', () => {
         id: 'reposition',
         name: 'Reposition',
         description: '',
-        effects: [{ type: 'REPOSITION', target: 'ALLY_ANY', position: Position.FRONT }],
+        effects: [{ type: 'REPOSITION', target: Target.ALLY_ANY, position: Position.FRONT }],
       },
     };
 
@@ -107,7 +107,7 @@ describe('Reposition 효과', () => {
         id: 'reposition',
         name: 'Reposition',
         description: '',
-        effects: [{ type: 'REPOSITION', target: 'ALLY_ANY', position: Position.FRONT }],
+        effects: [{ type: 'REPOSITION', target: Target.ALLY_ANY, position: Position.FRONT }],
       },
     };
 
@@ -133,7 +133,7 @@ describe('Reposition 효과', () => {
         id: 'reposition',
         name: 'Protect Weak',
         description: '',
-        effects: [{ type: 'REPOSITION', target: 'ALLY_LOWEST_HP', position: Position.BACK }],
+        effects: [{ type: 'REPOSITION', target: Target.ALLY_LOWEST_HP, position: Position.BACK }],
       },
     };
 

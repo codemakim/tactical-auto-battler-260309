@@ -1,14 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, Rarity } from '../types';
+import { CharacterClass, Team, Position, Rarity, Target } from '../types';
 import type { Action, ActionCondition } from '../types';
 import {
-  filterActionsByClass,
-  generateRewardOptions,
   replaceActionSlot,
   resetRunActions,
 } from '../systems/ActionCardSystem';
-import { ACTION_POOL } from '../data/ActionPool';
 
 // --- 테스트용 헬퍼 액션 ---
 
@@ -17,7 +14,7 @@ function makeAction(id: string, overrides: Partial<Action> = {}): Action {
     id,
     name: id,
     description: `Test action ${id}`,
-    effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: 'ENEMY_FRONT' }],
+    effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
     ...overrides,
   };
 }
@@ -25,88 +22,7 @@ function makeAction(id: string, overrides: Partial<Action> = {}): Action {
 describe('액션 카드 시스템', () => {
   beforeEach(() => resetUnitCounter());
 
-  // === 1. 클래스 제한 필터링 ===
-
-  describe('클래스 제한 필터링 (filterActionsByClass)', () => {
-    const warriorAction = makeAction('warrior_special', {
-      classRestriction: CharacterClass.WARRIOR,
-      rarity: Rarity.RARE,
-    });
-    const archerAction = makeAction('archer_special', {
-      classRestriction: CharacterClass.ARCHER,
-      rarity: Rarity.RARE,
-    });
-    const universalAction1 = makeAction('universal_1', { rarity: Rarity.COMMON });
-    const universalAction2 = makeAction('universal_2', { rarity: Rarity.COMMON });
-
-    const allActions = [warriorAction, archerAction, universalAction1, universalAction2];
-
-    it('워리어는 워리어 전용 + 범용 액션을 사용할 수 있다', () => {
-      const filtered = filterActionsByClass(allActions, CharacterClass.WARRIOR);
-
-      expect(filtered).toContainEqual(warriorAction);
-      expect(filtered).toContainEqual(universalAction1);
-      expect(filtered).toContainEqual(universalAction2);
-      expect(filtered).not.toContainEqual(archerAction);
-      expect(filtered).toHaveLength(3);
-    });
-
-    it('아처는 아처 전용 + 범용 액션만 사용할 수 있다', () => {
-      const filtered = filterActionsByClass(allActions, CharacterClass.ARCHER);
-
-      expect(filtered).toContainEqual(archerAction);
-      expect(filtered).toContainEqual(universalAction1);
-      expect(filtered).toContainEqual(universalAction2);
-      expect(filtered).not.toContainEqual(warriorAction);
-      expect(filtered).toHaveLength(3);
-    });
-
-    it('가디언은 범용 액션만 사용할 수 있다 (전용 액션 없음)', () => {
-      const filtered = filterActionsByClass(allActions, CharacterClass.GUARDIAN);
-
-      expect(filtered).toContainEqual(universalAction1);
-      expect(filtered).toContainEqual(universalAction2);
-      expect(filtered).not.toContainEqual(warriorAction);
-      expect(filtered).not.toContainEqual(archerAction);
-      expect(filtered).toHaveLength(2);
-    });
-  });
-
-  // === 2. 보상 생성 (5개 선택) ===
-
-  describe('보상 옵션 생성 (generateRewardOptions)', () => {
-    it('주어진 풀에서 정확히 5개의 보상 옵션을 생성한다', () => {
-      const result = generateRewardOptions(ACTION_POOL, CharacterClass.WARRIOR, 5, 42);
-
-      expect(result).toHaveLength(5);
-    });
-
-    it('모든 보상 옵션이 해당 클래스와 호환된다', () => {
-      const result = generateRewardOptions(ACTION_POOL, CharacterClass.ARCHER, 5, 123);
-
-      for (const action of result) {
-        expect(
-          !action.classRestriction || action.classRestriction === CharacterClass.ARCHER,
-        ).toBe(true);
-      }
-    });
-
-    it('같은 시드를 사용하면 같은 결과를 반환한다 (결정론적)', () => {
-      const result1 = generateRewardOptions(ACTION_POOL, CharacterClass.WARRIOR, 5, 999);
-      const result2 = generateRewardOptions(ACTION_POOL, CharacterClass.WARRIOR, 5, 999);
-
-      expect(result1.map((a) => a.id)).toEqual(result2.map((a) => a.id));
-    });
-
-    it('풀이 요청 수보다 작으면 가능한 만큼만 반환한다', () => {
-      const smallPool = [makeAction('a'), makeAction('b')];
-      const result = generateRewardOptions(smallPool, CharacterClass.WARRIOR, 5, 1);
-
-      expect(result).toHaveLength(2);
-    });
-  });
-
-  // === 3. 액션 슬롯 교체 ===
+  // === 1. 액션 슬롯 교체 ===
 
   describe('액션 슬롯 교체 (replaceActionSlot)', () => {
     it('캐릭터는 기본 3개 액션 슬롯을 가진다', () => {

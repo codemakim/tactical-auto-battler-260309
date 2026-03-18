@@ -1,4 +1,4 @@
-import { Position, Team } from '../types';
+import { Position, Team, Target } from '../types';
 import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent, DelayedEffect } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
@@ -114,8 +114,8 @@ export function executeAction(
   for (const effect of slot.action.effects) {
     if (effect.type === 'DELAY_TURN' || effect.type === 'ADVANCE_TURN') {
       // 턴 순서 변경 효과는 별도 처리
-      const targetType = effect.target ?? 'ENEMY_FRONT';
-      const target = selectTarget(source, targetType, units);
+      const targetType = effect.target ?? Target.ENEMY_FRONT;
+      const target = selectTarget(source, targetType, units, state);
       if (target) {
         const currentOrder = turnOrder ?? [...state.turnOrder];
         if (effect.type === 'DELAY_TURN') {
@@ -126,8 +126,8 @@ export function executeAction(
       }
     } else if (effect.type === 'DELAYED') {
       // §7.2: 지연 효과 생성
-      const targetType = effect.target ?? 'ENEMY_FRONT';
-      const target = selectTarget(source, targetType, units);
+      const targetType = effect.target ?? Target.ENEMY_FRONT;
+      const target = selectTarget(source, targetType, units, state);
       if (target) {
         const delayedEffect: DelayedEffect = {
           id: uid(),
@@ -157,7 +157,7 @@ export function executeAction(
         });
       }
     } else {
-      const result = applyEffect(source, effect, units, state.round, state.turn);
+      const result = applyEffect(source, effect, units, state.round, state.turn, state);
       units = result.units;
       allEvents.push(...result.events);
       // source가 변경됐을 수 있으므로 갱신 (SELF 효과)
@@ -185,18 +185,19 @@ function applyEffect(
   units: BattleUnit[],
   round: number,
   turn: number,
+  state?: BattleState,
 ): { units: BattleUnit[]; events: BattleEvent[] } {
   const allEvents: BattleEvent[] = [];
   let updatedUnits = [...units];
 
-  const targetType = effect.target ?? 'ENEMY_FRONT';
-  const target = selectTarget(source, targetType, updatedUnits);
+  const targetType = effect.target ?? Target.ENEMY_FRONT;
+  const target = selectTarget(source, targetType, updatedUnits, state);
 
-  if (!target && targetType !== 'SELF') {
+  if (!target && targetType.side !== 'SELF') {
     return { units: updatedUnits, events: allEvents };
   }
 
-  const actualTarget = targetType === 'SELF' ? source : target!;
+  const actualTarget = targetType.side === 'SELF' ? source : target!;
 
   switch (effect.type) {
     case 'DAMAGE': {

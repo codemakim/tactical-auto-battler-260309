@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { executeAction } from '../systems/ActionResolver';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, Target } from '../types';
 import type { BattleState, ActionSlot } from '../types';
 
 function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
@@ -38,9 +38,9 @@ describe('Charge 복합 효과', () => {
         name: 'Full Charge',
         description: 'Move to front, deal damage, push enemy back',
         effects: [
-          { type: 'MOVE', target: 'SELF', position: 'FRONT' },
-          { type: 'DAMAGE', value: 1.4, stat: 'atk', target: 'ENEMY_FRONT' },
-          { type: 'PUSH', target: 'ENEMY_FRONT', position: 'BACK' },
+          { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+          { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_FRONT },
+          { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
         ],
       },
     };
@@ -85,8 +85,8 @@ describe('Charge 복합 효과', () => {
         name: 'Charge',
         description: '',
         effects: [
-          { type: 'DAMAGE', value: 1.4, target: 'ENEMY_FRONT' },
-          { type: 'PUSH', target: 'ENEMY_FRONT', position: 'BACK' },
+          { type: 'DAMAGE', value: 1.4, target: Target.ENEMY_FRONT },
+          { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
         ],
       },
     };

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { moveUnit, pushUnit } from '../systems/PositionSystem';
 import { selectTarget } from '../systems/TargetSelector';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position } from '../types';
+import { CharacterClass, Team, Position, Target } from '../types';
 
 describe('포지션 시스템', () => {
   beforeEach(() => resetUnitCounter());
@@ -46,7 +46,7 @@ describe('타겟 선택', () => {
     const eFront2 = createUnit(createCharacterDef('EF2', CharacterClass.LANCER), Team.ENEMY, Position.FRONT);
     // Lancer AGI:12 > Warrior AGI:8
 
-    const target = selectTarget(player, 'ENEMY_FRONT', [player, eFront1, eFront2]);
+    const target = selectTarget(player, Target.ENEMY_FRONT, [player, eFront1, eFront2]);
 
     expect(target).not.toBeNull();
     expect(target!.id).toBe(eFront2.id); // Lancer가 AGI 더 높음
@@ -57,7 +57,7 @@ describe('타겟 선택', () => {
     const eBack = createUnit(createCharacterDef('EB', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);
     const eFront = createUnit(createCharacterDef('EF', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
 
-    const target = selectTarget(player, 'ENEMY_BACK', [player, eBack, eFront]);
+    const target = selectTarget(player, Target.ENEMY_BACK, [player, eBack, eFront]);
 
     expect(target).not.toBeNull();
     expect(target!.id).toBe(eBack.id);
@@ -68,7 +68,7 @@ describe('타겟 선택', () => {
     const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT); // HP:110
     const e2 = createUnit(createCharacterDef('E2', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);   // HP:75
 
-    const target = selectTarget(player, 'ENEMY_ANY', [player, e1, e2]);
+    const target = selectTarget(player, Target.ENEMY_ANY, [player, e1, e2]);
 
     expect(target!.id).toBe(e2.id); // Archer HP 더 낮음
   });
@@ -77,7 +77,7 @@ describe('타겟 선택', () => {
     const p1 = createUnit(createCharacterDef('P1', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT); // HP:140
     const p2 = createUnit(createCharacterDef('P2', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);   // HP:75
 
-    const target = selectTarget(p1, 'ALLY_LOWEST_HP', [p1, p2]);
+    const target = selectTarget(p1, Target.ALLY_LOWEST_HP, [p1, p2]);
 
     expect(target!.id).toBe(p2.id);
   });
@@ -86,7 +86,7 @@ describe('타겟 선택', () => {
     const player = createUnit(createCharacterDef('P', CharacterClass.ASSASSIN), Team.PLAYER, Position.BACK);
 
     // 적 후열에 아무도 없음
-    const target = selectTarget(player, 'ENEMY_BACK', [player]);
+    const target = selectTarget(player, Target.ENEMY_BACK, [player]);
 
     expect(target).toBeNull();
   });
@@ -96,7 +96,7 @@ describe('타겟 선택', () => {
     const enemy = createUnit(createCharacterDef('E', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
     enemy.isAlive = false;
 
-    const target = selectTarget(player, 'ENEMY_FRONT', [player, enemy]);
+    const target = selectTarget(player, Target.ENEMY_FRONT, [player, enemy]);
     expect(target).toBeNull();
   });
 });

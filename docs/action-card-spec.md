@@ -164,27 +164,46 @@ Higher rarity actions may include:
 - unique mechanics
 - complex conditions
 
-### Rarity Variants
+### Card Templates & Variant Generation
 
-The same action concept can exist at multiple rarity tiers as variants.
+Cards are defined as **templates** with variant axes. When a card is obtained as a reward, each axis is randomly resolved:
 
-Higher rarity variants share the same name and condition but have upgraded effects (e.g., wider target range, higher multiplier).
+```
+CardTemplate:
+  id, name, rarity, condition
+  effectTemplates:
+    - type, stat
+      multiplierPool: [1.0, 1.1, 1.2]    ← pick one
+      targetPool: [ENEMY_FRONT, ...]       ← pick one
+```
+
+This creates **horizontal differentiation** — the same card concept can appear with different trade-offs (e.g., higher damage but limited targeting, or lower damage but flexible targeting).
+
+Variant generation is seed-based (deterministic).
+
+### Rarity Distinction
+
+Rare/Epic cards also use templates but with:
+
+- **Higher multiplier ranges** (e.g., 1.3–1.5 vs Common's 1.0–1.2)
+- **Wider target pools** (e.g., ENEMY_ANY access)
+- **Additional effects** (e.g., PUSH, DEBUFF attached)
+
+A single-option template behaves identically to a fixed card.
 
 Example:
 
 ```
-Execution Cut (Common)
+Execution Cut (Common template)
   Condition: ENEMY_HP_BELOW 30
-  Target: ENEMY_FRONT
-  Power: ATK x1.3
+  multiplierPool: [1.3]
+  targetPool: [ENEMY_FRONT]
 
-Execution Cut (Rare)
+Execution Cut (Rare template)
   Condition: ENEMY_HP_BELOW 30
-  Target: ENEMY_ANY
-  Power: ATK x1.3
+  multiplierPool: [1.3]
+  targetPool: [ENEMY_ANY]
 ```
-
-The Rare variant targets any enemy (including back row), while the Common variant only targets the front line.
 
 ---
 

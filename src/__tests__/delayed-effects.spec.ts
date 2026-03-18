@@ -17,7 +17,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase, BuffType } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, BuffType, Target } from '../types';
 import type { BattleState, BattleUnit, ActionSlot, DelayedEffect } from '../types';
 import { uid, resetUid } from '../utils/uid';
 import { endRound } from '../core/RoundManager';
@@ -133,7 +133,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
           effects: [{
             type: 'DELAYED',
             value: 20,
-            target: 'ENEMY_FRONT',
+            target: Target.ENEMY_FRONT,
             delayedType: 'DAMAGE',
             delayRounds: 2,
           }],
@@ -172,7 +172,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
           effects: [{
             type: 'DELAYED',
             value: 15,
-            target: 'ALLY_LOWEST_HP',
+            target: Target.ALLY_LOWEST_HP,
             delayedType: 'HEAL',
             delayRounds: 1,
           }],
@@ -205,7 +205,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
           effects: [{
             type: 'DELAYED',
             value: 4,
-            target: 'ENEMY_FRONT',
+            target: Target.ENEMY_FRONT,
             delayedType: 'BUFF',
             delayRounds: 1,
             buffType: BuffType.ATK_DOWN,
@@ -241,7 +241,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
           effects: [{
             type: 'DELAYED',
             value: 10,
-            target: 'ENEMY_FRONT',
+            target: Target.ENEMY_FRONT,
             delayedType: 'DAMAGE',
             delayRounds: 2,
           }],

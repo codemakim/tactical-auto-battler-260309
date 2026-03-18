@@ -1,5 +1,4 @@
-import { Rarity, type Action } from '../types';
-import { CLASS_TEMPLATES } from './ClassDefinitions';
+import { Rarity, Target, type Action } from '../types';
 
 // === Universal Actions (범용, 모든 클래스 사용 가능) ===
 
@@ -8,28 +7,28 @@ export const UNIVERSAL_ACTIONS: Action[] = [
     id: 'universal_quick_strike',
     name: 'Quick Strike',
     description: 'A fast attack dealing ATK x0.8 damage.',
-    effects: [{ type: 'DAMAGE', value: 0.8, stat: 'atk', target: 'ENEMY_FRONT' }],
+    effects: [{ type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT }],
     rarity: Rarity.COMMON,
   },
   {
     id: 'universal_guard',
     name: 'Guard',
     description: 'Brace for impact, gaining a small shield.',
-    effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: 'SELF' }],
+    effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF }],
     rarity: Rarity.COMMON,
   },
   {
     id: 'universal_recover',
     name: 'Recover',
     description: 'Heal yourself for a small amount.',
-    effects: [{ type: 'HEAL', value: 20, target: 'SELF' }],
+    effects: [{ type: 'HEAL', value: 20, target: Target.SELF }],
     rarity: Rarity.COMMON,
   },
   {
     id: 'universal_rally',
     name: 'Rally',
     description: 'Heal the lowest HP ally.',
-    effects: [{ type: 'HEAL', value: 15, target: 'ALLY_LOWEST_HP' }],
+    effects: [{ type: 'HEAL', value: 15, target: Target.ALLY_LOWEST_HP }],
     rarity: Rarity.RARE,
   },
   {
@@ -37,18 +36,9 @@ export const UNIVERSAL_ACTIONS: Action[] = [
     name: 'Feint',
     description: 'Deal minor damage and delay the target.',
     effects: [
-      { type: 'DAMAGE', value: 0.5, stat: 'atk', target: 'ENEMY_FRONT' },
-      { type: 'DELAY_TURN', value: 1, target: 'ENEMY_FRONT' },
+      { type: 'DAMAGE', value: 0.5, stat: 'atk', target: Target.ENEMY_FRONT },
+      { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_FRONT },
     ],
     rarity: Rarity.RARE,
   },
-];
-
-/**
- * 전체 액션 풀 — 범용 + ClassDefinitions에서 자동 수집
- * 새 클래스의 classActions는 자동으로 포함됨
- */
-export const ACTION_POOL: Action[] = [
-  ...UNIVERSAL_ACTIONS,
-  ...Object.values(CLASS_TEMPLATES).flatMap(t => t.classActions),
 ];

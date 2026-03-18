@@ -330,18 +330,57 @@ Rules:
 
 # 13.5. Target Selection Rules
 
-When an effect specifies a target type, the following rules determine which unit is selected:
+When an effect specifies a target type, the following rules determine which unit is selected.
+
+## 복합 타겟 객체
+
+타겟은 3개 축의 복합 객체로 정의된다:
 
 ```
-SELF             - the acting unit itself
-ENEMY_FRONT      - alive enemy in FRONT with highest AGI (tie-break: first in order)
-ENEMY_BACK       - alive enemy in BACK with highest AGI
-ENEMY_ANY        - alive enemy with lowest current HP (regardless of position)
-ALLY_LOWEST_HP   - alive ally (excluding self) with lowest current HP
-ALLY_ANY         - any alive ally (excluding self)
+ActionTargetType = { side, position, select }
+
+side:     SELF | ENEMY | ALLY
+position: FRONT | BACK | ANY   (side=SELF일 때 무시)
+select:   HIGHEST_AGI | LOWEST_HP | RANDOM | FASTEST_TURN | FIRST
 ```
 
-Multi-effect target selection:
+### 편의 상수 (기존 타겟과 1:1 대응)
+
+```
+Target.SELF           = { side: SELF }
+Target.ENEMY_FRONT    = { side: ENEMY, position: FRONT, select: HIGHEST_AGI }
+Target.ENEMY_BACK     = { side: ENEMY, position: BACK,  select: HIGHEST_AGI }
+Target.ENEMY_ANY      = { side: ENEMY, position: ANY,   select: LOWEST_HP }
+Target.ALLY_LOWEST_HP = { side: ALLY,  position: ANY,   select: LOWEST_HP }
+Target.ALLY_ANY       = { side: ALLY,  position: ANY,   select: FIRST }
+```
+
+### 선택 기준 (select)
+
+| select | 설명 |
+|--------|------|
+| HIGHEST_AGI | AGI가 가장 높은 유닛 (동률: 배열 순서) |
+| LOWEST_HP | 현재 HP가 가장 낮은 유닛 |
+| RANDOM | 후보 중 무작위 선택 |
+| FASTEST_TURN | 턴 순서가 가장 빠른 유닛 (state 없으면 HIGHEST_AGI 폴백) |
+| FIRST | 배열 첫 번째 유닛 |
+
+### 포지션 폴백 규칙
+
+- position=FRONT인데 해당 포지션에 생존 유닛이 없으면 → 전체 후보로 폴백
+- position=BACK도 동일하게 폴백
+- position=ANY는 포지션 필터 없이 전체 후보
+
+### 수평 분화 조합 예시
+
+```
+{ side: ENEMY, position: FRONT, select: LOWEST_HP }    — 전열 중 HP 최저 적
+{ side: ENEMY, position: FRONT, select: RANDOM }       — 전열 랜덤 적
+{ side: ENEMY, position: FRONT, select: FASTEST_TURN } — 전열 중 다음 행동 적
+{ side: ENEMY, position: ANY,   select: HIGHEST_AGI }  — 전체 적 중 AGI 최고
+```
+
+## Multi-effect target selection
 
 - Each effect independently re-evaluates the target at execution time.
 - If the previous effect killed the primary target, the next effect selects the next best candidate.

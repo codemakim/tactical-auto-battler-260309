@@ -1,8 +1,7 @@
 import type { BattleState, RunState, BattleReward, Action, BattleUnit, ActionCondition, CharacterReward } from '../types';
 import { Difficulty, Team } from '../types';
-import { generateRewardOptions, replaceActionSlot } from './ActionCardSystem';
-import { ACTION_POOL } from '../data/ActionPool';
-import { getAvailableClasses } from '../data/ClassDefinitions';
+import { generateRewardFromTemplates, replaceActionSlot } from './ActionCardSystem';
+import { getAvailableClasses, CLASS_TEMPLATES } from '../data/ClassDefinitions';
 
 // 난이도별 골드 배율
 const DIFFICULTY_GOLD_MULTIPLIER: Record<string, number> = {
@@ -58,8 +57,10 @@ export function generateBattleRewards(
   const playerUnit = state.units.find((u) => u.team === Team.PLAYER && u.isAlive);
   const characterClass = playerUnit?.characterClass;
 
-  const actionOptions = characterClass
-    ? generateRewardOptions(ACTION_POOL, characterClass, 5, seed)
+  // 카드 템플릿에서 변형 생성
+  const templates = characterClass ? CLASS_TEMPLATES[characterClass]?.cardTemplates : undefined;
+  const actionOptions = characterClass && templates
+    ? generateRewardFromTemplates(templates, characterClass, 5, seed)
     : [];
 
   return { gold, actionOptions };
