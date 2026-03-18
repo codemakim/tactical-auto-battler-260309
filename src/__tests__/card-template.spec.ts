@@ -158,18 +158,21 @@ describe('카드 템플릿 변형 생성', () => {
       });
     });
 
-    it('단일 옵션 템플릿은 고정 카드처럼 동작', () => {
+    it('다중 옵션 템플릿은 시드에 따라 변형 생성', () => {
       const warrior = CLASS_TEMPLATES[CharacterClass.WARRIOR];
       const heavySlamTemplate = warrior.cardTemplates!.find(t => t.id === 'warrior_heavy_slam')!;
 
-      const a1 = generateCardVariant(heavySlamTemplate, 1);
-      const a2 = generateCardVariant(heavySlamTemplate, 999);
-
-      // 배율과 타겟 동일 (옵션 1개뿐)
-      expect(a1.effects[0].value).toBe(1.4);
-      expect(a2.effects[0].value).toBe(1.4);
-      expect(a1.effects[0].target).toEqual(Target.ENEMY_FRONT);
-      expect(a2.effects[0].target).toEqual(Target.ENEMY_FRONT);
+      // 여러 시드로 생성해서 최소 하나는 다른 결과가 나오는지 확인
+      const results = new Set<number>();
+      for (let seed = 0; seed < 20; seed++) {
+        const action = generateCardVariant(heavySlamTemplate, seed);
+        results.add(action.effects[0].value as number);
+      }
+      // 3개 옵션(1.3, 1.4, 1.5) 중 최소 2개는 나와야 함
+      expect(results.size).toBeGreaterThanOrEqual(2);
+      // 타겟은 항상 ENEMY_FRONT (옵션 1개뿐)
+      const a = generateCardVariant(heavySlamTemplate, 1);
+      expect(a.effects[0].target).toEqual(Target.ENEMY_FRONT);
     });
   });
 });

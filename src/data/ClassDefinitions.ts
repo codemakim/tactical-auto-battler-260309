@@ -608,15 +608,15 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
       { ...WARRIOR_STRIKE, action: { ...WARRIOR_STRIKE.action, isBasic: true } },
     ],
     cardTemplates: [
-      // --- 기본 카드 (actionPool에서 이전) ---
+      // --- 기본 카드 ---
       {
         id: 'warrior_shield_bash',
         name: 'Shield Bash',
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2], targetPool: [Target.ENEMY_FRONT] },
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.8], targetPool: [Target.SELF] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.SELF] },
         ],
       },
       {
@@ -625,7 +625,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'HP_BELOW', value: 50 },
         effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.5], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.SELF] },
         ],
       },
       {
@@ -634,7 +634,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -652,11 +652,11 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.0], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.SELF] },
         ],
       },
       // --- 특수 카드 ---
-      // Heavy Slam — 전열 고데미지 (RARE, 옵션 1개 = 고정)
+      // Heavy Slam — 전열 고데미지
       {
         id: 'warrior_heavy_slam',
         name: 'Heavy Slam',
@@ -664,10 +664,10 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.WARRIOR,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.4], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3, 1.4, 1.5], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
-      // Iron Wall — 전열 실드 (COMMON, 옵션 1개 = 고정)
+      // Iron Wall — 전열 실드
       {
         id: 'warrior_iron_wall',
         name: 'Iron Wall',
@@ -675,10 +675,10 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.WARRIOR,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.2], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.SELF] },
         ],
       },
-      // Driving Blow — 데미지 + PUSH (RARE, 옵션 1개 = 고정)
+      // Driving Blow — 데미지 + PUSH
       {
         id: 'warrior_driving_blow',
         name: 'Driving Blow',
@@ -686,8 +686,8 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.WARRIOR,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9], targetPool: [Target.ENEMY_FRONT] },
-          { type: 'PUSH', stat: undefined, multiplierPool: [0], targetPool: [Target.ENEMY_FRONT], position: 'BACK' },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.8, 0.9, 1.0], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_FRONT], position: 'BACK' },
         ],
       },
       // Execution Cut — COMMON (전열 마무리)
@@ -698,7 +698,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.WARRIOR,
         condition: { type: 'ENEMY_HP_BELOW', value: 30 },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2, 1.3, 1.4], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       // Execution Cut — RARE (전체 대상 마무리)
@@ -709,7 +709,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.WARRIOR,
         condition: { type: 'ENEMY_HP_BELOW', value: 30 },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2, 1.3, 1.4], targetPool: [Target.ENEMY_ANY] },
         ],
       },
     ],
