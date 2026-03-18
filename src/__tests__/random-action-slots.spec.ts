@@ -3,7 +3,7 @@ import { generateCharacterDef, createCharacterDef } from '../entities/UnitFactor
 import { drawInitialCards } from '../systems/ActionCardSystem';
 import { CharacterClass, Rarity, Target } from '../types';
 import type { CardTemplate } from '../types';
-import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
 import { getAllTemplatesForClass } from '../data/ActionPool';
 
 describe('액션 슬롯 배정', () => {
@@ -44,13 +44,13 @@ describe('액션 슬롯 배정', () => {
 
   it('createCharacterDef는 여전히 고정 슬롯 반환', () => {
     const def = createCharacterDef('Warrior', CharacterClass.WARRIOR);
-    const template = CLASS_TEMPLATES[CharacterClass.WARRIOR];
+    const template = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
     const expectedIds = template.baseActionSlots.map(s => s.action.id);
     expect(def.baseActionSlots.map(s => s.action.id)).toEqual(expectedIds);
   });
 
   it('drawInitialCards는 풀보다 많이 요청하면 고유 name 수만큼만 반환', () => {
-    const template = CLASS_TEMPLATES[CharacterClass.WARRIOR];
+    const template = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
     const result = drawInitialCards(template.cardTemplates, 100, 42);
     // Execution Cut이 COMMON/RARE 2장이지만 name 중복이라 1장만 뽑힘
     const uniqueNames = new Set(template.cardTemplates.map(t => t.name));
@@ -90,7 +90,7 @@ describe('액션 슬롯 배정', () => {
   it('모든 클래스의 cardTemplates가 존재', () => {
     const allClasses = [CharacterClass.WARRIOR, CharacterClass.LANCER, CharacterClass.ARCHER, CharacterClass.GUARDIAN, CharacterClass.CONTROLLER, CharacterClass.ASSASSIN];
     for (const cls of allClasses) {
-      const template = CLASS_TEMPLATES[cls];
+      const template = CLASS_DEFINITIONS[cls];
       expect(template.cardTemplates).toBeDefined();
       expect(template.cardTemplates.length).toBeGreaterThan(0);
     }

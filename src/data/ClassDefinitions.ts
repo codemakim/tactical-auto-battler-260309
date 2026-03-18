@@ -16,7 +16,7 @@ export interface ClassTemplate {
  * 클래스 레지스트리 — 새 클래스 추가 시 여기에 한 블록만 추가하면 됨.
  * 다른 파일 수정 불필요.
  */
-export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
+export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
   [CharacterClass.WARRIOR]: {
     characterClass: CharacterClass.WARRIOR,
     baseStats: { hp: 53, atk: 12, grd: 7, agi: 6 },
@@ -758,5 +758,5 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
 
 /** 등록된 모든 클래스 키 목록 */
 export function getAvailableClasses(): string[] {
-  return Object.keys(CLASS_TEMPLATES);
+  return Object.keys(CLASS_DEFINITIONS);
 }

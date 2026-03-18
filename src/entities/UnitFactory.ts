@@ -1,6 +1,6 @@
 import type { CharacterDefinition, BattleUnit, StatRange } from '../types';
 import { Team, Position } from '../types';
-import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
 import { getAllTemplatesForClass } from '../data/ActionPool';
 import type { CharacterClass } from '../types';
 import { drawInitialCards } from '../systems/ActionCardSystem';
@@ -23,7 +23,7 @@ export function createCharacterDef(
   trainingsUsed: number = 0,
   trainingPotential: number = 3,
 ): CharacterDefinition {
-  const template = CLASS_TEMPLATES[characterClass];
+  const template = CLASS_DEFINITIONS[characterClass];
   if (!template) throw new Error(`Unknown character class: ${characterClass}`);
 
   return {
@@ -68,7 +68,7 @@ export function generateCharacterDef(
   characterClass: CharacterClass,
   seed: number,
 ): CharacterDefinition {
-  const template = CLASS_TEMPLATES[characterClass];
+  const template = CLASS_DEFINITIONS[characterClass];
   if (!template) throw new Error(`Unknown character class: ${characterClass}`);
   const range = template.statRange;
   const rand = seededRand(seed);

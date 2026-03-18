@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
 import { getAllTemplatesForClass, UNIVERSAL_CARD_TEMPLATES } from '../data/ActionPool';
 import { CharacterClass, Rarity, Target } from '../types';
 
 describe('전사 카드풀', () => {
-  const template = CLASS_TEMPLATES[CharacterClass.WARRIOR];
+  const template = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
   const templates = template.cardTemplates;
 
   it('cardTemplates 존재', () => {

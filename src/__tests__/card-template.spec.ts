@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { generateCardVariant, generateRewardFromTemplates } from '../systems/ActionCardSystem';
 import { CharacterClass, Rarity, Target } from '../types';
 import type { CardTemplate } from '../types';
-import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
 
 describe('카드 템플릿 변형 생성', () => {
   const singleOptionTemplate: CardTemplate = {
@@ -135,13 +135,13 @@ describe('카드 템플릿 변형 생성', () => {
 
   describe('워리어 cardTemplates 통합', () => {
     it('워리어 ClassTemplate에 cardTemplates 존재', () => {
-      const warrior = CLASS_TEMPLATES[CharacterClass.WARRIOR];
+      const warrior = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
       expect(warrior.cardTemplates).toBeDefined();
       expect(warrior.cardTemplates!.length).toBeGreaterThan(0);
     });
 
     it('워리어 템플릿에서 보상 생성 가능', () => {
-      const warrior = CLASS_TEMPLATES[CharacterClass.WARRIOR];
+      const warrior = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
       const actions = generateRewardFromTemplates(
         warrior.cardTemplates!,
         CharacterClass.WARRIOR,
@@ -159,7 +159,7 @@ describe('카드 템플릿 변형 생성', () => {
     });
 
     it('다중 옵션 템플릿은 시드에 따라 변형 생성', () => {
-      const warrior = CLASS_TEMPLATES[CharacterClass.WARRIOR];
+      const warrior = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
       const heavySlamTemplate = warrior.cardTemplates!.find(t => t.id === 'warrior_heavy_slam')!;
 
       // 여러 시드로 생성해서 최소 하나는 다른 결과가 나오는지 확인

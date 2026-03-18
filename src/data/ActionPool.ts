@@ -1,5 +1,5 @@
 import { Rarity, Target, type CardTemplate } from '../types';
-import { CLASS_TEMPLATES } from './ClassDefinitions';
+import { CLASS_DEFINITIONS } from './ClassDefinitions';
 
 // === Universal Card Templates (범용, 모든 클래스 사용 가능) ===
 
@@ -56,6 +56,6 @@ export const UNIVERSAL_CARD_TEMPLATES: CardTemplate[] = [
  * 클래스 전용 카드 + 공용 카드를 합친 전체 템플릿 풀 반환
  */
 export function getAllTemplatesForClass(characterClass: string): CardTemplate[] {
-  const classTemplates = CLASS_TEMPLATES[characterClass]?.cardTemplates ?? [];
+  const classTemplates = CLASS_DEFINITIONS[characterClass]?.cardTemplates ?? [];
   return [...classTemplates, ...UNIVERSAL_CARD_TEMPLATES];
 }

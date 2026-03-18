@@ -5,7 +5,7 @@ import { selectTarget } from '../systems/TargetSelector';
 import { swapPositions } from '../systems/PositionSystem';
 import { executeAction } from '../systems/ActionResolver';
 import { generateCardVariant } from '../systems/ActionCardSystem';
-import { CLASS_TEMPLATES } from '../data/ClassDefinitions';
+import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
 import { resetUnitCounter } from '../entities/UnitFactory';
 
 // 테스트용 유닛 헬퍼
@@ -207,7 +207,7 @@ describe('SWAP 효과 — ActionResolver 통합', () => {
 });
 
 describe('Controller cardTemplates', () => {
-  const controllerDef = CLASS_TEMPLATES[CharacterClass.CONTROLLER];
+  const controllerDef = CLASS_DEFINITIONS[CharacterClass.CONTROLLER];
 
   it('카드 템플릿 10장 (기본 4 + 특수 6)', () => {
     expect(controllerDef.cardTemplates).toHaveLength(10);
