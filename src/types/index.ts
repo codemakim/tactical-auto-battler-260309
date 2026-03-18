@@ -294,11 +294,33 @@ export const HeroType = {
 } as const;
 export type HeroType = (typeof HeroType)[keyof typeof HeroType];
 
+export const AbilityCategory = {
+  COMMON: 'COMMON',
+  UNIQUE: 'UNIQUE',
+} as const;
+export type AbilityCategory = (typeof AbilityCategory)[keyof typeof AbilityCategory];
+
+export const AbilityType = {
+  EFFECT: 'EFFECT',
+  EDIT_ACTION: 'EDIT_ACTION',
+} as const;
+export type AbilityType = (typeof AbilityType)[keyof typeof AbilityType];
+
 export interface HeroAbility {
   id: string;
   name: string;
   description: string;
   effects: ActionEffect[];
+  category: AbilityCategory;
+  abilityType: AbilityType;
+}
+
+/** EDIT_ACTION 큐잉 시 필요한 추가 데이터 */
+export interface QueuedEditData {
+  targetUnitId: string;
+  slotIndex: number;
+  newAction: Action;
+  newCondition: ActionCondition;
 }
 
 export interface HeroState {
@@ -309,6 +331,7 @@ export interface HeroState {
   // 개입 큐잉: 유닛 행동 사이에 끼워 넣기 위한 대기열
   queuedAbility?: HeroAbility;
   queuedTargetId?: string;
+  queuedEditData?: QueuedEditData;
 }
 
 // === Battle Log (for replay) ===

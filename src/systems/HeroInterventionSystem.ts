@@ -1,9 +1,11 @@
-import type { BattleState, HeroAbility, BattleEvent, Action, ActionCondition, BattleUnit } from '../types';
+import type { BattleState, HeroAbility, BattleEvent, Action, ActionCondition, BattleUnit, QueuedEditData } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
-import { applyDamage, applyShield, calculateDamage } from './DamageSystem';
+import { applyDamage, applyShield, applyHeal, calculateDamage } from './DamageSystem';
 import { pushUnit } from './PositionSystem';
-import { Position, Team } from '../types';
+import { applyBuff } from './BuffSystem';
+import { accelerateUnit, delayUnit } from '../core/TurnOrderManager';
+import { AbilityType, Position, Team, BuffType } from '../types';
 import { replaceActionSlot } from './ActionCardSystem';
 
 /**
@@ -14,7 +16,7 @@ export function canIntervene(state: BattleState): boolean {
 }
 
 /**
- * 히어로 개입 실행.
+ * 히어로 개입 실행 (EFFECT 타입 능력).
  * 히어로는 전투에 직접 참전하지 않으므로, 더미 source 기반으로 처리.
  */
 export function executeIntervention(
@@ -28,6 +30,7 @@ export function executeIntervention(
 
   const allEvents: BattleEvent[] = [];
   let units = [...state.units];
+  let turnOrder = [...state.turnOrder];
 
   allEvents.push({
     id: uid(),
@@ -48,7 +51,6 @@ export function executeIntervention(
     switch (effect.type) {
       case 'SHIELD': {
         if (!target) {
-          // 아군 중 HP 가장 낮은 유닛
           const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
           target = allies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
         }
@@ -90,6 +92,81 @@ export function executeIntervention(
         break;
       }
 
+      case 'HEAL': {
+        if (!target) {
+          const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
+          target = allies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
+        }
+        if (target) {
+          const result = applyHeal(target, effect.value ?? 0, state.round, state.turn);
+          units = units.map(u => u.id === target!.id ? result.unit : u);
+          allEvents.push(...result.events);
+        }
+        break;
+      }
+
+      case 'BUFF': {
+        if (!target) {
+          const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
+          target = allies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
+        }
+        if (target && effect.buffType) {
+          const buff = {
+            id: uid(),
+            type: effect.buffType,
+            value: effect.value ?? 0,
+            duration: effect.duration ?? 1,
+            sourceId: 'hero',
+          };
+          const result = applyBuff(target, buff, state.round, state.turn);
+          units = units.map(u => u.id === target!.id ? result.unit : u);
+          allEvents.push(...result.events);
+        }
+        break;
+      }
+
+      case 'DEBUFF': {
+        if (!target) {
+          const enemies = units.filter(u => u.team === Team.ENEMY && u.isAlive);
+          target = enemies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
+        }
+        if (target && effect.buffType) {
+          const buff = {
+            id: uid(),
+            type: effect.buffType,
+            value: effect.value ?? 0,
+            duration: effect.duration ?? 1,
+            sourceId: 'hero',
+          };
+          const result = applyBuff(target, buff, state.round, state.turn);
+          units = units.map(u => u.id === target!.id ? result.unit : u);
+          allEvents.push(...result.events);
+        }
+        break;
+      }
+
+      case 'DELAY_TURN': {
+        if (!target) {
+          const enemies = units.filter(u => u.team === Team.ENEMY && u.isAlive);
+          target = enemies[0];
+        }
+        if (target) {
+          turnOrder = delayUnit(turnOrder, target.id);
+        }
+        break;
+      }
+
+      case 'ADVANCE_TURN': {
+        if (!target) {
+          const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
+          target = allies[0];
+        }
+        if (target) {
+          turnOrder = accelerateUnit(turnOrder, target.id);
+        }
+        break;
+      }
+
       default:
         break;
     }
@@ -101,9 +178,36 @@ export function executeIntervention(
   };
 
   return {
-    state: { ...state, units, hero: updatedHero },
+    state: { ...state, units, turnOrder, hero: updatedHero },
     events: allEvents,
   };
+}
+
+/**
+ * 큐잉된 능력 실행 — abilityType에 따라 분기.
+ * EFFECT → executeIntervention 위임
+ * EDIT_ACTION → queuedEditData로 heroEditAction 내부 로직 실행
+ */
+export function executeQueuedAbility(
+  state: BattleState,
+): { state: BattleState; events: BattleEvent[] } {
+  const { queuedAbility, queuedTargetId, queuedEditData } = state.hero;
+  if (!queuedAbility) {
+    return { state, events: [] };
+  }
+
+  if (queuedAbility.abilityType === AbilityType.EDIT_ACTION && queuedEditData) {
+    return heroEditAction(
+      state,
+      queuedEditData.targetUnitId,
+      queuedEditData.slotIndex,
+      queuedEditData.newAction,
+      queuedEditData.newCondition,
+    );
+  }
+
+  // EFFECT (기본값: abilityType 미지정 시에도 EFFECT로 처리)
+  return executeIntervention(state, queuedAbility, queuedTargetId);
 }
 
 /**

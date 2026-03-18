@@ -18,7 +18,7 @@ function makeFinishedState(overrides: Partial<BattleState> = {}): BattleState {
   return {
     units: [warrior, enemy],
     reserve: [],
-    hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+    hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
     round: 3,
     turn: 0,
     turnOrder: [],

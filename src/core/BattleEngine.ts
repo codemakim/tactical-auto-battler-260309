@@ -1,10 +1,11 @@
-import type { BattleState, BattleUnit, HeroAbility, HeroType } from '../types';
+import type { BattleState, BattleUnit, HeroAbility, HeroType, QueuedEditData } from '../types';
 import { BattlePhase, Team, Position, HeroType as HeroTypeConst, DEFAULT_GAME_CONFIG } from '../types';
 import { uid } from '../utils/uid';
 import { startRound, executeTurn, isRoundComplete } from './RoundManager';
 import { recordSnapshot, type ReplaySnapshot } from './ReplayRecorder';
 import { canIntervene, executeIntervention } from '../systems/HeroInterventionSystem';
 import { resetBattleActions } from '../systems/ActionCardSystem';
+import { getHeroDefinition } from '../data/HeroDefinitions';
 
 /**
  * 초기 BattleState 생성
@@ -38,7 +39,7 @@ export function createBattleState(
       heroType: heroType ?? HeroTypeConst.COMMANDER,
       interventionsRemaining: DEFAULT_GAME_CONFIG.heroInterventionsPerRound,
       maxInterventionsPerRound: DEFAULT_GAME_CONFIG.heroInterventionsPerRound,
-      abilities: [],
+      abilities: getHeroDefinition(heroType ?? HeroTypeConst.COMMANDER)?.abilities ?? [],
     },
     round: 0,
     turn: 0,
@@ -144,6 +145,7 @@ export function queueIntervention(
   state: BattleState,
   ability: HeroAbility,
   targetUnitId?: string,
+  editData?: QueuedEditData,
 ): BattleState {
   if (!canIntervene(state)) return state;
 
@@ -153,6 +155,7 @@ export function queueIntervention(
       ...state.hero,
       queuedAbility: ability,
       queuedTargetId: targetUnitId,
+      queuedEditData: editData,
     },
   };
 }

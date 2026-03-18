@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createBattleState, stepBattle, heroIntervene } from '../core/BattleEngine';
 import { canIntervene } from '../systems/HeroInterventionSystem';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase, Target } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, Target, AbilityCategory, AbilityType } from '../types';
 import type { HeroAbility } from '../types';
 
 describe('히어로 개입 시스템', () => {
@@ -26,6 +26,8 @@ describe('히어로 개입 시스템', () => {
     name: 'Protect',
     description: 'Shield an ally',
     effects: [{ type: 'SHIELD', value: 30, target: Target.SELF }],
+    category: AbilityCategory.UNIQUE,
+    abilityType: AbilityType.EFFECT,
   };
 
   const pushAbility: HeroAbility = {
@@ -33,6 +35,8 @@ describe('히어로 개입 시스템', () => {
     name: 'Force Push',
     description: 'Push enemy back',
     effects: [{ type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' }],
+    category: AbilityCategory.UNIQUE,
+    abilityType: AbilityType.EFFECT,
   };
 
   it('라운드당 최소 1회 개입이 가능하다', () => {

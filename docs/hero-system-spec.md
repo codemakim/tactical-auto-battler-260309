@@ -86,14 +86,56 @@ combat-spec.md §17~§19를 기반으로 한다.
 영웅은 유형별로 고유한 특화 능력을 가진다.
 공통 능력과 같은 개입 횟수 풀을 사용하므로, 매 턴 공통/특화 중 하나를 선택해야 한다.
 
-특화 능력의 구체적인 종류와 효과는 영웅 유형이 확정된 후 별도 정의한다.
-예: 버프 부여, 직접 데미지, 회복, 디버프 등.
+### §28.1 능력 구조
+
+각 능력은 두 축으로 분류된다:
+
+- **AbilityCategory**: `COMMON` (공통) | `UNIQUE` (고유)
+- **AbilityType**: `EFFECT` (즉시 효과) | `EDIT_ACTION` (액션 카드 편집)
+
+모든 영웅은 COMMON + EDIT_ACTION 능력 1개를 공유하며, 유형별 UNIQUE + EFFECT 능력 2~3개를 추가로 보유한다.
+
+### §28.2 영웅 유형별 특화 능력 (플레이스홀더)
+
+| 영웅 유형 | 이름 | 능력 ID | 효과 |
+|-----------|------|---------|------|
+| COMMANDER | Rally | `commander_rally` | 아군 ATK_UP (3, 2라운드) |
+| COMMANDER | Shield Order | `commander_shield_order` | 아군 실드 20 |
+| MAGE | Fireball | `mage_fireball` | 적 데미지 (x1.5) |
+| MAGE | Weaken | `mage_weaken` | 적 ATK_DOWN (3, 2라운드) |
+| SUPPORT | Heal | `support_heal` | 아군 HP 15 회복 |
+| SUPPORT | Haste | `support_haste` | 아군 턴 앞당김 |
+
+### §28.3 큐잉 흐름
+
+모든 능력(EFFECT, EDIT_ACTION)은 동일한 큐잉 흐름을 따른다:
+
+1. `queueIntervention(state, ability, targetId?, editData?)` — 큐에 저장
+2. `executeTurn()` 내부에서 `executeQueuedAbility()` 호출
+3. `abilityType`에 따라 분기:
+   - `EFFECT` → `executeIntervention()` 위임
+   - `EDIT_ACTION` → `queuedEditData`로 `heroEditAction()` 실행
+
+### §28.4 지원하는 효과 타입
+
+`executeIntervention()`이 처리하는 ActionEffect 타입:
+
+- `SHIELD` — 실드 부여
+- `DAMAGE` — 직접 데미지 (히어로 기본 공격력 15 × multiplier)
+- `PUSH` — 포지션 밀기
+- `HEAL` — HP 회복
+- `BUFF` — 버프 부여 (buffType, value, duration)
+- `DEBUFF` — 디버프 부여
+- `DELAY_TURN` — 턴 순서 뒤로 밀기
+- `ADVANCE_TURN` — 턴 순서 앞으로 당기기
 
 ---
 
 ## 구현 위치
 
-- `src/types/index.ts`: HeroType, preBattleActionSlots, ACTION_EDITED 이벤트
-- `src/systems/HeroInterventionSystem.ts`: heroEditAction() — 공통 능력
+- `src/types/index.ts`: HeroType, AbilityCategory, AbilityType, QueuedEditData, HeroAbility, HeroState
+- `src/data/HeroDefinitions.ts`: HERO_DEFINITIONS 레지스트리, COMMON_EDIT_ACTION, getHeroDefinition()
+- `src/systems/HeroInterventionSystem.ts`: executeIntervention(), executeQueuedAbility(), heroEditAction()
 - `src/systems/ActionCardSystem.ts`: resetBattleActions() — 전투 후 원복
-- `src/core/BattleEngine.ts`: createBattleState() 스냅샷, restorePreBattleActions()
+- `src/core/BattleEngine.ts`: createBattleState() 스냅샷 + abilities 채우기, queueIntervention() + editData
+- `src/core/RoundManager.ts`: executeTurn() 내 executeQueuedAbility() 호출

@@ -82,7 +82,7 @@ describe('라운드 종료 - 버프 지속시간 감소 (§7.1)', () => {
     const state: BattleState = {
       units: [p1, e1],
       reserve: [],
-      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 6,
       turnOrder: [],
@@ -110,7 +110,7 @@ describe('라운드 종료 - 버프 지속시간 감소 (§7.1)', () => {
     const state: BattleState = {
       units: [p1, e1],
       reserve: [],
-      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 6,
       turnOrder: [],
@@ -138,7 +138,7 @@ describe('라운드 종료 - 버프 지속시간 감소 (§7.1)', () => {
     const state: BattleState = {
       units: [p1, e1],
       reserve: [],
-      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 6,
       turnOrder: [],
@@ -185,7 +185,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
     const state: BattleState = {
       units: [source, ally, enemy],
       reserve: [],
-      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 1,
       turnOrder: [],
@@ -229,7 +229,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
     const state: BattleState = {
       units: [source, enemy],
       reserve: [],
-      hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+      hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 1,
       turnOrder: [],

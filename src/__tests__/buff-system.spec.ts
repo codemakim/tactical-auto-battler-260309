@@ -12,7 +12,7 @@ function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
   return {
     units: [],
     reserve: [],
-    hero: { interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
+    hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
     round: 1,
     turn: 1,
     turnOrder: [],
