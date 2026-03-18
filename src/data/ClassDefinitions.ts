@@ -726,7 +726,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
       { ...LANCER_THRUST, action: { ...LANCER_THRUST.action, isBasic: true } },
     ],
     cardTemplates: [
-      // --- 기본 카드 (actionPool에서 이전) ---
+      // --- 기본 카드 ---
       {
         id: 'lancer_charge',
         name: 'Charge',
@@ -734,7 +734,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
           { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.4], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3, 1.4, 1.5], targetPool: [Target.ENEMY_FRONT] },
           { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_FRONT], position: 'BACK' },
         ],
       },
@@ -744,7 +744,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -753,7 +753,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -773,7 +773,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.LANCER,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.8], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.6, 1.8], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -783,7 +783,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.LANCER,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
           { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_FRONT], position: 'BACK' },
         ],
       },
@@ -794,7 +794,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.LANCER,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2, 1.3, 1.4], targetPool: [Target.ENEMY_FRONT] },
           { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_FRONT], position: 'BACK' },
         ],
       },
@@ -812,14 +812,14 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
       { ...ARCHER_QUICK_SHOT, action: { ...ARCHER_QUICK_SHOT.action, isBasic: true } },
     ],
     cardTemplates: [
-      // --- 기본 카드 (actionPool에서 이전) ---
+      // --- 기본 카드 ---
       {
         id: 'archer_aimed_shot',
         name: 'Aimed Shot',
         rarity: Rarity.COMMON,
         condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.5], targetPool: [Target.ENEMY_BACK] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3, 1.5], targetPool: [Target.ENEMY_BACK] },
         ],
       },
       {
@@ -828,7 +828,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'ALWAYS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2, 1.3, 1.4], targetPool: [Target.ENEMY_ANY, Target.ENEMY_BACK] },
         ],
       },
       {
@@ -837,7 +837,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'ALWAYS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_ANY] },
         ],
       },
       {
@@ -846,7 +846,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_ANY] },
         ],
       },
       // --- 특수 카드 ---
@@ -857,7 +857,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.ARCHER,
         condition: { type: 'ALWAYS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.5], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.4, 1.5, 1.6], targetPool: [Target.ENEMY_ANY] },
         ],
       },
       {
@@ -878,7 +878,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.ARCHER,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.8], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_FRONT] },
           { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
         ],
       },
@@ -896,7 +896,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
       { ...GUARDIAN_HEAVY_SHIELD, action: { ...GUARDIAN_HEAVY_SHIELD.action, isBasic: true } },
     ],
     cardTemplates: [
-      // --- 기본 카드 (actionPool에서 이전) ---
+      // --- 기본 카드 ---
       {
         id: 'guardian_advance_guard',
         name: 'Advance Guard',
@@ -904,7 +904,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
           { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.2], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.0, 1.2, 1.4], targetPool: [Target.SELF] },
           { type: 'BUFF', multiplierPool: [0], targetPool: [Target.SELF], buffType: 'COVER', duration: 1 },
         ],
       },
@@ -914,8 +914,8 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.0], targetPool: [Target.SELF] },
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.8], targetPool: [Target.ALLY_LOWEST_HP] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.8, 1.0, 1.2], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.6, 0.8, 1.0], targetPool: [Target.ALLY_LOWEST_HP] },
           { type: 'BUFF', multiplierPool: [0], targetPool: [Target.SELF], buffType: 'COVER', duration: 1 },
         ],
       },
@@ -925,7 +925,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'HP_BELOW', value: 50 },
         effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.5], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.SELF] },
         ],
       },
       {
@@ -934,7 +934,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.3], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.1, 1.3, 1.5], targetPool: [Target.SELF] },
         ],
       },
       // --- 특수 카드 ---
@@ -945,8 +945,8 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.GUARDIAN,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7], targetPool: [Target.ENEMY_FRONT] },
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.8], targetPool: [Target.ALLY_LOWEST_HP] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.6, 0.7, 0.8], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ALLY_LOWEST_HP] },
         ],
       },
       {
@@ -966,8 +966,8 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.GUARDIAN,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.6], targetPool: [Target.SELF] },
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.0], targetPool: [Target.ALLY_LOWEST_HP] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.5, 0.6, 0.7], targetPool: [Target.SELF] },
+          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ALLY_LOWEST_HP] },
         ],
       },
     ],
@@ -984,14 +984,14 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
       { ...CONTROLLER_STRIKE, action: { ...CONTROLLER_STRIKE.action, isBasic: true } },
     ],
     cardTemplates: [
-      // --- 기본 카드 (actionPool에서 이전) ---
+      // --- 기본 카드 ---
       {
         id: 'controller_reposition',
         name: 'Reposition',
         rarity: Rarity.COMMON,
         condition: { type: 'ENEMY_FRONT_EXISTS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.6], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.5, 0.6, 0.7], targetPool: [Target.ENEMY_FRONT] },
           { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_FRONT], position: 'BACK' },
         ],
       },
@@ -1001,7 +1001,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0, 1.1, 1.2], targetPool: [Target.ENEMY_ANY, Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -1010,7 +1010,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -1031,7 +1031,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
           { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_BACK], position: 'FRONT' },
-          { type: 'DELAY_TURN', multiplierPool: [2], targetPool: [Target.ENEMY_BACK] },
+          { type: 'DELAY_TURN', multiplierPool: [1, 2], targetPool: [Target.ENEMY_BACK] },
         ],
       },
       {
@@ -1041,7 +1041,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.CONTROLLER,
         condition: { type: 'ALWAYS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_ANY] },
           { type: 'DELAY_TURN', multiplierPool: [1], targetPool: [Target.ENEMY_ANY] },
         ],
       },
@@ -1052,8 +1052,8 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.CONTROLLER,
         condition: { type: 'ALWAYS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.8], targetPool: [Target.ENEMY_ANY] },
-          { type: 'DELAY_TURN', multiplierPool: [2], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DELAY_TURN', multiplierPool: [1, 2], targetPool: [Target.ENEMY_ANY] },
         ],
       },
     ],
@@ -1070,14 +1070,14 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
       { ...ASSASSIN_QUICK_STRIKE, action: { ...ASSASSIN_QUICK_STRIKE.action, isBasic: true } },
     ],
     cardTemplates: [
-      // --- 기본 카드 (actionPool에서 이전) ---
+      // --- 기본 카드 ---
       {
         id: 'assassin_backstab',
         name: 'Backstab',
         rarity: Rarity.COMMON,
         condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.5], targetPool: [Target.ENEMY_BACK] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.ENEMY_BACK] },
         ],
       },
       {
@@ -1086,7 +1086,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_FRONT, { side: 'ENEMY', position: 'FRONT', select: 'LOWEST_HP' }] },
         ],
       },
       {
@@ -1095,7 +1095,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -1125,7 +1125,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.ASSASSIN,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
           { type: 'ADVANCE_TURN', multiplierPool: [1], targetPool: [Target.SELF] },
         ],
       },
@@ -1136,7 +1136,7 @@ export const CLASS_TEMPLATES: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.ASSASSIN,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.8], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_FRONT] },
           { type: 'DEBUFF', multiplierPool: [2], targetPool: [Target.ENEMY_FRONT], buffType: 'GUARD_DOWN', duration: 2 },
         ],
       },
