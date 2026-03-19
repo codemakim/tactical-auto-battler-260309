@@ -207,23 +207,25 @@
 - [x] Warrior Strike — POSITION_FRONT 조건 (후열에서 사용 불가)
 - [x] Lancer Thrust — POSITION_FRONT 조건
 - [x] Controller Strike — POSITION_FRONT 조건
-- [x] Assassin Quick Strike — POSITION_FRONT 조건
+- [x] Assassin Gut Strike — POSITION_FRONT 조건
 
 ## 클래스별 카드 풀 현황
 
 6개 클래스 카드 풀 완비 (ClassDefinitions.ts cardTemplates 기준)
 
 ### Warrior
-- 기본: Strike, Power Attack, Fortify, Advance
-- 특수: Shield Bash(실드+딜), Heavy Slam(RARE 고배율), Execution Cut(HP<30 마무리), Driving Blow(딜+PUSH), War Cry(ATK_UP 버프)
+- 기본: Shield Bash(딜+실드), Fortify(HP<50 긴급실드), Strike(기본), Advance(후열→전열), Hold Ground(전열 실드)
+- 특수: Heavy Slam(RARE 고배율), Iron Wall(전열 실드), Driving Blow(RARE 딜+PUSH), Execution Cut(HP<30 마무리, COMMON/RARE 2종)
 
 ### Lancer
 - 기본: Charge(후열→전열 돌진), Lance Strike, Thrust, Retreat
 - 특수: Piercing Thrust(RARE 고배율), Sweep(딜+PUSH), Skewer(RARE 딜+PUSH)
 
 ### Archer
-- 기본: Aimed Shot(후열 사격), Precise Shot(정밀 사격), Quick Shot(폴백), Volley(후열 안정딜)
-- 특수: Snipe(RARE 킬카드, 타겟 3종 분화), Focus Fire(RARE HP<30 마무리), Suppressing Shot(딜+DELAY), Poison Arrow(EPIC 딜+GUARD_DOWN), Evasive Shot(생존 이동)
+- 설계 철학: "조건부 원거리 딜러" — BACK에서만 강하고, ALWAYS 카드 0장. Controller 시너지로 극대화.
+- BACK 카드(4장): Aimed Shot(후열 저격), Volley(범용 사격), Suppressing Shot(딜+DELAY 견제), Poison Arrow(EPIC 딜+GUARD_DOWN)
+- FRONT 탈출(3장): Evasive Shot(딜+후퇴), Disengage(즉시 후퇴), Snap Shot(딜+DELAY 버팀)
+- 조건부 고배율(2장): Snipe(RARE ENEMY_BACK_EXISTS 킬카드), Focus Fire(RARE HP<30 마무리)
 
 ### Guardian
 - 기본: Advance Guard(전열 복귀+실드+COVER), Shield Wall(자기+아군 실드+COVER), Heavy Shield(HP<50 긴급 실드)
@@ -234,8 +236,11 @@
 - 특수: Gravity Pull(RARE 적 PULL), Expose Weakness(RARE 저HP PULL), Displace(SWAP), Break Formation(RARE 고ATK SWAP), Mind Slow(DELAY 2)
 
 ### Assassin
-- 기본: Backstab(후열→전열 돌진+고배율), Shadow Strike(전열 딜), Quick Strike(전열 딜), Retreat
-- 특수: Assassinate(RARE 고배율), Poisoned Blade(EPIC 딜+GUARD_DOWN)
+- 설계 철학: "침투형 리스크 딜러" — BACK→FRONT 돌진, 탈출 어려움(의도적). Archer와 후열 제거 역할 공유하되 접근법 상반.
+- 침투 카드(2장): Dive(FRONT이동+후열공격), Shadowstep(이동만)
+- 전열 공격(3장): Gut Strike(기본), Swift Blade(RARE 딜+ADVANCE_TURN), Venomous Strike(RARE 딜+GUARD_DOWN)
+- 탈출(1장): Withdraw(HP<40 딜+후퇴, 의도적으로 적음)
+- 핵심 킬(1장): Shadow Strike(EPIC FRONT에서 후열 x1.8~2.0 처형)
 
 ## 테스트 현황
 
