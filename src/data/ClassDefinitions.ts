@@ -741,6 +741,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
           { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
+          { type: 'ADVANCE_TURN', multiplierPool: [1], targetPool: [Target.SELF] },
         ],
       },
       // --- 전열 공격 카드 (POSITION_FRONT, 3장) — 침투 후 연타 ---
