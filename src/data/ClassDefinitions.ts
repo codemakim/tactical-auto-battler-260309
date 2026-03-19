@@ -276,66 +276,56 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
   },
 
   // ─── ARCHER ─────────────────────────────────────────────
+  // 설계 철학: "조건부 원거리 딜러" — BACK에서만 강하고, ALWAYS 카드 0장.
+  // FRONT에 밀려나면 탈출 카드가 필수. Controller 시너지로 극대화.
   [CharacterClass.ARCHER]: {
     characterClass: CharacterClass.ARCHER,
     baseStats: { hp: 40, atk: 13, grd: 4, agi: 10 },
     statRange: { hp: [36, 44], atk: [12, 14], grd: [3, 5], agi: [9, 12] },
     baseActionSlots: [
       {
-        condition: { type: 'ENEMY_BACK_EXISTS' },
+        condition: { type: 'POSITION_BACK' },
         action: {
           id: 'archer_aimed_shot', name: 'Aimed Shot', isBasic: true,
-          description: 'Deal ATK x1.2 damage to a back-row enemy.',
-          effects: [{ type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_BACK }],
+          description: 'Deal ATK x1.3 damage to a back-row enemy from the back line.',
+          effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
           rarity: Rarity.COMMON,
         },
       },
       {
-        condition: { type: 'ALWAYS' },
+        condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'archer_precise_shot', name: 'Precise Shot', isBasic: true,
-          description: 'Deal ATK x1.3 damage to any enemy.',
-          effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_ANY }],
+          id: 'archer_suppressing_shot', name: 'Suppressing Shot', isBasic: true,
+          description: 'Weak shot that delays enemy turn.',
+          effects: [
+            { type: 'DAMAGE', value: 0.7, stat: 'atk', target: Target.ENEMY_ANY },
+            { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+          ],
           rarity: Rarity.COMMON,
         },
       },
       {
-        condition: { type: 'ALWAYS' },
+        condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'archer_quick_shot', name: 'Quick Shot', isBasic: true,
-          description: 'Basic ranged attack.',
-          effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_ANY }],
+          id: 'archer_evasive_shot', name: 'Evasive Shot', isBasic: true,
+          description: 'Shoot while retreating to the back line.',
+          effects: [
+            { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+            { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+          ],
           rarity: Rarity.COMMON,
         },
       },
     ],
     cardTemplates: [
-      // --- 기본 카드 ---
+      // --- BACK 카드 (4장) — 후열에서 강한 공격 ---
       {
         id: 'archer_aimed_shot',
         name: 'Aimed Shot',
         rarity: Rarity.COMMON,
-        condition: { type: 'ENEMY_BACK_EXISTS' },
+        condition: { type: 'POSITION_BACK' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_BACK] },
-        ],
-      },
-      {
-        id: 'archer_precise_shot',
-        name: 'Precise Shot',
-        rarity: Rarity.COMMON,
-        condition: { type: 'ALWAYS' },
-        effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2, 1.3, 1.4], targetPool: [Target.ENEMY_ANY, Target.ENEMY_BACK] },
-        ],
-      },
-      {
-        id: 'archer_quick_shot',
-        name: 'Quick Shot',
-        rarity: Rarity.COMMON,
-        condition: { type: 'ALWAYS' },
-        effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2, 1.3, 1.4], targetPool: [Target.ENEMY_BACK] },
         ],
       },
       {
@@ -344,10 +334,65 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0, 1.1, 1.2], targetPool: [Target.ENEMY_ANY] },
         ],
       },
-      // --- 특수 카드 ---
+      {
+        id: 'archer_suppressing_shot',
+        name: 'Suppressing Shot',
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.ARCHER,
+        condition: { type: 'POSITION_BACK' },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.6, 0.7, 0.8], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DELAY_TURN', multiplierPool: [1], targetPool: [Target.ENEMY_ANY] },
+        ],
+      },
+      {
+        id: 'archer_poison_arrow',
+        name: 'Poison Arrow',
+        rarity: Rarity.EPIC,
+        classRestriction: CharacterClass.ARCHER,
+        condition: { type: 'POSITION_BACK' },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9], targetPool: [Target.ENEMY_ANY] },
+          { type: 'DEBUFF', multiplierPool: [2], targetPool: [Target.ENEMY_ANY], buffType: 'GUARD_DOWN' },
+        ],
+      },
+      // --- FRONT 카드 (3장) — 전열 탈출/대응 ---
+      {
+        id: 'archer_evasive_shot',
+        name: 'Evasive Shot',
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.ARCHER,
+        condition: { type: 'POSITION_FRONT' },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
+        ],
+      },
+      {
+        id: 'archer_disengage',
+        name: 'Disengage',
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.ARCHER,
+        condition: { type: 'POSITION_FRONT' },
+        effectTemplates: [
+          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
+        ],
+      },
+      {
+        id: 'archer_snap_shot',
+        name: 'Snap Shot',
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.ARCHER,
+        condition: { type: 'POSITION_FRONT' },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.5, 0.6, 0.7], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'DELAY_TURN', multiplierPool: [1], targetPool: [Target.ENEMY_FRONT] },
+        ],
+      },
+      // --- 조건부 카드 (2장) — 상황 특화 고배율 ---
       {
         id: 'archer_snipe',
         name: 'Snipe',
@@ -366,39 +411,6 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         condition: { type: 'ENEMY_HP_BELOW', value: 30 },
         effectTemplates: [
           { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.5, 1.6, 1.7], targetPool: [Target.ENEMY_ANY] },
-        ],
-      },
-      {
-        id: 'archer_suppressing_shot',
-        name: 'Suppressing Shot',
-        rarity: Rarity.COMMON,
-        classRestriction: CharacterClass.ARCHER,
-        condition: { type: 'ALWAYS' },
-        effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.6, 0.7, 0.8], targetPool: [Target.ENEMY_ANY] },
-          { type: 'DELAY_TURN', multiplierPool: [1], targetPool: [Target.ENEMY_ANY] },
-        ],
-      },
-      {
-        id: 'archer_poison_arrow',
-        name: 'Poison Arrow',
-        rarity: Rarity.EPIC,
-        classRestriction: CharacterClass.ARCHER,
-        condition: { type: 'ALWAYS' },
-        effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9], targetPool: [Target.ENEMY_ANY] },
-          { type: 'DEBUFF', multiplierPool: [2], targetPool: [Target.ENEMY_ANY], buffType: 'GUARD_DOWN' },
-        ],
-      },
-      {
-        id: 'archer_evasive_shot',
-        name: 'Evasive Shot',
-        rarity: Rarity.COMMON,
-        classRestriction: CharacterClass.ARCHER,
-        condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_FRONT] },
-          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
         ],
       },
     ],
@@ -669,17 +681,22 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
   },
 
   // ─── ASSASSIN ───────────────────────────────────────────
+  // 설계 철학: "침투형 리스크 딜러" — BACK→FRONT 돌진, 높은 ATK/AGI, 낮은 HP/GRD.
+  // 탈출 어려움(의도적). 들어가서 죽이거나 죽거나. Archer와 후열 제거 역할 공유하되 접근법 상반.
   [CharacterClass.ASSASSIN]: {
     characterClass: CharacterClass.ASSASSIN,
     baseStats: { hp: 38, atk: 14, grd: 3, agi: 11 },
     statRange: { hp: [34, 42], atk: [13, 16], grd: [2, 4], agi: [10, 12] },
     baseActionSlots: [
       {
-        condition: { type: 'ENEMY_BACK_EXISTS' },
+        condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'assassin_backstab', name: 'Backstab', isBasic: true,
-          description: 'Deal ATK x1.5 damage to a back-row enemy.',
-          effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_BACK }],
+          id: 'assassin_dive', name: 'Dive', isBasic: true,
+          description: 'Rush to front and strike a back-row enemy.',
+          effects: [
+            { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+            { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_BACK },
+          ],
           rarity: Rarity.COMMON,
         },
       },
@@ -687,48 +704,34 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         condition: { type: 'POSITION_FRONT' },
         action: {
           id: 'assassin_gut_strike', name: 'Gut Strike', isBasic: true,
-          description: 'Deal ATK x1.2 damage from the front.',
-          effects: [{ type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT }],
+          description: 'Deal ATK x1.3 damage from the front.',
+          effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_FRONT }],
           rarity: Rarity.COMMON,
         },
       },
       {
-        condition: { type: 'POSITION_FRONT' },
+        condition: { type: 'HP_BELOW', value: 40 },
         action: {
-          id: 'assassin_quick_strike', name: 'Quick Strike', isBasic: true,
-          description: 'Basic swift attack.',
-          effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
+          id: 'assassin_withdraw', name: 'Withdraw', isBasic: true,
+          description: 'Strike and retreat when badly hurt.',
+          effects: [
+            { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+            { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+          ],
           rarity: Rarity.COMMON,
         },
       },
     ],
     cardTemplates: [
-      // --- 기본 카드 ---
+      // --- 침투 카드 (POSITION_BACK, 2장) — 후열에서 전열로 돌진 ---
       {
-        id: 'assassin_backstab',
-        name: 'Backstab',
+        id: 'assassin_dive',
+        name: 'Dive',
         rarity: Rarity.COMMON,
-        condition: { type: 'ENEMY_BACK_EXISTS' },
+        condition: { type: 'POSITION_BACK' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.ENEMY_BACK] },
-        ],
-      },
-      {
-        id: 'assassin_gut_strike',
-        name: 'Gut Strike',
-        rarity: Rarity.COMMON,
-        condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.ENEMY_FRONT, { side: 'ENEMY', position: 'FRONT', select: 'LOWEST_HP' }] },
-        ],
-      },
-      {
-        id: 'assassin_quick_strike',
-        name: 'Quick Strike',
-        rarity: Rarity.COMMON,
-        condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.3, 1.4, 1.5], targetPool: [Target.ENEMY_BACK] },
         ],
       },
       {
@@ -740,15 +743,14 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
           { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
         ],
       },
-      // --- 특수 카드 ---
+      // --- 전열 공격 카드 (POSITION_FRONT, 3장) — 침투 후 연타 ---
       {
-        id: 'assassin_shadow_strike',
-        name: 'Shadow Strike',
-        rarity: Rarity.EPIC,
-        classRestriction: CharacterClass.ASSASSIN,
-        condition: { type: 'ENEMY_BACK_EXISTS' },
+        id: 'assassin_gut_strike',
+        name: 'Gut Strike',
+        rarity: Rarity.COMMON,
+        condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [2.0], targetPool: [Target.ENEMY_BACK] },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2, 1.3, 1.4], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
       {
@@ -771,6 +773,29 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         effectTemplates: [
           { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_FRONT] },
           { type: 'DEBUFF', multiplierPool: [2], targetPool: [Target.ENEMY_FRONT], buffType: 'GUARD_DOWN', duration: 2 },
+        ],
+      },
+      // --- 탈출 카드 (1장) — HP 낮을 때만 후퇴 가능 ---
+      {
+        id: 'assassin_withdraw',
+        name: 'Withdraw',
+        rarity: Rarity.COMMON,
+        classRestriction: CharacterClass.ASSASSIN,
+        condition: { type: 'HP_BELOW', value: 40 },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_FRONT] },
+          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
+        ],
+      },
+      // --- 핵심 킬 카드 (1장) — 전열에서 후열 적을 직접 처형 ---
+      {
+        id: 'assassin_shadow_strike',
+        name: 'Shadow Strike',
+        rarity: Rarity.EPIC,
+        classRestriction: CharacterClass.ASSASSIN,
+        condition: { type: 'POSITION_FRONT' },
+        effectTemplates: [
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.8, 1.9, 2.0], targetPool: [Target.ENEMY_BACK] },
         ],
       },
     ],

@@ -183,10 +183,10 @@ describe('액션 카드 시스템', () => {
 
       const reset = resetRunActions(modified);
 
-      // Archer 기본 슬롯: archer_aimed_shot, archer_precise_shot, archer_quick_shot
+      // Archer 기본 슬롯: archer_aimed_shot, archer_suppressing_shot, archer_evasive_shot
       expect(reset.actionSlots[0].action.id).toBe('archer_aimed_shot');
-      expect(reset.actionSlots[1].action.id).toBe('archer_precise_shot');
-      expect(reset.actionSlots[2].action.id).toBe('archer_quick_shot');
+      expect(reset.actionSlots[1].action.id).toBe('archer_suppressing_shot');
+      expect(reset.actionSlots[2].action.id).toBe('archer_evasive_shot');
     });
 
     it('스탯은 변경되지 않는다', () => {
