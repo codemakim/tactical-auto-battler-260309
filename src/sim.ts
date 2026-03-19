@@ -10,13 +10,412 @@
  *    PLAYER=WARRIOR,ARCHER,GUARDIAN,LANCER ENEMY=ASSASSIN,CONTROLLER,WARRIOR,ARCHER npx tsx src/sim.ts
  *    → 카드는 해당 클래스 풀에서 랜덤 추첨 (시드 기반)
  *    → 포지션은 클래스 선호도 자동 배정
+ *
+ * 3) 직접 지정 모드: 아래 MANUAL_TEAMS를 편집하고 실행
+ *    → 클래스 + 액션 슬롯(기술)을 직접 지정
+ *    → 사용 가능한 액션 목록은 ACTION_CATALOG에서 확인
+ *    → npx tsx src/sim.ts
  */
 
 import { generateCharacterDef, createUnit, resetUnitCounter } from './entities/UnitFactory';
 import { createBattleState, stepBattle } from './core/BattleEngine';
-import { CharacterClass, Team, Position } from './types';
-import { getAvailableClasses } from './data/ClassDefinitions';
-import type { BattleState, BattleEvent, BattleUnit, ActionSlot } from './types';
+import { CharacterClass, Team, Position, Target, Rarity, BuffType } from './types';
+import { getAvailableClasses, CLASS_DEFINITIONS } from './data/ClassDefinitions';
+import { UNIVERSAL_CARD_TEMPLATES } from './data/ActionPool';
+import type { BattleState, BattleEvent, BattleUnit, ActionSlot, ActionCondition, ActionEffect, ActionTargetType } from './types';
+
+// ══════════════════════════════════════════════════════
+//  직접 지정 모드 — 여기를 편집하세요!
+//  MANUAL_TEAMS를 null이 아닌 값으로 설정하면 활성화됩니다.
+//  null로 두면 기존 랜덤/환경변수 모드로 동작합니다.
+// ══════════════════════════════════════════════════════
+
+/*
+ * ┌─────────────────────────────────────────────────────┐
+ * │              📋 사용 가능한 타겟 (Target)             │
+ * ├─────────────────────────────────────────────────────┤
+ * │ Target.SELF            - 자기 자신                   │
+ * │ Target.ENEMY_FRONT     - 적 전열 (AGI 높은 적)       │
+ * │ Target.ENEMY_BACK      - 적 후열 (AGI 높은 적)       │
+ * │ Target.ENEMY_ANY       - 적 전체 (HP 낮은 적)        │
+ * │ Target.ALLY_LOWEST_HP  - 아군 중 HP 가장 낮은 유닛   │
+ * ├─────────────────────────────────────────────────────┤
+ * │              📋 사용 가능한 조건 (Condition)          │
+ * ├─────────────────────────────────────────────────────┤
+ * │ { type: 'ALWAYS' }                  - 항상           │
+ * │ { type: 'POSITION_FRONT' }          - 전열일 때      │
+ * │ { type: 'POSITION_BACK' }           - 후열일 때      │
+ * │ { type: 'HP_BELOW', value: 50 }     - HP 50% 이하   │
+ * │ { type: 'HP_ABOVE', value: 50 }     - HP 50% 이상   │
+ * │ { type: 'ENEMY_FRONT_EXISTS' }      - 적 전열 존재   │
+ * │ { type: 'ENEMY_BACK_EXISTS' }       - 적 후열 존재   │
+ * │ { type: 'ENEMY_HP_BELOW', value: 30 } - 적 HP 30%↓  │
+ * │ { type: 'FIRST_ACTION_THIS_ROUND' } - 라운드 첫 행동 │
+ * ├─────────────────────────────────────────────────────┤
+ * │            📋 사용 가능한 효과 (Effect)               │
+ * ├─────────────────────────────────────────────────────┤
+ * │ { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT }         │
+ * │ { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF }                │
+ * │ { type: 'HEAL', value: 20, target: Target.SELF }                                │
+ * │ { type: 'MOVE', target: Target.SELF, position: 'FRONT' }                        │
+ * │ { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' }                  │
+ * │ { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF } │
+ * │ { type: 'DEBUFF', buffType: 'GUARD_DOWN', duration: 2, value: 2, target: ... }  │
+ * │ { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY }                      │
+ * │ { type: 'ADVANCE_TURN', value: 1, target: Target.SELF }                         │
+ * │ { type: 'SWAP', target: Target.ENEMY_BACK, swapTarget: Target.ENEMY_FRONT }     │
+ * └─────────────────────────────────────────────────────┘
+ *
+ * ── 액션 카드 카탈로그 (실행 시 콘솔에도 출력됩니다) ──
+ * 아래 예시처럼 actionSlots에 3개 슬롯을 직접 지정하세요.
+ * 각 슬롯은 { condition, action: { id, name, effects } } 형태입니다.
+ */
+
+interface ManualUnit {
+  name: string;
+  characterClass: string;       // 'WARRIOR' | 'ARCHER' | 'GUARDIAN' | 'LANCER' | 'CONTROLLER' | 'ASSASSIN'
+  position?: string;            // 'FRONT' | 'BACK' (생략 시 클래스 선호 포지션)
+  actionSlots: ActionSlot[];    // 3개 액션 슬롯 직접 지정
+}
+
+interface ManualTeams {
+  player: ManualUnit[];   // 앞 3명 = 전투 참가, 4번째부터 = 예비
+  enemy: ManualUnit[];
+}
+
+// ──────────────────────────────────────────────────────
+// 🎮 아래 null을 지우고 팀을 편집하면 직접 지정 모드 활성화!
+// ──────────────────────────────────────────────────────
+const MANUAL_TEAMS = null as ManualTeams | null;
+
+/* ── 예시 (이 주석을 풀고 위의 null 대신 대입하세요) ──
+
+const MANUAL_TEAMS_EXAMPLE: ManualTeams = {
+  player: [
+    {
+      name: 'Aldric',
+      characterClass: 'WARRIOR',
+      position: 'FRONT',
+      actionSlots: [
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'HP_BELOW', value: 50 },
+          action: {
+            id: 'warrior_fortify', name: 'Fortify', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'warrior_heavy_slam', name: 'Heavy Slam', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'RARE',
+          },
+        },
+      ],
+    },
+    {
+      name: 'Shade',
+      characterClass: 'ASSASSIN',
+      position: 'BACK',
+      actionSlots: [
+        {
+          condition: { type: 'POSITION_BACK' },
+          action: {
+            id: 'assassin_dive', name: 'Dive', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_BACK },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'assassin_gut_strike', name: 'Gut Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'assassin_shadow_strike', name: 'Shadow Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 2.0, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'EPIC',
+          },
+        },
+      ],
+    },
+    {
+      name: 'Lyra',
+      characterClass: 'ARCHER',
+      position: 'BACK',
+      actionSlots: [
+        {
+          condition: { type: 'POSITION_BACK' },
+          action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_BACK' },
+          action: {
+            id: 'archer_suppressing_shot', name: 'Suppressing Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.7, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+      ],
+    },
+  ],
+  enemy: [
+    {
+      name: 'Bron',
+      characterClass: 'GUARDIAN',
+      position: 'FRONT',
+      actionSlots: [
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'guardian_shield_wall', name: 'Shield Wall', description: '',
+            effects: [
+              { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.ALLY_LOWEST_HP },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_BACK' },
+          action: {
+            id: 'guardian_advance_guard', name: 'Advance Guard', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'SHIELD', value: 1.2, stat: 'grd', target: Target.SELF },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'HP_BELOW', value: 50 },
+          action: {
+            id: 'guardian_heavy_shield', name: 'Heavy Shield', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          },
+        },
+      ],
+    },
+    {
+      name: 'Vex',
+      characterClass: 'CONTROLLER',
+      position: 'BACK',
+      actionSlots: [
+        {
+          condition: { type: 'ENEMY_FRONT_EXISTS' },
+          action: {
+            id: 'controller_reposition', name: 'Reposition', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_BACK' },
+          action: {
+            id: 'controller_tactical_shot', name: 'Tactical Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'ALWAYS' },
+          action: {
+            id: 'controller_mind_jolt', name: 'Mind Jolt', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.5, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ],
+            rarity: 'RARE',
+          },
+        },
+      ],
+    },
+    {
+      name: 'Kael',
+      characterClass: 'LANCER',
+      position: 'FRONT',
+      actionSlots: [
+        {
+          condition: { type: 'POSITION_BACK' },
+          action: {
+            id: 'lancer_charge', name: 'Charge', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'lancer_piercing_thrust', name: 'Piercing Thrust', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'RARE',
+          },
+        },
+        {
+          condition: { type: 'POSITION_FRONT' },
+          action: {
+            id: 'lancer_sweep', name: 'Sweep', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ],
+            rarity: 'COMMON',
+          },
+        },
+      ],
+    },
+  ],
+};
+*/
+
+// ── 액션 카탈로그 출력 함수 ──────────────────────────
+
+function printActionCatalog(): void {
+  console.log('═══════════════════════════════════════════');
+  console.log('  📋 액션 카드 카탈로그 (참고용)');
+  console.log('═══════════════════════════════════════════\n');
+
+  const availableClasses = getAvailableClasses();
+  for (const cls of availableClasses) {
+    const template = CLASS_DEFINITIONS[cls];
+    if (!template) continue;
+
+    console.log(`── ${cls} ──────────────────`);
+
+    // testActionSlots (기본 액션)
+    console.log('  [기본 액션 (testActionSlots)]');
+    for (const slot of template.testActionSlots) {
+      const effects = slot.action.effects.map(e => {
+        let s = `${e.type}`;
+        if (e.value) s += ` x${e.value}`;
+        if (e.stat) s += `(${e.stat})`;
+        if (e.position) s += `→${e.position}`;
+        if (e.buffType) s += `[${e.buffType}]`;
+        return s;
+      }).join(' + ');
+      console.log(`    ${slot.action.id}: ${slot.action.name} (${slot.condition.type}${slot.condition.value ? ':' + slot.condition.value : ''})`);
+      console.log(`      효과: ${effects}`);
+    }
+
+    // cardTemplates (카드 풀)
+    console.log('  [카드 풀 (cardTemplates)]');
+    for (const card of template.cardTemplates) {
+      const effects = card.effectTemplates.map(e => {
+        let s = `${e.type}`;
+        if (e.multiplierPool.length > 0 && e.multiplierPool[0] !== 0) {
+          s += ` x${e.multiplierPool.join('/')}`;
+        }
+        if (e.stat) s += `(${e.stat})`;
+        if (e.position) s += `→${e.position}`;
+        if (e.buffType) s += `[${e.buffType}]`;
+        return s;
+      }).join(' + ');
+      const restriction = card.classRestriction ? ` [${card.classRestriction} 전용]` : '';
+      console.log(`    ${card.id}: ${card.name} [${card.rarity}]${restriction} (${card.condition.type}${card.condition.value ? ':' + card.condition.value : ''})`);
+      console.log(`      효과: ${effects}`);
+    }
+    console.log('');
+  }
+
+  // 범용 카드
+  console.log('── UNIVERSAL (범용) ──────────────────');
+  for (const card of UNIVERSAL_CARD_TEMPLATES) {
+    const effects = card.effectTemplates.map(e => {
+      let s = `${e.type}`;
+      if (e.multiplierPool.length > 0 && e.multiplierPool[0] !== 0) {
+        s += ` x${e.multiplierPool.join('/')}`;
+      }
+      if (e.stat) s += `(${e.stat})`;
+      if (e.position) s += `→${e.position}`;
+      if (e.buffType) s += `[${e.buffType}]`;
+      return s;
+    }).join(' + ');
+    console.log(`    ${card.id}: ${card.name} [${card.rarity}] (${card.condition.type})`);
+    console.log(`      효과: ${effects}`);
+  }
+  console.log('\n');
+}
+
+// ── 직접 지정 팀 빌드 ──────────────────────────────
+
+function buildManualTeam(
+  manualUnits: ManualUnit[],
+  team: Team,
+  nameOffset: number,
+  seedBase: number,
+) {
+  const units: BattleUnit[] = [];
+  const reserves: BattleUnit[] = [];
+  const activeCount = Math.min(manualUnits.length, 3);
+
+  for (let i = 0; i < manualUnits.length; i++) {
+    const mu = manualUnits[i];
+    const cls = mu.characterClass;
+
+    // generateCharacterDef로 스탯 생성 후 actionSlots만 오버라이드
+    const def = generateCharacterDef(mu.name, cls, seedBase + i);
+    def.baseActionSlots = mu.actionSlots.map(slot => ({ ...slot }));
+
+    const pos = (mu.position ?? preferredPosition(cls)) as any;
+
+    if (i < activeCount) {
+      units.push(createUnit(def, team, pos));
+    } else {
+      reserves.push(createUnit(def, team, Position.BACK));
+    }
+  }
+
+  return { units, reserves };
+}
 
 // ── 시드 기반 난수 ─────────────────────────────────
 
@@ -127,16 +526,26 @@ function buildCustomTeam(
 
 resetUnitCounter();
 
-const isCustomMode = !!(envPlayer || envEnemy);
+const isManualMode = MANUAL_TEAMS !== null;
+const isCustomMode = !isManualMode && !!(envPlayer || envEnemy);
 const rand = seededRand(masterSeed);
 
-const player = envPlayer
-  ? buildCustomTeam(parseClassList(envPlayer), Team.PLAYER, 0, masterSeed + 100)
-  : buildRandomTeam(rand, Team.PLAYER, 3, 1, 0, masterSeed + 100);
+// 직접 지정 모드일 때 카탈로그 출력
+if (isManualMode) {
+  printActionCatalog();
+}
 
-const enemy = envEnemy
-  ? buildCustomTeam(parseClassList(envEnemy), Team.ENEMY, 8, masterSeed + 200)
-  : buildRandomTeam(rand, Team.ENEMY, 3, 1, 8, masterSeed + 200);
+const player = MANUAL_TEAMS
+  ? buildManualTeam(MANUAL_TEAMS.player, Team.PLAYER, 0, masterSeed + 100)
+  : envPlayer
+    ? buildCustomTeam(parseClassList(envPlayer), Team.PLAYER, 0, masterSeed + 100)
+    : buildRandomTeam(rand, Team.PLAYER, 3, 1, 0, masterSeed + 100);
+
+const enemy = MANUAL_TEAMS
+  ? buildManualTeam(MANUAL_TEAMS.enemy, Team.ENEMY, 8, masterSeed + 200)
+  : envEnemy
+    ? buildCustomTeam(parseClassList(envEnemy), Team.ENEMY, 8, masterSeed + 200)
+    : buildRandomTeam(rand, Team.ENEMY, 3, 1, 8, masterSeed + 200);
 
 // ── 전투 실행 ────────────────────────────────────
 
