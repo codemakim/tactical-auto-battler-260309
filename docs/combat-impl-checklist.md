@@ -50,9 +50,11 @@
 - [x] POSITION_FRONT
 - [x] POSITION_BACK
 - [x] HP_BELOW_PERCENT
+- [x] HP_ABOVE
 - [x] ALLY_HP_BELOW_PERCENT
 - [x] ENEMY_IN_FRONT (= ENEMY_FRONT_EXISTS)
 - [x] ENEMY_IN_BACK (= ENEMY_BACK_EXISTS)
+- [x] ENEMY_HP_BELOW (적 HP 임계값 이하 조건 — Archer Focus Fire 등)
 - [x] LOWEST_HP_ENEMY
 - [x] FIRST_ACTION_THIS_ROUND
 - [x] HAS_HERO_BUFF
@@ -68,6 +70,8 @@
 - [x] ApplyBuff (BUFF/DEBUFF 효과, BuffType 기반, 지속시간)
 - [x] DelayTurn (액션 효과로 연결 완료)
 - [x] AdvanceTurn (액션 효과로 연결 완료)
+- [x] Swap (두 유닛 위치 교환 — Controller Displace/Break Formation)
+- [x] Pull (PUSH + position: FRONT로 구현 — Controller Gravity Pull/Expose Weakness)
 
 ## 포지션 변경 (§13, §14)
 
@@ -149,7 +153,8 @@
 - [x] 보상 생성 로직 — 5개 옵션, 결정론적 (테스트 있음)
 - [x] 액션 교체 로직 — 모든 슬롯(0~2) 교체 가능, 유효하지 않은 인덱스만 차단 (테스트 있음)
 - [x] 런 종료 시 baseActionSlots로 원래 3개 슬롯 복원 (테스트 있음)
-- [~] 액션 카드 예시 데이터 (ActionPool에 기본 데이터 있음)
+- [x] 액션 카드 템플릿 — 6개 클래스 카드 풀 완비 (ClassDefinitions.cardTemplates)
+- [x] 카드 템플릿 랜덤화 — multiplierPool/targetPool에서 seed 기반 결정론적 선택
 
 ## 버프/디버프 시스템
 
@@ -171,9 +176,13 @@
 - [x] ACTION_EDITED 이벤트 타입
 - [x] 아군만 편집, 적군/사망 유닛 불가
 - [x] 예비 유닛도 스냅샷/원복 대상
-- [x] HeroType 타입 정의 (특화 능력 구조 준비)
-- [ ] 특화 능력 구현
-- [x] 13개 테스트 (hero-edit-action.spec.ts)
+- [x] HeroType 타입 정의 (COMMANDER, MAGE, SUPPORT)
+- [x] HeroDefinitions.ts — 영웅별 능력 레지스트리 (COMMON_EDIT_ACTION + UNIQUE 능력)
+- [x] 특화 능력 구현 — COMMANDER(Rally ATK_UP, Shield Order 실드), MAGE(Fireball 데미지, Weaken ATK_DOWN), SUPPORT(Heal 회복, Haste 턴앞당김)
+- [x] 다중 능력 보유: AbilityCategory(COMMON/UNIQUE) × AbilityType(EFFECT/EDIT_ACTION)
+- [x] createBattleState에서 HERO_DEFINITIONS 자동 참조
+- [x] preBattleActionSlots 스냅샷 + 전투 종료 restorePreBattleActions 원복
+- [x] 31개 테스트 (hero-edit-action.spec.ts 13개 + hero-abilities.spec.ts 18개)
 
 ## 커버 시스템 (§25, cover-system-spec.md)
 
@@ -199,3 +208,35 @@
 - [x] Lancer Thrust — POSITION_FRONT 조건
 - [x] Controller Strike — POSITION_FRONT 조건
 - [x] Assassin Quick Strike — POSITION_FRONT 조건
+
+## 클래스별 카드 풀 현황
+
+6개 클래스 카드 풀 완비 (ClassDefinitions.ts cardTemplates 기준)
+
+### Warrior
+- 기본: Strike, Power Attack, Fortify, Advance
+- 특수: Shield Bash(실드+딜), Heavy Slam(RARE 고배율), Execution Cut(HP<30 마무리), Driving Blow(딜+PUSH), War Cry(ATK_UP 버프)
+
+### Lancer
+- 기본: Charge(후열→전열 돌진), Lance Strike, Thrust, Retreat
+- 특수: Piercing Thrust(RARE 고배율), Sweep(딜+PUSH), Skewer(RARE 딜+PUSH)
+
+### Archer
+- 기본: Aimed Shot(후열 사격), Precise Shot(정밀 사격), Quick Shot(폴백), Volley(후열 안정딜)
+- 특수: Snipe(RARE 킬카드, 타겟 3종 분화), Focus Fire(RARE HP<30 마무리), Suppressing Shot(딜+DELAY), Poison Arrow(EPIC 딜+GUARD_DOWN), Evasive Shot(생존 이동)
+
+### Guardian
+- 기본: Advance Guard(전열 복귀+실드+COVER), Shield Wall(자기+아군 실드+COVER), Heavy Shield(HP<50 긴급 실드)
+- 특수: Bulwark(RARE 고실드+COVER), Fortified Wall(전열 실드), Iron Bastion(RARE 고실드)
+
+### Controller
+- 기본: Disrupt(전열 딜+DELAY), Mind Jolt(후열 딜+DELAY), Guard(폴백)
+- 특수: Gravity Pull(RARE 적 PULL), Expose Weakness(RARE 저HP PULL), Displace(SWAP), Break Formation(RARE 고ATK SWAP), Mind Slow(DELAY 2)
+
+### Assassin
+- 기본: Backstab(후열→전열 돌진+고배율), Shadow Strike(전열 딜), Quick Strike(전열 딜), Retreat
+- 특수: Assassinate(RARE 고배율), Poisoned Blade(EPIC 딜+GUARD_DOWN)
+
+## 테스트 현황
+
+- 28개 테스트 파일, 351개 테스트 전체 통과 (2026-03-19 기준)
