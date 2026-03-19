@@ -2,8 +2,14 @@
  * 전투 시뮬레이션 스크립트
  * 실행: npx tsx src/sim.ts
  *
- * 시드 기반 랜덤 팀 구성 → 전투 → 읽기 좋은 로그 출력
- * 재현: SIM_SEED=12345 npx tsx src/sim.ts
+ * ── 모드 ──
+ * 1) 랜덤 모드 (기본):  npx tsx src/sim.ts
+ *    재현:              SIM_SEED=12345 npx tsx src/sim.ts
+ *
+ * 2) 커스텀 모드: 클래스 지정 (쉼표 구분, 3명+예비1 = 4명)
+ *    PLAYER=WARRIOR,ARCHER,GUARDIAN,LANCER ENEMY=ASSASSIN,CONTROLLER,WARRIOR,ARCHER npx tsx src/sim.ts
+ *    → 카드는 해당 클래스 풀에서 랜덤 추첨 (시드 기반)
+ *    → 포지션은 클래스 선호도 자동 배정
  */
 
 import { generateCharacterDef, createUnit, resetUnitCounter } from './entities/UnitFactory';
@@ -74,13 +80,63 @@ function buildRandomTeam(
   return { units, reserves };
 }
 
+// ── 커스텀 팀 생성 ─────────────────────────────────
+
+// @ts-ignore — Node.js 전용
+const envPlayer: string | undefined = typeof process !== 'undefined' ? process.env?.PLAYER : undefined;
+// @ts-ignore
+const envEnemy: string | undefined = typeof process !== 'undefined' ? process.env?.ENEMY : undefined;
+
+function parseClassList(env: string): string[] {
+  return env.split(',').map(s => s.trim().toUpperCase());
+}
+
+function buildCustomTeam(
+  classList: string[],
+  team: Team,
+  nameOffset: number,
+  seedBase: number,
+) {
+  const available = getAvailableClasses();
+  const units: BattleUnit[] = [];
+  const reserves: BattleUnit[] = [];
+  const activeCount = Math.min(classList.length, 3);
+
+  for (let i = 0; i < classList.length; i++) {
+    const cls = classList[i];
+    if (!available.includes(cls)) {
+      console.error(`⚠ 알 수 없는 클래스: ${cls} (사용 가능: ${available.join(', ')})`);
+      // @ts-ignore
+      process.exit(1);
+    }
+    const name = NAMES_POOL[(nameOffset + i) % NAMES_POOL.length];
+    const def = generateCharacterDef(name, cls, seedBase + i);
+    const pos = preferredPosition(cls);
+
+    if (i < activeCount) {
+      units.push(createUnit(def, team, pos as any));
+    } else {
+      reserves.push(createUnit(def, team, Position.BACK));
+    }
+  }
+
+  return { units, reserves };
+}
+
 // ── 팀 구성 ──────────────────────────────────────
 
 resetUnitCounter();
 
+const isCustomMode = !!(envPlayer || envEnemy);
 const rand = seededRand(masterSeed);
-const player = buildRandomTeam(rand, Team.PLAYER, 3, 1, 0, masterSeed + 100);
-const enemy = buildRandomTeam(rand, Team.ENEMY, 3, 1, 8, masterSeed + 200);
+
+const player = envPlayer
+  ? buildCustomTeam(parseClassList(envPlayer), Team.PLAYER, 0, masterSeed + 100)
+  : buildRandomTeam(rand, Team.PLAYER, 3, 1, 0, masterSeed + 100);
+
+const enemy = envEnemy
+  ? buildCustomTeam(parseClassList(envEnemy), Team.ENEMY, 8, masterSeed + 200)
+  : buildRandomTeam(rand, Team.ENEMY, 3, 1, 8, masterSeed + 200);
 
 // ── 전투 실행 ────────────────────────────────────
 

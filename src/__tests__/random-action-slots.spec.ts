@@ -45,7 +45,7 @@ describe('액션 슬롯 배정', () => {
   it('createCharacterDef는 여전히 고정 슬롯 반환', () => {
     const def = createCharacterDef('Warrior', CharacterClass.WARRIOR);
     const template = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
-    const expectedIds = template.baseActionSlots.map(s => s.action.id);
+    const expectedIds = template.testActionSlots.map(s => s.action.id);
     expect(def.baseActionSlots.map(s => s.action.id)).toEqual(expectedIds);
   });
 

@@ -145,7 +145,7 @@
 ## 액션 카드 시스템 (action-card-spec.md)
 
 - [x] 3 액션 슬롯, 우선순위 평가
-- [x] 각 클래스별 기본 3개 슬롯 정의 (ClassDefinitions.baseActionSlots)
+- [x] 각 클래스별 테스트용 3개 슬롯 정의 (ClassDefinitions.testActionSlots, TODO: 제거 예정)
 - [x] BattleUnit.baseActionSlots — 런 리셋 참조용
 - [x] Action 타입에 rarity 필드
 - [x] Action 타입에 classRestriction 필드

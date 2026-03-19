@@ -6,8 +6,8 @@ export interface ClassTemplate {
   baseStats: Omit<Stats, 'maxHp'>;
   /** 캐릭터 생성 시 랜덤 범위 (§23.5) */
   statRange: StatRange;
-  /** 클래스 기본 3개 액션 슬롯. 우선순위 순서 (0이 최우선). */
-  baseActionSlots: ActionSlot[];
+  /** TODO: 테스트 전용 — 게임에서는 cardTemplates 풀에서 랜덤 추첨. 테스트 안정화 후 제거 예정. */
+  testActionSlots: ActionSlot[];
   /** 카드 변형 템플릿 — 보상 시 랜덤 변형 생성 */
   cardTemplates: CardTemplate[];
 }
@@ -21,7 +21,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
     characterClass: CharacterClass.WARRIOR,
     baseStats: { hp: 53, atk: 12, grd: 7, agi: 6 },
     statRange: { hp: [48, 58], atk: [11, 13], grd: [6, 8], agi: [5, 7] },
-    baseActionSlots: [
+    testActionSlots: [
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
@@ -166,7 +166,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
     characterClass: CharacterClass.LANCER,
     baseStats: { hp: 46, atk: 13, grd: 5, agi: 9 },
     statRange: { hp: [42, 50], atk: [12, 15], grd: [4, 6], agi: [8, 10] },
-    baseActionSlots: [
+    testActionSlots: [
       {
         condition: { type: 'POSITION_BACK' },
         action: {
@@ -282,7 +282,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
     characterClass: CharacterClass.ARCHER,
     baseStats: { hp: 40, atk: 13, grd: 4, agi: 10 },
     statRange: { hp: [36, 44], atk: [12, 14], grd: [3, 5], agi: [9, 12] },
-    baseActionSlots: [
+    testActionSlots: [
       {
         condition: { type: 'POSITION_BACK' },
         action: {
@@ -421,7 +421,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
     characterClass: CharacterClass.GUARDIAN,
     baseStats: { hp: 60, atk: 8, grd: 11, agi: 4 },
     statRange: { hp: [56, 65], atk: [7, 10], grd: [10, 12], agi: [4, 5] },
-    baseActionSlots: [
+    testActionSlots: [
       {
         condition: { type: 'POSITION_BACK' },
         action: {
@@ -541,7 +541,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
     characterClass: CharacterClass.CONTROLLER,
     baseStats: { hp: 44, atk: 9, grd: 5, agi: 8 },
     statRange: { hp: [40, 48], atk: [8, 11], grd: [4, 6], agi: [7, 9] },
-    baseActionSlots: [
+    testActionSlots: [
       {
         condition: { type: 'ENEMY_FRONT_EXISTS' },
         action: {
@@ -687,7 +687,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
     characterClass: CharacterClass.ASSASSIN,
     baseStats: { hp: 38, atk: 14, grd: 3, agi: 11 },
     statRange: { hp: [34, 42], atk: [13, 16], grd: [2, 4], agi: [10, 12] },
-    baseActionSlots: [
+    testActionSlots: [
       {
         condition: { type: 'POSITION_BACK' },
         action: {

@@ -14,7 +14,7 @@ src/
   types/
     index.ts           - 모든 타입 정의 (interface + as const, NO enum)
   data/                - 정적 게임 데이터
-    ClassDefinitions.ts - 클래스 레지스트리 (스탯, baseActionSlots, cardTemplates 통합)
+    ClassDefinitions.ts - 클래스 레지스트리 (스탯, testActionSlots, cardTemplates 통합)
                          새 클래스 추가 = 이 파일에 한 블록 추가만으로 완료
     HeroDefinitions.ts - 영웅 유형별 정의 레지스트리 (COMMANDER/MAGE/SUPPORT, 능력 목록)
     ActionPool.ts      - 범용 액션 + ClassDefinitions에서 자동 수집한 전체 풀

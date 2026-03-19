@@ -15,7 +15,7 @@ function nextId(team: Team, name: string): string {
 }
 
 /**
- * 클래스 템플릿에서 CharacterDefinition 생성 (고정 스탯, 테스트/폴백용)
+ * 클래스 템플릿에서 CharacterDefinition 생성 (고정 스탯 + testActionSlots 사용, 테스트 전용)
  */
 export function createCharacterDef(
   name: string,
@@ -31,7 +31,7 @@ export function createCharacterDef(
     name,
     characterClass,
     baseStats: { ...template.baseStats },
-    baseActionSlots: template.baseActionSlots.map(slot => ({ ...slot })),
+    baseActionSlots: template.testActionSlots.map(slot => ({ ...slot })),
     trainingsUsed,
     trainingPotential,
   };
@@ -61,7 +61,7 @@ function randInt(rand: () => number, min: number, max: number): number {
 /**
  * 클래스 범위 내 랜덤 스탯으로 CharacterDefinition 생성 (§23.5)
  * trainingPotential도 2~5 범위에서 랜덤
- * 고정 baseActionSlots 사용
+ * 고정 testActionSlots 사용 (테스트 전용)
  */
 export function generateCharacterDef(
   name: string,
