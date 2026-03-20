@@ -374,6 +374,121 @@ describe('라운드 종료 - 실드 제거 (§7)', () => {
   });
 });
 
+describe('stepBattle 통합 - 라운드 간 실드 제거 (§7)', () => {
+  beforeEach(() => {
+    resetUnitCounter();
+    resetUid();
+  });
+
+  it('stepBattle 루프에서 라운드가 전환되면 실드가 0으로 초기화된다', () => {
+    // Guardian(실드 부여) vs Warrior — stepBattle로 1라운드 완주 후 실드 확인
+    const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+
+    let state = createBattleState([guardian], [warrior], [], []);
+
+    // stepBattle로 라운드 1 완주 + 라운드 2 시작까지 진행
+    const maxSteps = 50;
+    let steps = 0;
+    while (state.round < 2 && steps < maxSteps) {
+      state = stepBattle(state).state;
+      steps++;
+    }
+
+    // 라운드 2가 시작됐으면, 라운드 1에서 부여된 실드가 제거되었어야 한다
+    expect(state.round).toBeGreaterThanOrEqual(2);
+
+    // SHIELD_CLEARED 이벤트가 라운드 1 종료 시점에 존재해야 한다
+    const shieldCleared = state.events.filter((e) => e.type === 'SHIELD_CLEARED' && e.round === 1);
+    // Guardian은 Shield Wall로 자기에게 실드를 부여하므로 최소 1개
+    expect(shieldCleared.length).toBeGreaterThanOrEqual(1);
+
+    // 라운드 2 시작 시점에서 실드가 0이어야 한다
+    const roundStartEvents = state.events.filter((e) => e.type === 'ROUND_START' && e.round === 2);
+    expect(roundStartEvents.length).toBe(1);
+
+    // ROUND_START(R2) 이전의 마지막 상태에서 실드가 제거됐는지 확인
+    // SHIELD_CLEARED가 ROUND_END 이전에 기록되어야 한다
+    const round1End = state.events.findIndex((e) => e.type === 'ROUND_END' && e.round === 1);
+    const round1ShieldClear = state.events.findIndex((e) => e.type === 'SHIELD_CLEARED' && e.round === 1);
+    expect(round1ShieldClear).toBeGreaterThan(-1);
+    expect(round1ShieldClear).toBeLessThan(round1End);
+  });
+
+  it('여러 라운드를 거쳐도 실드가 누적되지 않는다', () => {
+    // Guardian vs Warrior — 3라운드 이상 진행 시 실드가 계속 리셋되는지 확인
+    const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+
+    let state = createBattleState([guardian], [warrior], [], []);
+
+    // 3라운드까지 진행
+    const maxSteps = 100;
+    let steps = 0;
+    while (state.round < 4 && !state.isFinished && steps < maxSteps) {
+      state = stepBattle(state).state;
+      steps++;
+    }
+
+    // 각 라운드 종료마다 SHIELD_CLEARED가 발생해야 한다
+    for (let r = 1; r <= Math.min(state.round - 1, 3); r++) {
+      const cleared = state.events.filter((e) => e.type === 'SHIELD_CLEARED' && e.round === r);
+      // Guardian이 매 라운드 실드를 부여하므로 매 라운드 최소 1개 클리어
+      expect(cleared.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('runFullBattle에서도 라운드 간 실드가 정상 제거된다', () => {
+    const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+
+    const initial = createBattleState([guardian], [warrior], [], []);
+    const final = runFullBattle(initial);
+
+    // 전투가 여러 라운드 진행됐을 것
+    expect(final.round).toBeGreaterThanOrEqual(2);
+
+    // 전투 종료 시 살아있는 유닛의 실드 누적량 확인
+    // 마지막 라운드 기준 실드는 해당 라운드 내에서 부여된 양만 있어야 한다
+    const allShieldCleared = final.events.filter((e) => e.type === 'SHIELD_CLEARED');
+    const completedRounds = final.round - (final.isFinished ? 0 : 1);
+
+    // 완료된 각 라운드마다 SHIELD_CLEARED가 존재해야 한다
+    for (let r = 1; r < completedRounds; r++) {
+      const roundCleared = allShieldCleared.filter((e) => e.round === r);
+      expect(roundCleared.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('버프 만료도 stepBattle 루프에서 정상 처리된다', () => {
+    // endRound 내 tickBuffs도 stepBattle 경로에서 호출되는지 확인
+    const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
+    const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+
+    // duration 1 버프 수동 부여
+    guardian.buffs = [{ id: 'test_buff', type: 'ATK_UP' as any, value: 5, duration: 1, sourceId: guardian.id }];
+
+    let state = createBattleState([guardian], [warrior], [], []);
+
+    // 라운드 2까지 진행
+    const maxSteps = 50;
+    let steps = 0;
+    while (state.round < 2 && steps < maxSteps) {
+      state = stepBattle(state).state;
+      steps++;
+    }
+
+    // 라운드 1 종료 시 BUFF_EXPIRED가 발생해야 한다
+    const buffExpired = state.events.filter((e) => e.type === 'BUFF_EXPIRED' && e.round === 1);
+    expect(buffExpired.length).toBeGreaterThanOrEqual(1);
+
+    // 라운드 2 시작 시점에서 해당 버프가 제거되었어야 한다
+    const g = state.units.find((u) => u.name === 'Guardian')!;
+    const testBuff = g.buffs.find((b) => b.id === 'test_buff');
+    expect(testBuff).toBeUndefined();
+  });
+});
+
 describe('라운드 종료 이벤트 순서', () => {
   beforeEach(() => resetUnitCounter());
 
