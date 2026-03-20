@@ -1,7 +1,7 @@
 import type { BattleState, BattleUnit, HeroAbility, HeroType, QueuedEditData } from '../types';
 import { BattlePhase, Team, Position, HeroType as HeroTypeConst, DEFAULT_GAME_CONFIG } from '../types';
 import { uid } from '../utils/uid';
-import { startRound, executeTurn, isRoundComplete } from './RoundManager';
+import { startRound, executeTurn, endRound, isRoundComplete } from './RoundManager';
 import { recordSnapshot, type ReplaySnapshot } from './ReplayRecorder';
 import { canIntervene, executeIntervention } from '../systems/HeroInterventionSystem';
 import { resetBattleActions } from '../systems/ActionCardSystem';
@@ -106,7 +106,7 @@ export function stepBattle(state: BattleState): {
   // 턴 실행
   if (state.phase === BattlePhase.TURN_START || state.phase === BattlePhase.TURN_END) {
     if (isRoundComplete(state)) {
-      return { state: { ...state, phase: BattlePhase.ROUND_END } };
+      return { state: endRound(state) };
     }
     const newState = executeTurn(state);
     return { state: newState };
