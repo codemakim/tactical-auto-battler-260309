@@ -83,239 +83,985 @@ interface ManualTeams {
   enemy: ManualUnit[];
 }
 
-// ──────────────────────────────────────────────────────
-// 🎮 아래 null을 지우고 팀을 편집하면 직접 지정 모드 활성화!
-// ──────────────────────────────────────────────────────
-const MANUAL_TEAMS = null as ManualTeams | null;
+// ══════════════════════════════════════════════════════
+//  🎮 시나리오 선택 — 이름만 바꿔서 실행!
+//     '' (빈 문자열) = 랜덤/환경변수 모드
+// ══════════════════════════════════════════════════════
+const MANUAL_SCENARIO = '';
 
-/* ── 예시 (이 주석을 풀고 위의 null 대신 대입하세요) ──
+const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
 
-const MANUAL_TEAMS_EXAMPLE: ManualTeams = {
-  player: [
-    {
-      name: 'Aldric',
-      characterClass: 'WARRIOR',
-      position: 'FRONT',
-      actionSlots: [
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
-            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
-            effects: [
-              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
-              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'HP_BELOW', value: 50 },
-          action: {
-            id: 'warrior_fortify', name: 'Fortify', description: '',
-            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
-            id: 'warrior_heavy_slam', name: 'Heavy Slam', description: '',
-            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
-            rarity: 'RARE',
-          },
-        },
-      ],
-    },
-    {
-      name: 'Shade',
-      characterClass: 'ASSASSIN',
-      position: 'BACK',
-      actionSlots: [
-        {
-          condition: { type: 'POSITION_BACK' },
-          action: {
-            id: 'assassin_dive', name: 'Dive', description: '',
-            effects: [
-              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
-              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_BACK },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
-            id: 'assassin_gut_strike', name: 'Gut Strike', description: '',
-            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_FRONT }],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
-            id: 'assassin_shadow_strike', name: 'Shadow Strike', description: '',
-            effects: [{ type: 'DAMAGE', value: 2.0, stat: 'atk', target: Target.ENEMY_BACK }],
-            rarity: 'EPIC',
-          },
-        },
-      ],
-    },
-    {
-      name: 'Lyra',
-      characterClass: 'ARCHER',
-      position: 'BACK',
-      actionSlots: [
-        {
-          condition: { type: 'POSITION_BACK' },
-          action: {
-            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
-            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_BACK' },
-          action: {
-            id: 'archer_suppressing_shot', name: 'Suppressing Shot', description: '',
-            effects: [
-              { type: 'DAMAGE', value: 0.7, stat: 'atk', target: Target.ENEMY_ANY },
-              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
-            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
-            effects: [
-              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
-              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-      ],
-    },
-  ],
-  enemy: [
-    {
-      name: 'Bron',
-      characterClass: 'GUARDIAN',
-      position: 'FRONT',
-      actionSlots: [
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
+  // ─────────────────────────────────────────────────
+  // 1) 아처 생존 검증 — FRONT 압박 시 탈출 카드가 의미 있는가?
+  //    질문: Archer가 Lancer Push에 밀려 전열로 갔을 때 Evasive Shot/Snap Shot으로 살아남는가?
+  //    Lancer Charge+Push가 후열 클래스 카운터로 작동하는가?
+  // ─────────────────────────────────────────────────
+  ARCHER_ESCAPE_VS_LANCER_PRESSURE: {
+    player: [
+      // Guardian — COVER로 Archer 보호 + 자기 실드
+      {
+        name: 'Bron', characterClass: 'GUARDIAN', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
             id: 'guardian_shield_wall', name: 'Shield Wall', description: '',
             effects: [
               { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
               { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.ALLY_LOWEST_HP },
               { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_BACK' },
-          action: {
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
             id: 'guardian_advance_guard', name: 'Advance Guard', description: '',
             effects: [
               { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
               { type: 'SHIELD', value: 1.2, stat: 'grd', target: Target.SELF },
               { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'HP_BELOW', value: 50 },
-          action: {
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
             id: 'guardian_heavy_shield', name: 'Heavy Shield', description: '',
             effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
             rarity: 'COMMON',
-          },
-        },
-      ],
-    },
-    {
-      name: 'Vex',
-      characterClass: 'CONTROLLER',
-      position: 'BACK',
-      actionSlots: [
-        {
-          condition: { type: 'ENEMY_FRONT_EXISTS' },
-          action: {
-            id: 'controller_reposition', name: 'Reposition', description: '',
+          }},
+        ],
+      },
+      // Archer A — BACK 주력 + FRONT 탈출 + 고점 저격
+      {
+        name: 'Lyra', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'ENEMY_BACK_EXISTS' }, action: {
+            id: 'archer_snipe', name: 'Snipe', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.6, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'RARE',
+          }},
+        ],
+      },
+      // Archer B — 제압형 + FRONT 대응(Snap Shot) + 범용 사격
+      {
+        name: 'Sera', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_suppressing_shot', name: 'Suppressing Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.7, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_snap_shot', name: 'Snap Shot', description: '',
             effects: [
               { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
-              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_BACK' },
-          action: {
-            id: 'controller_tactical_shot', name: 'Tactical Shot', description: '',
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_FRONT },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_volley', name: 'Volley', description: '',
             effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
             rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'ALWAYS' },
-          action: {
-            id: 'controller_mind_jolt', name: 'Mind Jolt', description: '',
-            effects: [
-              { type: 'DAMAGE', value: 0.5, stat: 'atk', target: Target.ENEMY_ANY },
-              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
-            ],
-            rarity: 'RARE',
-          },
-        },
-      ],
-    },
-    {
-      name: 'Kael',
-      characterClass: 'LANCER',
-      position: 'FRONT',
-      actionSlots: [
-        {
-          condition: { type: 'POSITION_BACK' },
-          action: {
+          }},
+        ],
+      },
+    ],
+    enemy: [
+      // Lancer — 진입 + 전열 압박 + PUSH
+      {
+        name: 'Kael', characterClass: 'LANCER', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
             id: 'lancer_charge', name: 'Charge', description: '',
             effects: [
               { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
               { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_FRONT },
               { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
-            ],
-            rarity: 'COMMON',
-          },
-        },
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
             id: 'lancer_piercing_thrust', name: 'Piercing Thrust', description: '',
             effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
             rarity: 'RARE',
-          },
-        },
-        {
-          condition: { type: 'POSITION_FRONT' },
-          action: {
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
             id: 'lancer_sweep', name: 'Sweep', description: '',
             effects: [
               { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
               { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
-            ],
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Warrior — 유지 + 공격 + 저체력 대응
+      {
+        name: 'Aldric', characterClass: 'WARRIOR', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_heavy_slam', name: 'Heavy Slam', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'RARE',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'warrior_fortify', name: 'Fortify', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
             rarity: 'COMMON',
-          },
-        },
-      ],
-    },
-  ],
+          }},
+        ],
+      },
+      // Controller — 위치 조작 + 턴 지연 + fallback
+      {
+        name: 'Vex', characterClass: 'CONTROLLER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'ENEMY_FRONT_EXISTS' }, action: {
+            id: 'controller_reposition', name: 'Reposition', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'ALWAYS' }, action: {
+            id: 'controller_mind_jolt', name: 'Mind Jolt', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.5, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ], rarity: 'RARE',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'controller_tactical_shot', name: 'Tactical Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────
+  // 2) 암살 vs 커버 — Assassin 침투가 Guardian COVER에 얼마나 막히는가?
+  //    질문: Dive/Shadow Strike로 후열 킬각을 만들 수 있는가?
+  //    Guardian COVER가 암살 대응책으로 충분한가?
+  // ─────────────────────────────────────────────────
+  ASSASSIN_DIVE_VS_GUARDIAN_COVER: {
+    player: [
+      // Assassin A — 침투 + 전열 운영 + 킬 카드
+      {
+        name: 'Shade', characterClass: 'ASSASSIN', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'assassin_dive', name: 'Dive', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_BACK },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'assassin_gut_strike', name: 'Gut Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'assassin_shadow_strike', name: 'Shadow Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 2.0, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'EPIC',
+          }},
+        ],
+      },
+      // Assassin B — 침투(Shadowstep) + Swift Blade 연타 + 탈출
+      {
+        name: 'Nyx', characterClass: 'ASSASSIN', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'assassin_shadowstep', name: 'Shadowstep', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'ADVANCE_TURN', value: 1, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'assassin_swift_blade', name: 'Swift Blade', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'ADVANCE_TURN', value: 1, target: Target.SELF },
+            ], rarity: 'RARE',
+          }},
+          { condition: { type: 'HP_BELOW', value: 40 }, action: {
+            id: 'assassin_withdraw', name: 'Withdraw', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Archer — 후열 지원 화력
+      {
+        name: 'Lyra', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'ENEMY_HP_BELOW', value: 30 }, action: {
+            id: 'archer_focus_fire', name: 'Focus Fire', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.6, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'RARE',
+          }},
+        ],
+      },
+    ],
+    enemy: [
+      // Guardian — COVER + 자기 보호 + 아군 보호
+      {
+        name: 'Bron', characterClass: 'GUARDIAN', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'guardian_shield_wall', name: 'Shield Wall', description: '',
+            effects: [
+              { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.ALLY_LOWEST_HP },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'guardian_advance_guard', name: 'Advance Guard', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'SHIELD', value: 1.2, stat: 'grd', target: Target.SELF },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'guardian_heavy_shield', name: 'Heavy Shield', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Archer — 후열 딜러 (보호 대상)
+      {
+        name: 'Mira', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_volley', name: 'Volley', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Controller — 위치 교란으로 Assassin 견제
+      {
+        name: 'Vex', characterClass: 'CONTROLLER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'ENEMY_FRONT_EXISTS' }, action: {
+            id: 'controller_reposition', name: 'Reposition', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'ALWAYS' }, action: {
+            id: 'controller_mind_jolt', name: 'Mind Jolt', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.5, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ], rarity: 'RARE',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'controller_tactical_shot', name: 'Tactical Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────
+  // 3) Controller+Archer 시너지 — Controller가 판을 깔아주면 Archer가 빛나는가?
+  //    질문: Gravity Pull/Displace로 적을 끌어오면 Archer 고배율 카드와 맞물리는가?
+  //    Controller가 "셋업 클래스"로 작동하는가?
+  // ─────────────────────────────────────────────────
+  CONTROLLER_ENABLES_ARCHER: {
+    player: [
+      // Controller — PULL + SWAP + 턴 지연
+      {
+        name: 'Vex', characterClass: 'CONTROLLER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'ENEMY_BACK_EXISTS' }, action: {
+            id: 'controller_gravity_pull', name: 'Gravity Pull', description: '',
+            effects: [{ type: 'PUSH', target: Target.ENEMY_BACK, position: 'FRONT' }],
+            rarity: 'RARE',
+          }},
+          { condition: { type: 'ENEMY_BACK_EXISTS' }, action: {
+            id: 'controller_displace', name: 'Displace', description: '',
+            effects: [{ type: 'SWAP', target: Target.ENEMY_BACK, swapTarget: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'ALWAYS' }, action: {
+            id: 'controller_mind_jolt', name: 'Mind Jolt', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.5, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ], rarity: 'RARE',
+          }},
+        ],
+      },
+      // Archer — BACK 주력 + 저격 + FRONT 탈출
+      {
+        name: 'Lyra', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'ENEMY_BACK_EXISTS' }, action: {
+            id: 'archer_snipe', name: 'Snipe', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.6, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'RARE',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Guardian — COVER + 아군 보호 + 자기 보호
+      {
+        name: 'Bron', characterClass: 'GUARDIAN', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'guardian_shield_wall', name: 'Shield Wall', description: '',
+            effects: [
+              { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.ALLY_LOWEST_HP },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'guardian_advance_guard', name: 'Advance Guard', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'SHIELD', value: 1.2, stat: 'grd', target: Target.SELF },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'guardian_heavy_shield', name: 'Heavy Shield', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+    enemy: [
+      // Warrior — 유지 + 공격 + 저체력 대응
+      {
+        name: 'Aldric', characterClass: 'WARRIOR', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_heavy_slam', name: 'Heavy Slam', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'RARE',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'warrior_fortify', name: 'Fortify', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Archer — 후열 딜러
+      {
+        name: 'Sera', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_suppressing_shot', name: 'Suppressing Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.7, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Lancer — 진입 + 전열 압박 + 포지션 변화
+      {
+        name: 'Kael', characterClass: 'LANCER', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'lancer_charge', name: 'Charge', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_piercing_thrust', name: 'Piercing Thrust', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'RARE',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_sweep', name: 'Sweep', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────
+  // 4) ADVANCE_TURN 경제 붕괴 테스트 — Shadowstep+Swift Blade 루프가 과한가?
+  //    질문: Assassin이 턴 독점 캐릭터가 되는가?
+  //    리스크 딜러 정체성이 유지되는가? Withdraw가 실제로 의미 있는 탈출기인가?
+  // ─────────────────────────────────────────────────
+  ASSASSIN_TEMPO_LOOP_TEST: {
+    player: [
+      // Assassin A — Shadowstep 진입 + Swift Blade 연타 + 탈출
+      {
+        name: 'Shade', characterClass: 'ASSASSIN', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'assassin_shadowstep', name: 'Shadowstep', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'ADVANCE_TURN', value: 1, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'assassin_swift_blade', name: 'Swift Blade', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'ADVANCE_TURN', value: 1, target: Target.SELF },
+            ], rarity: 'RARE',
+          }},
+          { condition: { type: 'HP_BELOW', value: 40 }, action: {
+            id: 'assassin_withdraw', name: 'Withdraw', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Assassin B — Dive 직행 + Venomous Strike 디버프 + 킬 카드
+      {
+        name: 'Nyx', characterClass: 'ASSASSIN', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'assassin_dive', name: 'Dive', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_BACK },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'assassin_venomous_strike', name: 'Venomous Strike', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'DEBUFF', buffType: 'GUARD_DOWN', duration: 2, value: 2, target: Target.ENEMY_FRONT },
+            ], rarity: 'RARE',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'assassin_shadow_strike', name: 'Shadow Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 2.0, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'EPIC',
+          }},
+        ],
+      },
+      // Guardian — 전열 유지하며 Assassin이 죽기 전 버텨주기
+      {
+        name: 'Bron', characterClass: 'GUARDIAN', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'guardian_shield_wall', name: 'Shield Wall', description: '',
+            effects: [
+              { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.ALLY_LOWEST_HP },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'guardian_advance_guard', name: 'Advance Guard', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'SHIELD', value: 1.2, stat: 'grd', target: Target.SELF },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'guardian_heavy_shield', name: 'Heavy Shield', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+    enemy: [
+      // Warrior — 전열 유지 탱커
+      {
+        name: 'Aldric', characterClass: 'WARRIOR', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_strike', name: 'Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'warrior_fortify', name: 'Fortify', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Lancer — 진입 + 전열 압박
+      {
+        name: 'Kael', characterClass: 'LANCER', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'lancer_charge', name: 'Charge', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_lance_strike', name: 'Lance Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_sweep', name: 'Sweep', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Archer — 후열 딜러
+      {
+        name: 'Sera', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_volley', name: 'Volley', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────
+  // 5) 전열 클래스 삼각관계 — Warrior/Guardian/Lancer가 서로 다른 역할을 하는가?
+  //    질문: Warrior는 sustain인가? Guardian은 탱킹 가치가 있는가?
+  //    Lancer는 Warrior와 역할이 진짜 다른가?
+  // ─────────────────────────────────────────────────
+  FRONTLINE_STABILITY_TEST: {
+    player: [
+      // Warrior — 유지(Shield Bash) + 공격(Heavy Slam) + 저체력 대응(Fortify)
+      {
+        name: 'Aldric', characterClass: 'WARRIOR', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_heavy_slam', name: 'Heavy Slam', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'RARE',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'warrior_fortify', name: 'Fortify', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Guardian — COVER + 아군 보호 + 자기 보호
+      {
+        name: 'Bron', characterClass: 'GUARDIAN', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'guardian_shield_wall', name: 'Shield Wall', description: '',
+            effects: [
+              { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.ALLY_LOWEST_HP },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'guardian_advance_guard', name: 'Advance Guard', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'SHIELD', value: 1.2, stat: 'grd', target: Target.SELF },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'guardian_heavy_shield', name: 'Heavy Shield', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Archer — 후열 화력
+      {
+        name: 'Lyra', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_suppressing_shot', name: 'Suppressing Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.7, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+    enemy: [
+      // Lancer — 진입 + 전열 압박 + PUSH
+      {
+        name: 'Kael', characterClass: 'LANCER', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'lancer_charge', name: 'Charge', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_piercing_thrust', name: 'Piercing Thrust', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.5, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'RARE',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_sweep', name: 'Sweep', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Warrior — 상대편 전열 대비
+      {
+        name: 'Theron', characterClass: 'WARRIOR', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_driving_blow', name: 'Driving Blow', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.9, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'RARE',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'warrior_fortify', name: 'Fortify', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Controller — 판 흔들기
+      {
+        name: 'Vex', characterClass: 'CONTROLLER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'ENEMY_FRONT_EXISTS' }, action: {
+            id: 'controller_reposition', name: 'Reposition', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'controller_disrupt', name: 'Disrupt', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_FRONT },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'controller_tactical_shot', name: 'Tactical Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────
+  // 6) 클래스 정체성 스모크 테스트 — 각 클래스가 "자기답게" 움직이는가?
+  //    질문: Warrior는 버티는가? Lancer는 미는가? Archer는 뒤에서 쏘는가?
+  //    Controller는 판을 흔드는가? Assassin은 파고드는가?
+  // ─────────────────────────────────────────────────
+  CLASS_IDENTITY_SMOKE_TEST: {
+    player: [
+      // Warrior — 버티면서 치기
+      {
+        name: 'Aldric', characterClass: 'WARRIOR', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_shield_bash', name: 'Shield Bash', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'warrior_strike', name: 'Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'warrior_fortify', name: 'Fortify', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Archer — 뒤에서 쏘기
+      {
+        name: 'Lyra', characterClass: 'ARCHER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'archer_aimed_shot', name: 'Aimed Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'archer_evasive_shot', name: 'Evasive Shot', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'ENEMY_BACK_EXISTS' }, action: {
+            id: 'archer_snipe', name: 'Snipe', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.6, stat: 'atk', target: Target.ENEMY_BACK }],
+            rarity: 'RARE',
+          }},
+        ],
+      },
+      // Controller — 판 흔들기
+      {
+        name: 'Vex', characterClass: 'CONTROLLER', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'ENEMY_FRONT_EXISTS' }, action: {
+            id: 'controller_reposition', name: 'Reposition', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'ALWAYS' }, action: {
+            id: 'controller_mind_jolt', name: 'Mind Jolt', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.5, stat: 'atk', target: Target.ENEMY_ANY },
+              { type: 'DELAY_TURN', value: 1, target: Target.ENEMY_ANY },
+            ], rarity: 'RARE',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'controller_tactical_shot', name: 'Tactical Shot', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+    enemy: [
+      // Guardian — 탱킹
+      {
+        name: 'Bron', characterClass: 'GUARDIAN', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'guardian_shield_wall', name: 'Shield Wall', description: '',
+            effects: [
+              { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
+              { type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.ALLY_LOWEST_HP },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'guardian_advance_guard', name: 'Advance Guard', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'SHIELD', value: 1.2, stat: 'grd', target: Target.SELF },
+              { type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 50 }, action: {
+            id: 'guardian_heavy_shield', name: 'Heavy Shield', description: '',
+            effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
+            rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Lancer — 밀기
+      {
+        name: 'Kael', characterClass: 'LANCER', position: 'FRONT',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'lancer_charge', name: 'Charge', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_lance_strike', name: 'Lance Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'lancer_sweep', name: 'Sweep', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+      // Assassin — 파고들기
+      {
+        name: 'Shade', characterClass: 'ASSASSIN', position: 'BACK',
+        actionSlots: [
+          { condition: { type: 'POSITION_BACK' }, action: {
+            id: 'assassin_dive', name: 'Dive', description: '',
+            effects: [
+              { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+              { type: 'DAMAGE', value: 1.4, stat: 'atk', target: Target.ENEMY_BACK },
+            ], rarity: 'COMMON',
+          }},
+          { condition: { type: 'POSITION_FRONT' }, action: {
+            id: 'assassin_gut_strike', name: 'Gut Strike', description: '',
+            effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_FRONT }],
+            rarity: 'COMMON',
+          }},
+          { condition: { type: 'HP_BELOW', value: 40 }, action: {
+            id: 'assassin_withdraw', name: 'Withdraw', description: '',
+            effects: [
+              { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
+              { type: 'MOVE', target: Target.SELF, position: 'BACK' },
+            ], rarity: 'COMMON',
+          }},
+        ],
+      },
+    ],
+  },
 };
-*/
+
+const MANUAL_TEAMS = MANUAL_SCENARIO
+  ? (MANUAL_SCENARIOS[MANUAL_SCENARIO] ?? null)
+  : null;
 
 // ── 액션 카탈로그 출력 함수 ──────────────────────────
 
@@ -530,9 +1276,9 @@ const isManualMode = MANUAL_TEAMS !== null;
 const isCustomMode = !isManualMode && !!(envPlayer || envEnemy);
 const rand = seededRand(masterSeed);
 
-// 직접 지정 모드일 때 카탈로그 출력
-if (isManualMode) {
-  printActionCatalog();
+// 시나리오 모드일 때 시나리오 이름 출력
+if (MANUAL_SCENARIO) {
+  console.log(`\n🎯 시나리오: ${MANUAL_SCENARIO}\n`);
 }
 
 const player = MANUAL_TEAMS
