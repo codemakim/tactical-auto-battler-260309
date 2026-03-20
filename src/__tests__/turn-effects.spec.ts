@@ -119,7 +119,7 @@ describe('턴 순서 변경 효과', () => {
     const result = executeAction(unit, comboSlot, state);
 
     // Damage should be dealt
-    const damagedEnemy = result.units.find(u => u.id === enemy.id)!;
+    const damagedEnemy = result.units.find((u) => u.id === enemy.id)!;
     expect(damagedEnemy.stats.hp).toBeLessThan(enemy.stats.hp);
 
     // Turn order should be modified

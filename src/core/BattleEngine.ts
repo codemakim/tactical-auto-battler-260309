@@ -16,7 +16,7 @@ import { getHeroDefinition } from '../data/HeroDefinitions';
 function snapshotActionSlots(unit: BattleUnit): BattleUnit {
   return {
     ...unit,
-    preBattleActionSlots: unit.actionSlots.map(slot => ({ ...slot })),
+    preBattleActionSlots: unit.actionSlots.map((slot) => ({ ...slot })),
   };
 }
 
@@ -164,10 +164,6 @@ export function queueIntervention(
  * 히어로 개입 실행 (UI에서 호출).
  * §18 스펙: 즉시 실행이 아닌 큐잉 방식 - 다음 유닛 행동 직전에 발동.
  */
-export function heroIntervene(
-  state: BattleState,
-  ability: HeroAbility,
-  targetUnitId?: string,
-): BattleState {
+export function heroIntervene(state: BattleState, ability: HeroAbility, targetUnitId?: string): BattleState {
   return queueIntervention(state, ability, targetUnitId);
 }

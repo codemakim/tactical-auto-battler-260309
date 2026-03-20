@@ -1,4 +1,12 @@
-import type { BattleState, RunState, BattleReward, Action, BattleUnit, ActionCondition, CharacterReward } from '../types';
+import type {
+  BattleState,
+  RunState,
+  BattleReward,
+  Action,
+  BattleUnit,
+  ActionCondition,
+  CharacterReward,
+} from '../types';
 import { Difficulty, Team } from '../types';
 import { generateRewardFromTemplates, replaceActionSlot } from './ActionCardSystem';
 import { getAvailableClasses } from '../data/ClassDefinitions';
@@ -17,7 +25,7 @@ const BASE_GOLD = 50;
 // 라운드 보너스: 빠를수록 더 많이 (기준 라운드에서 초과 라운드당 감소)
 const FAST_CLEAR_BONUS_BASE = 30;
 const FAST_CLEAR_THRESHOLD = 5; // 이 라운드 이하면 최대 보너스
-const ROUND_PENALTY = 5;        // 기준 초과 라운드당 감소량
+const ROUND_PENALTY = 5; // 기준 초과 라운드당 감소량
 // 패배 시 골드 지급 비율
 const DEFEAT_GOLD_RATIO = 0.3;
 
@@ -28,7 +36,10 @@ const DEFEAT_GOLD_RATIO = 0.3;
  */
 export function calculateGoldReward(state: BattleState, difficulty: Difficulty): number {
   const multiplier = DIFFICULTY_GOLD_MULTIPLIER[difficulty] ?? 1.0;
-  const roundBonus = Math.max(0, FAST_CLEAR_BONUS_BASE - Math.max(0, state.round - FAST_CLEAR_THRESHOLD) * ROUND_PENALTY);
+  const roundBonus = Math.max(
+    0,
+    FAST_CLEAR_BONUS_BASE - Math.max(0, state.round - FAST_CLEAR_THRESHOLD) * ROUND_PENALTY,
+  );
   const baseReward = Math.round((BASE_GOLD + roundBonus) * multiplier);
 
   // 패배 시 일부만 지급
@@ -46,11 +57,7 @@ export function calculateGoldReward(state: BattleState, difficulty: Difficulty):
  *
  * characterClass를 지정하지 않으면 범용 액션만 포함된 풀에서 선택
  */
-export function generateBattleRewards(
-  state: BattleState,
-  runState: RunState,
-  seed: number,
-): BattleReward {
+export function generateBattleRewards(state: BattleState, runState: RunState, seed: number): BattleReward {
   const gold = calculateGoldReward(state, runState.difficulty);
 
   // 플레이어 팀의 첫 번째 생존 유닛 클래스를 기준으로 액션 옵션 생성
@@ -60,20 +67,19 @@ export function generateBattleRewards(
 
   // 클래스 전용 + 공용 카드 템플릿에서 변형 생성
   const templates = characterClass ? getAllTemplatesForClass(characterClass) : [];
-  const actionOptions = characterClass && templates.length > 0
-    ? generateRewardFromTemplates(templates, characterClass, 5, seed)
-    : [];
+  const actionOptions =
+    characterClass && templates.length > 0 ? generateRewardFromTemplates(templates, characterClass, 5, seed) : [];
 
   return { gold, actionOptions };
 }
 
 // 캐릭터 획득 기본 확률
-const BASE_CHARACTER_CHANCE = 0.30;
+const BASE_CHARACTER_CHANCE = 0.3;
 // 난이도별 확률 보너스
 const DIFFICULTY_CHARACTER_BONUS: Record<string, number> = {
   [Difficulty.EASY]: 0.0,
   [Difficulty.STANDARD]: 0.05,
-  [Difficulty.HARD]: 0.10,
+  [Difficulty.HARD]: 0.1,
   [Difficulty.NIGHTMARE]: 0.15,
 };
 // 로스터 크기당 확률 감소 (팀 크기 초과분에만 적용)

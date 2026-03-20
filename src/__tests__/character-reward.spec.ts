@@ -54,7 +54,7 @@ describe('캐릭터 획득 기회 (§23)', () => {
       const ratio = hits / trials;
       // 35% 기대, ±10% 허용
       expect(ratio).toBeGreaterThan(0.25);
-      expect(ratio).toBeLessThan(0.50);
+      expect(ratio).toBeLessThan(0.5);
     });
 
     it('EASY 난이도는 기본 30% 확률', () => {
@@ -65,7 +65,7 @@ describe('캐릭터 획득 기회 (§23)', () => {
         if (r !== null) hits++;
       }
       const ratio = hits / trials;
-      expect(ratio).toBeGreaterThan(0.20);
+      expect(ratio).toBeGreaterThan(0.2);
       expect(ratio).toBeLessThan(0.45);
     });
   });

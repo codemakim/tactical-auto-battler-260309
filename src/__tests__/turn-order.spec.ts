@@ -15,10 +15,10 @@ describe('턴 순서 시스템', () => {
 
     const order = calculateFullTurnOrder([warrior, assassin, archer, lancer]);
 
-    expect(order[0]).toBe(assassin.id);  // AGI 16
-    expect(order[1]).toBe(archer.id);    // AGI 14
-    expect(order[2]).toBe(lancer.id);    // AGI 12
-    expect(order[3]).toBe(warrior.id);   // AGI 8
+    expect(order[0]).toBe(assassin.id); // AGI 16
+    expect(order[1]).toBe(archer.id); // AGI 14
+    expect(order[2]).toBe(lancer.id); // AGI 12
+    expect(order[3]).toBe(warrior.id); // AGI 8
   });
 
   it('피아가 섞여서 행동한다 (AGI 순서대로)', () => {

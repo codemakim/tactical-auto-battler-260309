@@ -66,7 +66,7 @@ describe('타겟 선택', () => {
   it('ENEMY_ANY: HP가 가장 낮은 적 선택', () => {
     const player = createUnit(createCharacterDef('P', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
     const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT); // HP:110
-    const e2 = createUnit(createCharacterDef('E2', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);   // HP:75
+    const e2 = createUnit(createCharacterDef('E2', CharacterClass.ARCHER), Team.ENEMY, Position.BACK); // HP:75
 
     const target = selectTarget(player, Target.ENEMY_ANY, [player, e1, e2]);
 
@@ -75,7 +75,7 @@ describe('타겟 선택', () => {
 
   it('ALLY_LOWEST_HP: 자기 제외, HP 가장 낮은 아군', () => {
     const p1 = createUnit(createCharacterDef('P1', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT); // HP:140
-    const p2 = createUnit(createCharacterDef('P2', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);   // HP:75
+    const p2 = createUnit(createCharacterDef('P2', CharacterClass.ARCHER), Team.PLAYER, Position.BACK); // HP:75
 
     const target = selectTarget(p1, Target.ALLY_LOWEST_HP, [p1, p2]);
 

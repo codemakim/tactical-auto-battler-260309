@@ -130,13 +130,15 @@ describe('지연 효과 시스템 (§7.2)', () => {
           id: 'time_bomb',
           name: 'Time Bomb',
           description: 'Deal damage after 2 rounds',
-          effects: [{
-            type: 'DELAYED',
-            value: 20,
-            target: Target.ENEMY_FRONT,
-            delayedType: 'DAMAGE',
-            delayRounds: 2,
-          }],
+          effects: [
+            {
+              type: 'DELAYED',
+              value: 20,
+              target: Target.ENEMY_FRONT,
+              delayedType: 'DAMAGE',
+              delayRounds: 2,
+            },
+          ],
         },
       };
 
@@ -169,13 +171,15 @@ describe('지연 효과 시스템 (§7.2)', () => {
           id: 'delayed_heal',
           name: 'Delayed Heal',
           description: 'Heal ally after 1 round',
-          effects: [{
-            type: 'DELAYED',
-            value: 15,
-            target: Target.ALLY_LOWEST_HP,
-            delayedType: 'HEAL',
-            delayRounds: 1,
-          }],
+          effects: [
+            {
+              type: 'DELAYED',
+              value: 15,
+              target: Target.ALLY_LOWEST_HP,
+              delayedType: 'HEAL',
+              delayRounds: 1,
+            },
+          ],
         },
       };
 
@@ -202,15 +206,17 @@ describe('지연 효과 시스템 (§7.2)', () => {
           id: 'delayed_debuff',
           name: 'Curse',
           description: 'Debuff enemy after 1 round',
-          effects: [{
-            type: 'DELAYED',
-            value: 4,
-            target: Target.ENEMY_FRONT,
-            delayedType: 'BUFF',
-            delayRounds: 1,
-            buffType: BuffType.ATK_DOWN,
-            duration: 2,
-          }],
+          effects: [
+            {
+              type: 'DELAYED',
+              value: 4,
+              target: Target.ENEMY_FRONT,
+              delayedType: 'BUFF',
+              delayRounds: 1,
+              buffType: BuffType.ATK_DOWN,
+              duration: 2,
+            },
+          ],
         },
       };
 
@@ -238,13 +244,15 @@ describe('지연 효과 시스템 (§7.2)', () => {
           id: 'time_bomb',
           name: 'Time Bomb',
           description: 'Delayed damage',
-          effects: [{
-            type: 'DELAYED',
-            value: 10,
-            target: Target.ENEMY_FRONT,
-            delayedType: 'DAMAGE',
-            delayRounds: 2,
-          }],
+          effects: [
+            {
+              type: 'DELAYED',
+              value: 10,
+              target: Target.ENEMY_FRONT,
+              delayedType: 'DAMAGE',
+              delayRounds: 2,
+            },
+          ],
         },
       };
 
@@ -255,7 +263,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = executeAction(player, slot, state);
 
-      const appliedEvent = result.events.find(e => e.type === 'DELAYED_EFFECT_APPLIED');
+      const appliedEvent = result.events.find((e) => e.type === 'DELAYED_EFFECT_APPLIED');
       expect(appliedEvent).toBeDefined();
       expect(appliedEvent!.sourceId).toBe(player.id);
       expect(appliedEvent!.targetId).toBe(enemy.id);
@@ -295,7 +303,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
       const result = tickDelayedEffects([effect1, effect2, effect3]);
 
       expect(result.resolved).toHaveLength(2);
-      expect(result.resolved.map(e => e.id)).toEqual(['de_1', 'de_3']);
+      expect(result.resolved.map((e) => e.id)).toEqual(['de_1', 'de_3']);
       expect(result.remaining).toHaveLength(1);
       expect(result.remaining[0].id).toBe('de_2');
       expect(result.remaining[0].remainingRounds).toBe(2);
@@ -327,7 +335,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.stats.hp).toBe(hpBefore - 10);
     });
 
@@ -351,12 +359,12 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.stats.hp).toBe(0);
       expect(target.isAlive).toBe(false);
 
       // UNIT_DIED 이벤트 확인
-      const deathEvent = result.events.find(e => e.type === 'UNIT_DIED');
+      const deathEvent = result.events.find((e) => e.type === 'UNIT_DIED');
       expect(deathEvent).toBeDefined();
       expect(deathEvent!.targetId).toBe(enemy.id);
     });
@@ -382,7 +390,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.shield).toBe(0);
       // 10 damage - 6 shield = 4 damage to HP
       expect(target.stats.hp).toBe(hpBefore - 4);
@@ -414,7 +422,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === player.id)!;
+      const target = result.state.units.find((u) => u.id === player.id)!;
       expect(target.stats.hp).toBe(hpBefore + 10);
     });
 
@@ -437,7 +445,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === player.id)!;
+      const target = result.state.units.find((u) => u.id === player.id)!;
       expect(target.stats.hp).toBe(target.stats.maxHp);
     });
   });
@@ -468,7 +476,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.buffs).toHaveLength(1);
       expect(target.buffs[0].type).toBe(BuffType.GUARD_DOWN);
       expect(target.buffs[0].value).toBe(5);
@@ -496,7 +504,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === ally.id)!;
+      const target = result.state.units.find((u) => u.id === ally.id)!;
       expect(target.buffs[0].sourceId).toBe(player.id);
     });
   });
@@ -528,11 +536,11 @@ describe('지연 효과 시스템 (§7.2)', () => {
       const result = resolveDelayedEffects(state);
 
       // HP 변동 없음
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.stats.hp).toBe(0);
 
       // RESOLVED 이벤트에 skipped 표시
-      const resolvedEvent = result.events.find(e => e.type === 'DELAYED_EFFECT_RESOLVED');
+      const resolvedEvent = result.events.find((e) => e.type === 'DELAYED_EFFECT_RESOLVED');
       expect(resolvedEvent).toBeDefined();
       expect(resolvedEvent!.data?.skipped).toBe(true);
       expect(resolvedEvent!.data?.reason).toBe('target_dead');
@@ -558,7 +566,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === player.id)!;
+      const target = result.state.units.find((u) => u.id === player.id)!;
       expect(target.stats.hp).toBe(0);
       expect(target.isAlive).toBe(false);
     });
@@ -584,7 +592,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.buffs).toHaveLength(0);
     });
   });
@@ -617,7 +625,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.stats.hp).toBe(hpBefore - 12);
     });
   });
@@ -656,7 +664,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.stats.hp).toBe(hpBefore - 5 - 8);
     });
 
@@ -689,12 +697,12 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const target = result.state.units.find(u => u.id === enemy.id)!;
+      const target = result.state.units.find((u) => u.id === enemy.id)!;
       expect(target.isAlive).toBe(false);
       expect(target.stats.hp).toBe(0);
 
       // 두 번째 효과는 skipped
-      const resolvedEvents = result.events.filter(e => e.type === 'DELAYED_EFFECT_RESOLVED');
+      const resolvedEvents = result.events.filter((e) => e.type === 'DELAYED_EFFECT_RESOLVED');
       expect(resolvedEvents).toHaveLength(2);
       expect(resolvedEvents[1].data?.skipped).toBe(true);
       expect(resolvedEvents[1].data?.reason).toBe('target_dead');
@@ -733,8 +741,8 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const t1 = result.state.units.find(u => u.id === enemy1.id)!;
-      const t2 = result.state.units.find(u => u.id === enemy2.id)!;
+      const t1 = result.state.units.find((u) => u.id === enemy1.id)!;
+      const t2 = result.state.units.find((u) => u.id === enemy2.id)!;
 
       expect(t1.stats.hp).toBe(hp1Before - 7);
       expect(t2.stats.hp).toBe(t2.stats.maxHp); // maxHp까지만 회복
@@ -766,7 +774,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const resolvedEvent = result.events.find(e => e.type === 'DELAYED_EFFECT_RESOLVED');
+      const resolvedEvent = result.events.find((e) => e.type === 'DELAYED_EFFECT_RESOLVED');
       expect(resolvedEvent).toBeDefined();
       expect(resolvedEvent!.sourceId).toBe(player.id);
       expect(resolvedEvent!.targetId).toBe(enemy.id);
@@ -794,7 +802,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const dmgEvent = result.events.find(e => e.type === 'DAMAGE_DEALT');
+      const dmgEvent = result.events.find((e) => e.type === 'DAMAGE_DEALT');
       expect(dmgEvent).toBeDefined();
       expect(dmgEvent!.targetId).toBe(enemy.id);
       expect(dmgEvent!.value).toBe(10);
@@ -819,7 +827,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = resolveDelayedEffects(state);
 
-      const healEvent = result.events.find(e => e.type === 'HEAL_APPLIED');
+      const healEvent = result.events.find((e) => e.type === 'HEAL_APPLIED');
       expect(healEvent).toBeDefined();
       expect(healEvent!.targetId).toBe(player.id);
     });
@@ -846,7 +854,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
       const result = resolveDelayedEffects(state);
 
       // POISON은 디버프
-      const debuffEvent = result.events.find(e => e.type === 'DEBUFF_APPLIED');
+      const debuffEvent = result.events.find((e) => e.type === 'DEBUFF_APPLIED');
       expect(debuffEvent).toBeDefined();
       expect(debuffEvent!.targetId).toBe(enemy.id);
     });
@@ -879,7 +887,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
       const result = endRound(state);
 
       // 지연 효과가 처리되었는지 확인
-      const target = result.units.find(u => u.id === enemy.id)!;
+      const target = result.units.find((u) => u.id === enemy.id)!;
       expect(target.stats.hp).toBe(hpBefore - 10);
 
       // delayedEffects가 비었는지 확인
@@ -906,7 +914,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
       const result = endRound(state);
 
       // HP 변동 없음
-      const target = result.units.find(u => u.id === enemy.id)!;
+      const target = result.units.find((u) => u.id === enemy.id)!;
       expect(target.stats.hp).toBe(enemy.stats.hp);
 
       // 효과가 남아있고 remainingRounds 감소됨
@@ -919,13 +927,15 @@ describe('지연 효과 시스템 (§7.2)', () => {
       const enemy = makeEnemyUnit('Enemy');
 
       // 적에게 1라운드 남은 ATK_DOWN 버프
-      enemy.buffs = [{
-        id: 'buff_1',
-        type: BuffType.ATK_DOWN,
-        value: 3,
-        duration: 1,
-        sourceId: player.id,
-      }];
+      enemy.buffs = [
+        {
+          id: 'buff_1',
+          type: BuffType.ATK_DOWN,
+          value: 3,
+          duration: 1,
+          sourceId: player.id,
+        },
+      ];
 
       // 1라운드 남은 지연 데미지
       const delayedEffect = makeDelayedEffect({
@@ -943,7 +953,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
 
       const result = endRound(state);
 
-      const target = result.units.find(u => u.id === enemy.id)!;
+      const target = result.units.find((u) => u.id === enemy.id)!;
 
       // 버프 만료됨
       expect(target.buffs).toHaveLength(0);
@@ -955,7 +965,7 @@ describe('지연 효과 시스템 (§7.2)', () => {
       expect(result.delayedEffects).toHaveLength(0);
 
       // 이벤트 순서: BUFF_EXPIRED → DELAYED_EFFECT_RESOLVED → ROUND_END
-      const eventTypes = result.events.map(e => e.type);
+      const eventTypes = result.events.map((e) => e.type);
       const buffExpiredIdx = eventTypes.indexOf('BUFF_EXPIRED');
       const resolvedIdx = eventTypes.indexOf('DELAYED_EFFECT_RESOLVED');
       const roundEndIdx = eventTypes.indexOf('ROUND_END');

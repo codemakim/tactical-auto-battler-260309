@@ -8,19 +8,17 @@ import type { BattleUnit } from '../types';
  * 여러 명이면 AGI 높은 유닛 우선.
  * 타겟이 전열이면 null (커버 불필요).
  */
-export function findCoverUnit(
-  target: BattleUnit,
-  allUnits: BattleUnit[],
-): BattleUnit | null {
+export function findCoverUnit(target: BattleUnit, allUnits: BattleUnit[]): BattleUnit | null {
   // §25.5 타겟이 전열이면 커버 발동 안 함
   if (target.position === Position.FRONT) return null;
 
-  const candidates = allUnits.filter(u =>
-    u.id !== target.id &&
-    u.team === target.team &&
-    u.position === Position.FRONT &&
-    u.isAlive &&
-    u.buffs.some(b => b.type === BuffType.COVER),
+  const candidates = allUnits.filter(
+    (u) =>
+      u.id !== target.id &&
+      u.team === target.team &&
+      u.position === Position.FRONT &&
+      u.isAlive &&
+      u.buffs.some((b) => b.type === BuffType.COVER),
   );
 
   if (candidates.length === 0) return null;

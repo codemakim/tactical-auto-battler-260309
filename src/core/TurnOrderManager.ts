@@ -6,7 +6,7 @@ import type { BattleUnit } from '../types';
  */
 export function calculateTurnOrder(units: BattleUnit[]): string[] {
   return units
-    .filter(u => u.isAlive && !u.hasActedThisRound)
+    .filter((u) => u.isAlive && !u.hasActedThisRound)
     .sort((a, b) => {
       if (b.stats.agi !== a.stats.agi) {
         return b.stats.agi - a.stats.agi;
@@ -16,7 +16,7 @@ export function calculateTurnOrder(units: BattleUnit[]): string[] {
       const bRatio = b.stats.hp / b.stats.maxHp;
       return bRatio - aRatio;
     })
-    .map(u => u.id);
+    .map((u) => u.id);
 }
 
 /**
@@ -24,7 +24,7 @@ export function calculateTurnOrder(units: BattleUnit[]): string[] {
  */
 export function calculateFullTurnOrder(units: BattleUnit[]): string[] {
   return units
-    .filter(u => u.isAlive)
+    .filter((u) => u.isAlive)
     .sort((a, b) => {
       if (b.stats.agi !== a.stats.agi) {
         return b.stats.agi - a.stats.agi;
@@ -33,7 +33,7 @@ export function calculateFullTurnOrder(units: BattleUnit[]): string[] {
       const bRatio = b.stats.hp / b.stats.maxHp;
       return bRatio - aRatio;
     })
-    .map(u => u.id);
+    .map((u) => u.id);
 }
 
 /**

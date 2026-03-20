@@ -17,15 +17,17 @@ export function moveUnit(
 
   return {
     unit: { ...unit, position: targetPosition },
-    events: [{
-      id: uid(),
-      type: 'UNIT_MOVED',
-      round,
-      turn,
-      timestamp: Date.now(),
-      targetId: unit.id,
-      data: { from: unit.position, to: targetPosition },
-    }],
+    events: [
+      {
+        id: uid(),
+        type: 'UNIT_MOVED',
+        round,
+        turn,
+        timestamp: Date.now(),
+        targetId: unit.id,
+        data: { from: unit.position, to: targetPosition },
+      },
+    ],
   };
 }
 
@@ -49,22 +51,24 @@ export function swapPositions(
   return {
     unitA: newA,
     unitB: newB,
-    events: [{
-      id: uid(),
-      type: 'UNIT_SWAPPED',
-      round,
-      turn,
-      timestamp: Date.now(),
-      sourceId,
-      data: {
-        unitAId: unitA.id,
-        unitBId: unitB.id,
-        unitAFrom: unitA.position,
-        unitATo: newA.position,
-        unitBFrom: unitB.position,
-        unitBTo: newB.position,
+    events: [
+      {
+        id: uid(),
+        type: 'UNIT_SWAPPED',
+        round,
+        turn,
+        timestamp: Date.now(),
+        sourceId,
+        data: {
+          unitAId: unitA.id,
+          unitBId: unitB.id,
+          unitAFrom: unitA.position,
+          unitATo: newA.position,
+          unitBFrom: unitB.position,
+          unitBTo: newB.position,
+        },
       },
-    }],
+    ],
   };
 }
 
@@ -84,15 +88,17 @@ export function pushUnit(
 
   return {
     unit: { ...unit, position: targetPosition },
-    events: [{
-      id: uid(),
-      type: 'UNIT_PUSHED',
-      round,
-      turn,
-      timestamp: Date.now(),
-      sourceId,
-      targetId: unit.id,
-      data: { from: unit.position, to: targetPosition },
-    }],
+    events: [
+      {
+        id: uid(),
+        type: 'UNIT_PUSHED',
+        round,
+        turn,
+        timestamp: Date.now(),
+        sourceId,
+        targetId: unit.id,
+        data: { from: unit.position, to: targetPosition },
+      },
+    ],
   };
 }

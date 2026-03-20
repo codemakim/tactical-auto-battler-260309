@@ -11,9 +11,7 @@ describe('카드 템플릿 변형 생성', () => {
     rarity: Rarity.COMMON,
     classRestriction: CharacterClass.WARRIOR,
     condition: { type: 'POSITION_FRONT' },
-    effectTemplates: [
-      { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2], targetPool: [Target.ENEMY_FRONT] },
-    ],
+    effectTemplates: [{ type: 'DAMAGE', stat: 'atk', multiplierPool: [1.2], targetPool: [Target.ENEMY_FRONT] }],
   };
 
   const multiOptionTemplate: CardTemplate = {
@@ -110,7 +108,7 @@ describe('카드 템플릿 변형 생성', () => {
     it('count만큼 액션 생성', () => {
       const actions = generateRewardFromTemplates(templates, CharacterClass.WARRIOR, 2, 42);
       expect(actions).toHaveLength(2);
-      actions.forEach(a => {
+      actions.forEach((a) => {
         expect(a.effects).toHaveLength(1);
         expect(a.rarity).toBe(Rarity.COMMON);
       });
@@ -129,7 +127,7 @@ describe('카드 템플릿 변형 생성', () => {
     it('같은 시드는 같은 결과', () => {
       const a1 = generateRewardFromTemplates(templates, CharacterClass.WARRIOR, 3, 99);
       const a2 = generateRewardFromTemplates(templates, CharacterClass.WARRIOR, 3, 99);
-      expect(a1.map(a => a.name)).toEqual(a2.map(a => a.name));
+      expect(a1.map((a) => a.name)).toEqual(a2.map((a) => a.name));
     });
   });
 
@@ -142,25 +140,18 @@ describe('카드 템플릿 변형 생성', () => {
 
     it('워리어 템플릿에서 보상 생성 가능', () => {
       const warrior = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
-      const actions = generateRewardFromTemplates(
-        warrior.cardTemplates!,
-        CharacterClass.WARRIOR,
-        3,
-        42,
-      );
+      const actions = generateRewardFromTemplates(warrior.cardTemplates!, CharacterClass.WARRIOR, 3, 42);
       expect(actions).toHaveLength(3);
-      actions.forEach(a => {
+      actions.forEach((a) => {
         expect(a.effects.length).toBeGreaterThan(0);
         // 기본 카드는 classRestriction 없음, 특수 카드는 WARRIOR
-        expect(
-          a.classRestriction === undefined || a.classRestriction === CharacterClass.WARRIOR
-        ).toBe(true);
+        expect(a.classRestriction === undefined || a.classRestriction === CharacterClass.WARRIOR).toBe(true);
       });
     });
 
     it('다중 옵션 템플릿은 시드에 따라 변형 생성', () => {
       const warrior = CLASS_DEFINITIONS[CharacterClass.WARRIOR];
-      const heavySlamTemplate = warrior.cardTemplates!.find(t => t.id === 'warrior_heavy_slam')!;
+      const heavySlamTemplate = warrior.cardTemplates!.find((t) => t.id === 'warrior_heavy_slam')!;
 
       // 여러 시드로 생성해서 최소 하나는 다른 결과가 나오는지 확인
       const results = new Set<number>();

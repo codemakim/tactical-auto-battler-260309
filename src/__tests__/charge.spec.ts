@@ -50,18 +50,18 @@ describe('Charge 복합 효과', () => {
     const result = executeAction(lancer, fullChargeSlot, state);
 
     // 1. Lancer가 FRONT로 이동했는지 확인
-    const updatedLancer = result.units.find(u => u.id === lancer.id)!;
+    const updatedLancer = result.units.find((u) => u.id === lancer.id)!;
     expect(updatedLancer.position).toBe(Position.FRONT);
 
     // 2. 적에게 데미지가 적용되었는지 확인
-    const updatedEnemy = result.units.find(u => u.id === enemy.id)!;
+    const updatedEnemy = result.units.find((u) => u.id === enemy.id)!;
     expect(updatedEnemy.stats.hp).toBeLessThan(enemy.stats.hp);
 
     // 3. 적이 BACK으로 밀렸는지 확인
     expect(updatedEnemy.position).toBe(Position.BACK);
 
     // 4. 이벤트 순서 확인: ACTION_EXECUTED → UNIT_MOVED → DAMAGE_DEALT → UNIT_PUSHED
-    const eventTypes = result.events.map(e => e.type);
+    const eventTypes = result.events.map((e) => e.type);
     expect(eventTypes[0]).toBe('ACTION_EXECUTED');
     expect(eventTypes[1]).toBe('UNIT_MOVED');
     expect(eventTypes[2]).toBe('DAMAGE_DEALT');
@@ -94,8 +94,8 @@ describe('Charge 복합 효과', () => {
     const state = makeBattleState({ units: [lancer, eFront1, eFront2] });
     const result = executeAction(lancer, chargeSlot, state);
 
-    const updatedFront1 = result.units.find(u => u.id === eFront1.id)!;
-    const updatedFront2 = result.units.find(u => u.id === eFront2.id)!;
+    const updatedFront1 = result.units.find((u) => u.id === eFront1.id)!;
+    const updatedFront2 = result.units.find((u) => u.id === eFront2.id)!;
 
     // DAMAGE는 AGI 높은 eFront2에게 적용됨
     expect(updatedFront2.stats.hp).toBeLessThan(eFront2.stats.hp);
@@ -118,14 +118,14 @@ describe('Charge 복합 효과', () => {
     const result = executeAction(lancer, basicSlot, state);
 
     // 적에게 데미지 적용
-    const updatedEnemy = result.units.find(u => u.id === enemy.id)!;
+    const updatedEnemy = result.units.find((u) => u.id === enemy.id)!;
     expect(updatedEnemy.stats.hp).toBeLessThan(enemy.stats.hp);
 
     // 적이 BACK으로 밀림
     expect(updatedEnemy.position).toBe(Position.BACK);
 
     // 이벤트에 DAMAGE_DEALT과 UNIT_PUSHED 포함
-    const eventTypes = result.events.map(e => e.type);
+    const eventTypes = result.events.map((e) => e.type);
     expect(eventTypes).toContain('DAMAGE_DEALT');
     expect(eventTypes).toContain('UNIT_PUSHED');
   });

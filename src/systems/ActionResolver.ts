@@ -2,7 +2,14 @@ import { Position, Team, Target } from '../types';
 import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent, DelayedEffect } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
-import { calculateDamage, calculateShield, applyDamage, applyDamageWithCover, applyShield, applyHeal } from './DamageSystem';
+import {
+  calculateDamage,
+  calculateShield,
+  applyDamage,
+  applyDamageWithCover,
+  applyShield,
+  applyHeal,
+} from './DamageSystem';
 import { moveUnit, pushUnit, swapPositions } from './PositionSystem';
 import { accelerateUnit, delayUnit } from '../core/TurnOrderManager';
 import { applyBuff, isStunned } from './BuffSystem';
@@ -10,14 +17,10 @@ import { applyBuff, isStunned } from './BuffSystem';
 /**
  * 조건 평가: 유닛의 현재 상태와 전체 전투 상태를 보고 조건 충족 여부 판단
  */
-export function evaluateCondition(
-  slot: ActionSlot,
-  unit: BattleUnit,
-  state: BattleState,
-): boolean {
+export function evaluateCondition(slot: ActionSlot, unit: BattleUnit, state: BattleState): boolean {
   const { type, value } = slot.condition;
   const enemyTeam = unit.team === Team.PLAYER ? Team.ENEMY : Team.PLAYER;
-  const aliveUnits = state.units.filter(u => u.isAlive);
+  const aliveUnits = state.units.filter((u) => u.isAlive);
 
   switch (type) {
     case 'ALWAYS':
@@ -36,15 +39,15 @@ export function evaluateCondition(
       return value !== undefined && (unit.stats.hp / unit.stats.maxHp) * 100 > value;
 
     case 'ENEMY_FRONT_EXISTS':
-      return aliveUnits.some(u => u.team === enemyTeam && u.position === Position.FRONT);
+      return aliveUnits.some((u) => u.team === enemyTeam && u.position === Position.FRONT);
 
     case 'ENEMY_BACK_EXISTS':
-      return aliveUnits.some(u => u.team === enemyTeam && u.position === Position.BACK);
+      return aliveUnits.some((u) => u.team === enemyTeam && u.position === Position.BACK);
 
     case 'ALLY_HP_BELOW':
       return aliveUnits.some(
-        u => u.team === unit.team && u.id !== unit.id &&
-          value !== undefined && (u.stats.hp / u.stats.maxHp) * 100 < value,
+        (u) =>
+          u.team === unit.team && u.id !== unit.id && value !== undefined && (u.stats.hp / u.stats.maxHp) * 100 < value,
       );
 
     case 'LOWEST_HP_ENEMY':
@@ -57,8 +60,9 @@ export function evaluateCondition(
       return unit.shield > 0;
 
     case 'ENEMY_HP_BELOW':
-      return value !== undefined && aliveUnits.some(
-        u => u.team === enemyTeam && (u.stats.hp / u.stats.maxHp) * 100 < value,
+      return (
+        value !== undefined &&
+        aliveUnits.some((u) => u.team === enemyTeam && (u.stats.hp / u.stats.maxHp) * 100 < value)
       );
 
     default:
@@ -72,10 +76,7 @@ export function evaluateCondition(
  * 조건이 맞는 액션이 없으면 null 반환 (턴 손실).
  * 스턴 상태면 'STUNNED' 반환.
  */
-export function selectAction(
-  unit: BattleUnit,
-  state: BattleState,
-): ActionSlot | null | 'STUNNED' {
+export function selectAction(unit: BattleUnit, state: BattleState): ActionSlot | null | 'STUNNED' {
   if (isStunned(unit)) return 'STUNNED';
 
   for (const slot of unit.actionSlots) {
@@ -161,7 +162,7 @@ export function executeAction(
       units = result.units;
       allEvents.push(...result.events);
       // source가 변경됐을 수 있으므로 갱신 (SELF 효과)
-      const updatedSource = units.find(u => u.id === source.id);
+      const updatedSource = units.find((u) => u.id === source.id);
       if (updatedSource) {
         source = updatedSource;
       }
@@ -212,11 +213,9 @@ function applyEffect(
 
     case 'SHIELD': {
       // stat: 'grd'가 있으면 GRD 기반 배율 계산, 없으면 고정값
-      const amount = effect.stat === 'grd'
-        ? calculateShield(source, effect.value ?? 1.0)
-        : (effect.value ?? 0);
+      const amount = effect.stat === 'grd' ? calculateShield(source, effect.value ?? 1.0) : (effect.value ?? 0);
       const result = applyShield(actualTarget, amount, round, turn);
-      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      updatedUnits = updatedUnits.map((u) => (u.id === actualTarget.id ? result.unit : u));
       allEvents.push(...result.events);
       break;
     }
@@ -224,7 +223,7 @@ function applyEffect(
     case 'HEAL': {
       const amount = effect.value ?? 0;
       const result = applyHeal(actualTarget, amount, round, turn);
-      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      updatedUnits = updatedUnits.map((u) => (u.id === actualTarget.id ? result.unit : u));
       allEvents.push(...result.events);
       break;
     }
@@ -232,7 +231,7 @@ function applyEffect(
     case 'MOVE': {
       const pos = effect.position ?? Position.FRONT;
       const result = moveUnit(actualTarget, pos, round, turn);
-      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      updatedUnits = updatedUnits.map((u) => (u.id === actualTarget.id ? result.unit : u));
       allEvents.push(...result.events);
       break;
     }
@@ -240,7 +239,7 @@ function applyEffect(
     case 'PUSH': {
       const pos = effect.position ?? Position.BACK;
       const result = pushUnit(actualTarget, pos, source.id, round, turn);
-      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      updatedUnits = updatedUnits.map((u) => (u.id === actualTarget.id ? result.unit : u));
       allEvents.push(...result.events);
       break;
     }
@@ -257,7 +256,7 @@ function applyEffect(
         sourceId: source.id,
       };
       const result = applyBuff(actualTarget, buff, round, turn);
-      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      updatedUnits = updatedUnits.map((u) => (u.id === actualTarget.id ? result.unit : u));
       allEvents.push(...result.events);
       break;
     }
@@ -265,7 +264,7 @@ function applyEffect(
     case 'REPOSITION': {
       const pos = effect.position ?? Position.FRONT;
       const result = moveUnit(actualTarget, pos, round, turn);
-      updatedUnits = updatedUnits.map(u => u.id === actualTarget.id ? result.unit : u);
+      updatedUnits = updatedUnits.map((u) => (u.id === actualTarget.id ? result.unit : u));
       allEvents.push(...result.events);
       break;
     }
@@ -275,7 +274,7 @@ function applyEffect(
       const swapPartner = selectTarget(source, swapPartnerTarget, updatedUnits, state);
       if (!swapPartner || swapPartner.id === actualTarget.id) break;
       const result = swapPositions(actualTarget, swapPartner, source.id, round, turn);
-      updatedUnits = updatedUnits.map(u => {
+      updatedUnits = updatedUnits.map((u) => {
         if (u.id === actualTarget.id) return result.unitA;
         if (u.id === swapPartner.id) return result.unitB;
         return u;

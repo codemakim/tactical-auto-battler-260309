@@ -47,7 +47,7 @@ describe('Reposition 효과', () => {
     const state = makeBattleState({ units: [source, ally, enemy] });
     const result = executeAction(source, slot, state);
 
-    const movedAlly = result.units.find(u => u.id === ally.id);
+    const movedAlly = result.units.find((u) => u.id === ally.id);
     expect(movedAlly!.position).toBe(Position.FRONT);
   });
 
@@ -69,7 +69,7 @@ describe('Reposition 효과', () => {
     const state = makeBattleState({ units: [source, ally, enemy] });
     const result = executeAction(source, slot, state);
 
-    const movedAlly = result.units.find(u => u.id === ally.id);
+    const movedAlly = result.units.find((u) => u.id === ally.id);
     expect(movedAlly!.position).toBe(Position.BACK);
   });
 
@@ -92,7 +92,7 @@ describe('Reposition 효과', () => {
     const result = executeAction(source, slot, state);
 
     // UNIT_MOVED 이벤트가 없어야 함 (이미 같은 위치)
-    const moveEvents = result.events.filter(e => e.type === 'UNIT_MOVED');
+    const moveEvents = result.events.filter((e) => e.type === 'UNIT_MOVED');
     expect(moveEvents).toHaveLength(0);
   });
 
@@ -114,7 +114,7 @@ describe('Reposition 효과', () => {
     const state = makeBattleState({ units: [source, ally, enemy] });
     const result = executeAction(source, slot, state);
 
-    const moveEvents = result.events.filter(e => e.type === 'UNIT_MOVED');
+    const moveEvents = result.events.filter((e) => e.type === 'UNIT_MOVED');
     expect(moveEvents).toHaveLength(1);
     expect(moveEvents[0].targetId).toBe(ally.id);
   });
@@ -141,7 +141,7 @@ describe('Reposition 효과', () => {
     const result = executeAction(source, slot, state);
 
     // HP가 가장 낮은 ally1이 BACK으로 이동
-    const movedAlly = result.units.find(u => u.id === ally1.id);
+    const movedAlly = result.units.find((u) => u.id === ally1.id);
     expect(movedAlly!.position).toBe(Position.BACK);
   });
 });

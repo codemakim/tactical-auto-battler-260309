@@ -7,11 +7,7 @@ import { findCoverUnit } from './CoverSystem';
  * 데미지 계산: floor(유효 ATK × 배율)
  * §12.1: 상시 방어력 차감 없음
  */
-export function calculateDamage(
-  attacker: BattleUnit,
-  _defender: BattleUnit,
-  multiplier: number,
-): number {
+export function calculateDamage(attacker: BattleUnit, _defender: BattleUnit, multiplier: number): number {
   const atkStats = getEffectiveStats(attacker);
   return Math.floor(atkStats.atk * multiplier);
 }
@@ -20,10 +16,7 @@ export function calculateDamage(
  * 실드 생성량 계산: floor(유효 GRD × 배율)
  * §12.2: GRD 스탯 기반 실드 생성
  */
-export function calculateShield(
-  unit: BattleUnit,
-  multiplier: number,
-): number {
+export function calculateShield(unit: BattleUnit, multiplier: number): number {
   const stats = getEffectiveStats(unit);
   return Math.floor(stats.grd * multiplier);
 }
@@ -102,15 +95,17 @@ export function applyShield(
 
   return {
     unit: updated,
-    events: [{
-      id: uid(),
-      type: 'SHIELD_APPLIED',
-      round,
-      turn,
-      timestamp: Date.now(),
-      targetId: unit.id,
-      value: amount,
-    }],
+    events: [
+      {
+        id: uid(),
+        type: 'SHIELD_APPLIED',
+        round,
+        turn,
+        timestamp: Date.now(),
+        targetId: unit.id,
+        value: amount,
+      },
+    ],
   };
 }
 
@@ -143,13 +138,13 @@ export function applyDamageWithCover(
     };
 
     const dmgResult = applyDamage(coverUnit, amount, sourceId, round, turn);
-    const units = allUnits.map(u => u.id === coverUnit.id ? dmgResult.unit : u);
+    const units = allUnits.map((u) => (u.id === coverUnit.id ? dmgResult.unit : u));
     return { units, events: [coverEvent, ...dmgResult.events] };
   }
 
   // 커버 없음: 원래 타겟이 피격
   const dmgResult = applyDamage(target, amount, sourceId, round, turn);
-  const units = allUnits.map(u => u.id === target.id ? dmgResult.unit : u);
+  const units = allUnits.map((u) => (u.id === target.id ? dmgResult.unit : u));
   return { units, events: dmgResult.events };
 }
 
@@ -166,14 +161,16 @@ export function applyHeal(
 
   return {
     unit: { ...unit, stats: { ...unit.stats, hp: newHp } },
-    events: [{
-      id: uid(),
-      type: 'HEAL_APPLIED',
-      round,
-      turn,
-      timestamp: Date.now(),
-      targetId: unit.id,
-      value: newHp - unit.stats.hp,
-    }],
+    events: [
+      {
+        id: uid(),
+        type: 'HEAL_APPLIED',
+        round,
+        turn,
+        timestamp: Date.now(),
+        targetId: unit.id,
+        value: newHp - unit.stats.hp,
+      },
+    ],
   };
 }

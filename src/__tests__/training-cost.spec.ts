@@ -232,8 +232,8 @@ describe('훈련 골드 소비 (§24)', () => {
 
       expect(result2.unit.trainingsUsed).toBe(2);
       expect(result2.unit.stats.atk).toBe(unit.stats.atk + 1); // ATK +1
-      expect(result2.unit.stats.hp).toBe(unit.stats.hp + 3);   // HP +3
-      expect(result2.remainingGold).toBe(300 - 50 - 75);       // 175골드 남음
+      expect(result2.unit.stats.hp).toBe(unit.stats.hp + 3); // HP +3
+      expect(result2.remainingGold).toBe(300 - 50 - 75); // 175골드 남음
     });
   });
 });

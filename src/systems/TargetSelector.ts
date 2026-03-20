@@ -12,7 +12,7 @@ function getEnemyTeam(unit: BattleUnit): Team {
  * 살아있는 유닛 필터
  */
 function alive(units: BattleUnit[]): BattleUnit[] {
-  return units.filter(u => u.isAlive);
+  return units.filter((u) => u.isAlive);
 }
 
 /**
@@ -30,20 +30,18 @@ export function selectTarget(
   if (targetType.side === 'SELF') return source;
 
   // 1. side 필터
-  const team = targetType.side === 'ENEMY'
-    ? getEnemyTeam(source)
-    : source.team;
+  const team = targetType.side === 'ENEMY' ? getEnemyTeam(source) : source.team;
 
-  let candidates = alive(allUnits).filter(u => u.team === team);
+  let candidates = alive(allUnits).filter((u) => u.team === team);
 
   // ALLY는 본인 제외
   if (targetType.side === 'ALLY') {
-    candidates = candidates.filter(u => u.id !== source.id);
+    candidates = candidates.filter((u) => u.id !== source.id);
   }
 
   // 2. position 필터 (폴백: 해당 포지션 없으면 전체)
   if (targetType.position !== 'ANY') {
-    const posFiltered = candidates.filter(u => u.position === targetType.position);
+    const posFiltered = candidates.filter((u) => u.position === targetType.position);
     if (posFiltered.length > 0) {
       candidates = posFiltered;
     }
@@ -59,11 +57,7 @@ export function selectTarget(
 /**
  * 선택 전략에 따라 후보 중 1명 선택
  */
-function selectByStrategy(
-  candidates: BattleUnit[],
-  select: string,
-  state?: BattleState,
-): BattleUnit | null {
+function selectByStrategy(candidates: BattleUnit[], select: string, state?: BattleState): BattleUnit | null {
   switch (select) {
     case TargetSelect.HIGHEST_AGI:
       return candidates.sort((a, b) => b.stats.agi - a.stats.agi)[0] ?? null;

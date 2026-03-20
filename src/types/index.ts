@@ -60,9 +60,9 @@ export type BuffType = (typeof BuffType)[keyof typeof BuffType];
 export interface Buff {
   id: string;
   type: BuffType;
-  value: number;       // 스탯 수정량 또는 틱 데미지/힐량
-  duration: number;    // 남은 라운드 수 (라운드 종료 시 감소)
-  sourceId: string;    // 버프를 부여한 유닛 ID
+  value: number; // 스탯 수정량 또는 틱 데미지/힐량
+  duration: number; // 남은 라운드 수 (라운드 종료 시 감소)
+  sourceId: string; // 버프를 부여한 유닛 ID
 }
 
 // === Condition Types ===
@@ -118,29 +118,41 @@ export type ActionTargetType =
 
 /** 편의 상수 — 기존 문자열 타겟과 1:1 대응 */
 export const Target = {
-  SELF:           { side: 'SELF' } as const,
-  ENEMY_FRONT:    { side: 'ENEMY', position: 'FRONT', select: 'HIGHEST_AGI' } as const,
-  ENEMY_BACK:     { side: 'ENEMY', position: 'BACK',  select: 'HIGHEST_AGI' } as const,
-  ENEMY_ANY:      { side: 'ENEMY', position: 'ANY',   select: 'LOWEST_HP' } as const,
-  ALLY_LOWEST_HP: { side: 'ALLY',  position: 'ANY',   select: 'LOWEST_HP' } as const,
-  ALLY_ANY:       { side: 'ALLY',  position: 'ANY',   select: 'FIRST' } as const,
-  ENEMY_BACK_LOWEST_HP:   { side: 'ENEMY', position: 'BACK', select: 'LOWEST_HP' } as const,
+  SELF: { side: 'SELF' } as const,
+  ENEMY_FRONT: { side: 'ENEMY', position: 'FRONT', select: 'HIGHEST_AGI' } as const,
+  ENEMY_BACK: { side: 'ENEMY', position: 'BACK', select: 'HIGHEST_AGI' } as const,
+  ENEMY_ANY: { side: 'ENEMY', position: 'ANY', select: 'LOWEST_HP' } as const,
+  ALLY_LOWEST_HP: { side: 'ALLY', position: 'ANY', select: 'LOWEST_HP' } as const,
+  ALLY_ANY: { side: 'ALLY', position: 'ANY', select: 'FIRST' } as const,
+  ENEMY_BACK_LOWEST_HP: { side: 'ENEMY', position: 'BACK', select: 'LOWEST_HP' } as const,
   ENEMY_BACK_HIGHEST_ATK: { side: 'ENEMY', position: 'BACK', select: 'HIGHEST_ATK' } as const,
 } as const;
 
 // === Action Types ===
 
 export interface ActionEffect {
-  type: 'DAMAGE' | 'HEAL' | 'SHIELD' | 'MOVE' | 'PUSH' | 'BUFF' | 'DEBUFF' | 'DELAY_TURN' | 'ADVANCE_TURN' | 'REPOSITION' | 'DELAYED' | 'SWAP';
-  value?: number;      // multiplier or flat value
-  stat?: keyof Stats;  // which stat to reference
+  type:
+    | 'DAMAGE'
+    | 'HEAL'
+    | 'SHIELD'
+    | 'MOVE'
+    | 'PUSH'
+    | 'BUFF'
+    | 'DEBUFF'
+    | 'DELAY_TURN'
+    | 'ADVANCE_TURN'
+    | 'REPOSITION'
+    | 'DELAYED'
+    | 'SWAP';
+  value?: number; // multiplier or flat value
+  stat?: keyof Stats; // which stat to reference
   target?: ActionTargetType;
   position?: Position; // for MOVE/PUSH/REPOSITION effects
   buffType?: BuffType; // for BUFF/DEBUFF effects
-  duration?: number;   // buff 지속 라운드 수
-  delayedType?: 'DAMAGE' | 'HEAL' | 'BUFF';  // DELAYED 효과 시 발동할 효과 종류
-  delayRounds?: number;   // DELAYED 효과 시 몇 라운드 후 발동
-  swapTarget?: ActionTargetType;  // SWAP 효과 시 교환 상대 타겟
+  duration?: number; // buff 지속 라운드 수
+  delayedType?: 'DAMAGE' | 'HEAL' | 'BUFF'; // DELAYED 효과 시 발동할 효과 종류
+  delayRounds?: number; // DELAYED 효과 시 몇 라운드 후 발동
+  swapTarget?: ActionTargetType; // SWAP 효과 시 교환 상대 타겟
 }
 
 export const Rarity = {
@@ -156,8 +168,8 @@ export interface Action {
   name: string;
   description: string;
   effects: ActionEffect[];
-  isBasic?: boolean;                 // true for character's unique basic action
-  rarity?: Rarity;                   // 액션 카드 희귀도
+  isBasic?: boolean; // true for character's unique basic action
+  rarity?: Rarity; // 액션 카드 희귀도
   classRestriction?: CharacterClass; // 특정 클래스 전용 (없으면 범용)
 }
 
@@ -172,12 +184,12 @@ export interface ActionSlot {
 export interface EffectTemplate {
   type: ActionEffect['type'];
   stat?: keyof Stats;
-  multiplierPool: number[];         // 이 중 하나 랜덤 선택
-  targetPool: ActionTargetType[];   // 이 중 하나 랜덤 선택
-  position?: Position;              // MOVE/PUSH용 고정값
-  buffType?: BuffType;              // BUFF/DEBUFF용 고정값
-  duration?: number;                // 버프 지속 라운드
-  swapTarget?: ActionTargetType;   // SWAP 효과 시 교환 상대 타겟
+  multiplierPool: number[]; // 이 중 하나 랜덤 선택
+  targetPool: ActionTargetType[]; // 이 중 하나 랜덤 선택
+  position?: Position; // MOVE/PUSH용 고정값
+  buffType?: BuffType; // BUFF/DEBUFF용 고정값
+  duration?: number; // 버프 지속 라운드
+  swapTarget?: ActionTargetType; // SWAP 효과 시 교환 상대 타겟
 }
 
 /** 카드 템플릿 — 획득 시 변형 생성의 원본 */
@@ -222,21 +234,21 @@ export interface CharacterDefinition {
   baseStats: Omit<Stats, 'maxHp'>;
   /** 클래스의 기본 3개 액션 슬롯. 런 리셋 시 이 슬롯으로 복원된다. */
   baseActionSlots: ActionSlot[];
-  trainingsUsed: number;       // 사용한 훈련 횟수
-  trainingPotential: number;   // 최대 훈련 횟수 (2~5)
+  trainingsUsed: number; // 사용한 훈련 횟수
+  trainingPotential: number; // 최대 훈련 횟수 (2~5)
 }
 
 // === Delayed Effect ===
 
 export interface DelayedEffect {
-  id: string;              // 고유 식별자
-  sourceId: string;        // 효과를 생성한 유닛 ID
-  targetId: string;        // 효과 대상 유닛 ID
-  effectType: 'DAMAGE' | 'HEAL' | 'BUFF';  // 발동 시 적용할 효과
-  value: number;           // 데미지량 / 힐량 / 버프 수치
+  id: string; // 고유 식별자
+  sourceId: string; // 효과를 생성한 유닛 ID
+  targetId: string; // 효과 대상 유닛 ID
+  effectType: 'DAMAGE' | 'HEAL' | 'BUFF'; // 발동 시 적용할 효과
+  value: number; // 데미지량 / 힐량 / 버프 수치
   remainingRounds: number; // 남은 라운드 수 (0이 되면 발동)
-  buffType?: BuffType;     // effectType이 BUFF일 때 버프 종류
-  buffDuration?: number;   // effectType이 BUFF일 때 버프 지속시간
+  buffType?: BuffType; // effectType이 BUFF일 때 버프 종류
+  buffDuration?: number; // effectType이 BUFF일 때 버프 지속시간
 }
 
 // === Battle Unit (runtime) ===
@@ -259,25 +271,25 @@ export interface BattleUnit {
   preBattleActionSlots?: ActionSlot[];
   isAlive: boolean;
   hasActedThisRound: boolean;
-  trainingsUsed: number;       // 사용한 훈련 횟수 (§24)
-  trainingPotential: number;   // 최대 훈련 횟수 (§23.5)
+  trainingsUsed: number; // 사용한 훈련 횟수 (§24)
+  trainingPotential: number; // 최대 훈련 횟수 (§23.5)
 }
 
 // === Battle State (전체 전투 상태를 하나의 객체로 관리) ===
 
 export interface BattleState {
   units: BattleUnit[];
-  reserve: BattleUnit[];   // 대기 유닛
+  reserve: BattleUnit[]; // 대기 유닛
   hero: HeroState;
   round: number;
   turn: number;
-  turnOrder: string[];     // unit id 순서
+  turnOrder: string[]; // unit id 순서
   phase: BattlePhase;
-  events: BattleEvent[];   // 리플레이용 전체 로그
-  delayedEffects: DelayedEffect[];  // §7.2 지연 효과
+  events: BattleEvent[]; // 리플레이용 전체 로그
+  delayedEffects: DelayedEffect[]; // §7.2 지연 효과
   isFinished: boolean;
   winner: Team | null;
-  seed: number;            // 결정론적 재현을 위한 랜덤 시드
+  seed: number; // 결정론적 재현을 위한 랜덤 시드
 }
 
 // === Battle Result (전투 종료 후 출력) ===
@@ -293,9 +305,9 @@ export interface BattleResult {
 // === Hero ===
 
 export const HeroType = {
-  COMMANDER: 'COMMANDER',  // 지휘(버프) 위주
-  MAGE: 'MAGE',            // 직접 타격(마법)
-  SUPPORT: 'SUPPORT',      // 회복/지원
+  COMMANDER: 'COMMANDER', // 지휘(버프) 위주
+  MAGE: 'MAGE', // 직접 타격(마법)
+  SUPPORT: 'SUPPORT', // 회복/지원
 } as const;
 export type HeroType = (typeof HeroType)[keyof typeof HeroType];
 
@@ -368,7 +380,7 @@ export type BattleEventType =
   | 'BATTLE_END';
 
 export interface BattleEvent {
-  id: string;           // 고유 ID (리플레이 탐색용)
+  id: string; // 고유 ID (리플레이 탐색용)
   type: BattleEventType;
   round: number;
   turn: number;
@@ -400,8 +412,8 @@ export interface BattleReward {
 
 export interface CharacterReward {
   characterClass: CharacterClass;
-  trainingPotential: number;  // 랜덤 생성된 잠재력 (2~5)
-  probability: number;        // 이 보상이 생성된 확률 (0~1, 디버그/UI용)
+  trainingPotential: number; // 랜덤 생성된 잠재력 (2~5)
+  probability: number; // 이 보상이 생성된 확률 (0~1, 디버그/UI용)
 }
 
 // === Game Config ===

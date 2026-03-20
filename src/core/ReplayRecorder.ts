@@ -7,7 +7,7 @@ export interface ReplaySnapshot {
   eventIndex: number;
   round: number;
   turn: number;
-  units: BattleUnit[];   // 해당 시점의 유닛 상태 복사본
+  units: BattleUnit[]; // 해당 시점의 유닛 상태 복사본
 }
 
 /**
@@ -15,7 +15,7 @@ export interface ReplaySnapshot {
  */
 export interface ReplayData {
   events: BattleEvent[];
-  snapshots: ReplaySnapshot[];  // 주요 시점 스냅샷 (라운드 시작마다)
+  snapshots: ReplaySnapshot[]; // 주요 시점 스냅샷 (라운드 시작마다)
 }
 
 /**
@@ -35,35 +35,27 @@ export function createReplayData(finalState: BattleState): ReplayData {
 /**
  * 전투 중 스냅샷 기록 (라운드 시작 시 호출)
  */
-export function recordSnapshot(
-  state: BattleState,
-): ReplaySnapshot {
+export function recordSnapshot(state: BattleState): ReplaySnapshot {
   return {
     eventIndex: state.events.length,
     round: state.round,
     turn: state.turn,
-    units: state.units.map(u => ({ ...u, stats: { ...u.stats } })),
+    units: state.units.map((u) => ({ ...u, stats: { ...u.stats } })),
   };
 }
 
 /**
  * 리플레이 탐색: 특정 이벤트 인덱스까지의 이벤트 목록
  */
-export function getEventsUpTo(
-  replay: ReplayData,
-  eventIndex: number,
-): BattleEvent[] {
+export function getEventsUpTo(replay: ReplayData, eventIndex: number): BattleEvent[] {
   return replay.events.slice(0, eventIndex + 1);
 }
 
 /**
  * 리플레이 탐색: 특정 라운드의 이벤트만
  */
-export function getEventsForRound(
-  replay: ReplayData,
-  round: number,
-): BattleEvent[] {
-  return replay.events.filter(e => e.round === round);
+export function getEventsForRound(replay: ReplayData, round: number): BattleEvent[] {
+  return replay.events.filter((e) => e.round === round);
 }
 
 /**

@@ -1,4 +1,13 @@
-import { CharacterClass, Rarity, BuffType, Target, type ActionSlot, type Stats, type StatRange, type CardTemplate } from '../types';
+import {
+  CharacterClass,
+  Rarity,
+  BuffType,
+  Target,
+  type ActionSlot,
+  type Stats,
+  type StatRange,
+  type CardTemplate,
+} from '../types';
 
 export interface ClassTemplate {
   characterClass: string;
@@ -25,7 +34,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'warrior_shield_bash', name: 'Shield Bash', isBasic: true,
+          id: 'warrior_shield_bash',
+          name: 'Shield Bash',
+          isBasic: true,
           description: 'Deal ATK x1.2 damage and gain GRD x0.8 shield.',
           effects: [
             { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT },
@@ -37,7 +48,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'HP_BELOW', value: 50 },
         action: {
-          id: 'warrior_fortify', name: 'Fortify', isBasic: true,
+          id: 'warrior_fortify',
+          name: 'Fortify',
+          isBasic: true,
           description: 'Gain GRD x1.5 shield when health is low.',
           effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
           rarity: Rarity.COMMON,
@@ -46,7 +59,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'warrior_strike', name: 'Strike', isBasic: true,
+          id: 'warrior_strike',
+          name: 'Strike',
+          isBasic: true,
           description: 'Basic melee attack.',
           effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
           rarity: Rarity.COMMON,
@@ -70,9 +85,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         name: 'Fortify',
         rarity: Rarity.COMMON,
         condition: { type: 'HP_BELOW', value: 50 },
-        effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.SELF] },
-        ],
+        effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.SELF] }],
       },
       {
         id: 'warrior_strike',
@@ -88,18 +101,14 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         name: 'Advance',
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_BACK' },
-        effectTemplates: [
-          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
-        ],
+        effectTemplates: [{ type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' }],
       },
       {
         id: 'warrior_hold_ground',
         name: 'Hold Ground',
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.SELF] },
-        ],
+        effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.SELF] }],
       },
       // --- 특수 카드 ---
       // Heavy Slam — 전열 고데미지
@@ -120,9 +129,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         classRestriction: CharacterClass.WARRIOR,
         condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.SELF] },
-        ],
+        effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [1.1, 1.2, 1.3], targetPool: [Target.SELF] }],
       },
       // Driving Blow — 데미지 + PUSH
       {
@@ -170,7 +177,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'lancer_charge', name: 'Charge', isBasic: true,
+          id: 'lancer_charge',
+          name: 'Charge',
+          isBasic: true,
           description: 'Rush forward and deal ATK x1.4 damage. Pushes enemy back.',
           effects: [
             { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -183,7 +192,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'lancer_lance_strike', name: 'Lance Strike', isBasic: true,
+          id: 'lancer_lance_strike',
+          name: 'Lance Strike',
+          isBasic: true,
           description: 'Deal ATK x1.2 damage from the front.',
           effects: [{ type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT }],
           rarity: Rarity.COMMON,
@@ -192,7 +203,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'lancer_thrust', name: 'Thrust', isBasic: true,
+          id: 'lancer_thrust',
+          name: 'Thrust',
+          isBasic: true,
           description: 'Basic thrust attack.',
           effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
           rarity: Rarity.COMMON,
@@ -235,9 +248,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         name: 'Retreat',
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
-        ],
+        effectTemplates: [{ type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' }],
       },
       // --- 특수 카드 ---
       {
@@ -286,7 +297,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'archer_aimed_shot', name: 'Aimed Shot', isBasic: true,
+          id: 'archer_aimed_shot',
+          name: 'Aimed Shot',
+          isBasic: true,
           description: 'Deal ATK x1.3 damage to a back-row enemy from the back line.',
           effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_BACK }],
           rarity: Rarity.COMMON,
@@ -295,7 +308,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'archer_suppressing_shot', name: 'Suppressing Shot', isBasic: true,
+          id: 'archer_suppressing_shot',
+          name: 'Suppressing Shot',
+          isBasic: true,
           description: 'Weak shot that delays enemy turn.',
           effects: [
             { type: 'DAMAGE', value: 0.7, stat: 'atk', target: Target.ENEMY_ANY },
@@ -307,7 +322,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'archer_evasive_shot', name: 'Evasive Shot', isBasic: true,
+          id: 'archer_evasive_shot',
+          name: 'Evasive Shot',
+          isBasic: true,
           description: 'Shoot while retreating to the back line.',
           effects: [
             { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
@@ -377,9 +394,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         classRestriction: CharacterClass.ARCHER,
         condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
-        ],
+        effectTemplates: [{ type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' }],
       },
       {
         id: 'archer_snap_shot',
@@ -400,7 +415,12 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.ARCHER,
         condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.5, 1.6, 1.7], targetPool: [Target.ENEMY_BACK, Target.ENEMY_BACK_LOWEST_HP, Target.ENEMY_BACK_HIGHEST_ATK] },
+          {
+            type: 'DAMAGE',
+            stat: 'atk',
+            multiplierPool: [1.5, 1.6, 1.7],
+            targetPool: [Target.ENEMY_BACK, Target.ENEMY_BACK_LOWEST_HP, Target.ENEMY_BACK_HIGHEST_ATK],
+          },
         ],
       },
       {
@@ -425,7 +445,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'guardian_advance_guard', name: 'Advance Guard', isBasic: true,
+          id: 'guardian_advance_guard',
+          name: 'Advance Guard',
+          isBasic: true,
           description: 'Move to front, gain GRD x1.2 shield, and enter cover mode.',
           effects: [
             { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -438,7 +460,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'guardian_shield_wall', name: 'Shield Wall', isBasic: true,
+          id: 'guardian_shield_wall',
+          name: 'Shield Wall',
+          isBasic: true,
           description: 'Gain GRD x1.0 shield, shield lowest HP ally for GRD x0.8, and enter cover mode.',
           effects: [
             { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -451,7 +475,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'HP_BELOW', value: 50 },
         action: {
-          id: 'guardian_heavy_shield', name: 'Heavy Shield', isBasic: true,
+          id: 'guardian_heavy_shield',
+          name: 'Heavy Shield',
+          isBasic: true,
           description: 'Emergency GRD x1.5 shield when low on health.',
           effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
           rarity: Rarity.COMMON,
@@ -487,18 +513,14 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         name: 'Heavy Shield',
         rarity: Rarity.COMMON,
         condition: { type: 'HP_BELOW', value: 50 },
-        effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.SELF] },
-        ],
+        effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.SELF] }],
       },
       {
         id: 'guardian_bulwark',
         name: 'Bulwark',
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [1.1, 1.3, 1.5], targetPool: [Target.SELF] },
-        ],
+        effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [1.1, 1.3, 1.5], targetPool: [Target.SELF] }],
       },
       // --- 특수 카드 ---
       {
@@ -518,9 +540,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         rarity: Rarity.EPIC,
         classRestriction: CharacterClass.GUARDIAN,
         condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'SHIELD', stat: 'grd', multiplierPool: [2.0], targetPool: [Target.SELF] },
-        ],
+        effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [2.0], targetPool: [Target.SELF] }],
       },
       {
         id: 'guardian_rally_guard',
@@ -545,7 +565,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'ENEMY_FRONT_EXISTS' },
         action: {
-          id: 'controller_reposition', name: 'Reposition', isBasic: true,
+          id: 'controller_reposition',
+          name: 'Reposition',
+          isBasic: true,
           description: 'Push an enemy to the back and deal minor damage.',
           effects: [
             { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
@@ -557,7 +579,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'controller_tactical_shot', name: 'Tactical Shot', isBasic: true,
+          id: 'controller_tactical_shot',
+          name: 'Tactical Shot',
+          isBasic: true,
           description: 'Deal ATK x1.1 damage from range.',
           effects: [{ type: 'DAMAGE', value: 1.1, stat: 'atk', target: Target.ENEMY_ANY }],
           rarity: Rarity.COMMON,
@@ -566,7 +590,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'controller_strike', name: 'Strike', isBasic: true,
+          id: 'controller_strike',
+          name: 'Strike',
+          isBasic: true,
           description: 'Basic melee attack.',
           effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
           rarity: Rarity.COMMON,
@@ -591,7 +617,12 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
-          { type: 'DAMAGE', stat: 'atk', multiplierPool: [1.0, 1.1, 1.2], targetPool: [Target.ENEMY_ANY, Target.ENEMY_FRONT] },
+          {
+            type: 'DAMAGE',
+            stat: 'atk',
+            multiplierPool: [1.0, 1.1, 1.2],
+            targetPool: [Target.ENEMY_ANY, Target.ENEMY_FRONT],
+          },
         ],
       },
       {
@@ -608,9 +639,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         name: 'Withdraw',
         rarity: Rarity.COMMON,
         condition: { type: 'POSITION_FRONT' },
-        effectTemplates: [
-          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' },
-        ],
+        effectTemplates: [{ type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' }],
       },
       // --- PULL 카드 ---
       {
@@ -619,9 +648,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         rarity: Rarity.RARE,
         classRestriction: CharacterClass.CONTROLLER,
         condition: { type: 'ENEMY_BACK_EXISTS' },
-        effectTemplates: [
-          { type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_BACK], position: 'FRONT' },
-        ],
+        effectTemplates: [{ type: 'PUSH', multiplierPool: [0], targetPool: [Target.ENEMY_BACK], position: 'FRONT' }],
       },
       {
         id: 'controller_expose_weakness',
@@ -651,7 +678,12 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         classRestriction: CharacterClass.CONTROLLER,
         condition: { type: 'ENEMY_BACK_EXISTS' },
         effectTemplates: [
-          { type: 'SWAP', multiplierPool: [0], targetPool: [Target.ENEMY_BACK_HIGHEST_ATK], swapTarget: Target.ENEMY_FRONT },
+          {
+            type: 'SWAP',
+            multiplierPool: [0],
+            targetPool: [Target.ENEMY_BACK_HIGHEST_ATK],
+            swapTarget: Target.ENEMY_FRONT,
+          },
         ],
       },
       // --- DELAY 카드 ---
@@ -691,7 +723,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'assassin_dive', name: 'Dive', isBasic: true,
+          id: 'assassin_dive',
+          name: 'Dive',
+          isBasic: true,
           description: 'Rush to front and strike a back-row enemy.',
           effects: [
             { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -703,7 +737,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'POSITION_FRONT' },
         action: {
-          id: 'assassin_gut_strike', name: 'Gut Strike', isBasic: true,
+          id: 'assassin_gut_strike',
+          name: 'Gut Strike',
+          isBasic: true,
           description: 'Deal ATK x1.3 damage from the front.',
           effects: [{ type: 'DAMAGE', value: 1.3, stat: 'atk', target: Target.ENEMY_FRONT }],
           rarity: Rarity.COMMON,
@@ -712,7 +748,9 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'HP_BELOW', value: 40 },
         action: {
-          id: 'assassin_withdraw', name: 'Withdraw', isBasic: true,
+          id: 'assassin_withdraw',
+          name: 'Withdraw',
+          isBasic: true,
           description: 'Strike and retreat when badly hurt.',
           effects: [
             { type: 'DAMAGE', value: 0.8, stat: 'atk', target: Target.ENEMY_FRONT },
@@ -773,7 +811,13 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
           { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.7, 0.8, 0.9], targetPool: [Target.ENEMY_FRONT] },
-          { type: 'DEBUFF', multiplierPool: [2], targetPool: [Target.ENEMY_FRONT], buffType: 'GUARD_DOWN', duration: 2 },
+          {
+            type: 'DEBUFF',
+            multiplierPool: [2],
+            targetPool: [Target.ENEMY_FRONT],
+            buffType: 'GUARD_DOWN',
+            duration: 2,
+          },
         ],
       },
       // --- 탈출 카드 (1장) — HP 낮을 때만 후퇴 가능 ---

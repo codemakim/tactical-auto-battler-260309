@@ -32,11 +32,21 @@ describe('액션 해석 시스템', () => {
     // 액션 슬롯: FRONT → Attack, BACK → Defend, ALWAYS → BasicAction
     const frontAttack: ActionSlot = {
       condition: { type: 'POSITION_FRONT' },
-      action: { id: 'atk', name: 'Attack', description: '', effects: [{ type: 'DAMAGE', value: 1.0, target: Target.ENEMY_FRONT }] },
+      action: {
+        id: 'atk',
+        name: 'Attack',
+        description: '',
+        effects: [{ type: 'DAMAGE', value: 1.0, target: Target.ENEMY_FRONT }],
+      },
     };
     const backDefend: ActionSlot = {
       condition: { type: 'POSITION_BACK' },
-      action: { id: 'defend', name: 'Defend', description: '', effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF }] },
+      action: {
+        id: 'defend',
+        name: 'Defend',
+        description: '',
+        effects: [{ type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF }],
+      },
     };
 
     unit.actionSlots = [frontAttack, backDefend, ...unit.actionSlots]; // 기본 액션은 마지막
@@ -78,7 +88,10 @@ describe('액션 해석 시스템', () => {
 
     // 기본 액션 제거, 맞지 않는 조건만 남김
     unit.actionSlots = [
-      { condition: { type: 'HP_BELOW', value: 10 }, action: { id: 'heal', name: 'Heal', description: '', effects: [] } },
+      {
+        condition: { type: 'HP_BELOW', value: 10 },
+        action: { id: 'heal', name: 'Heal', description: '', effects: [] },
+      },
       { condition: { type: 'POSITION_BACK' }, action: { id: 'x', name: 'X', description: '', effects: [] } },
     ];
 

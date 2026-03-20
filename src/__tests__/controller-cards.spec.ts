@@ -41,7 +41,7 @@ function makeState(units: BattleUnit[]): BattleState {
     },
     round: 1,
     turn: 1,
-    turnOrder: units.map(u => u.id),
+    turnOrder: units.map((u) => u.id),
     phase: 'ACTION_RESOLVE',
     events: [],
     delayedEffects: [],
@@ -54,9 +54,24 @@ function makeState(units: BattleUnit[]): BattleState {
 describe('HIGHEST_ATK 타겟 셀렉터', () => {
   it('ENEMY_BACK 중 ATK가 가장 높은 유닛 선택', () => {
     const source = makeUnit({ id: 'src', team: Team.PLAYER });
-    const e1 = makeUnit({ id: 'e1', team: Team.ENEMY, position: Position.BACK, stats: { hp: 30, maxHp: 30, atk: 8, grd: 3, agi: 5 } });
-    const e2 = makeUnit({ id: 'e2', team: Team.ENEMY, position: Position.BACK, stats: { hp: 30, maxHp: 30, atk: 15, grd: 3, agi: 5 } });
-    const e3 = makeUnit({ id: 'e3', team: Team.ENEMY, position: Position.FRONT, stats: { hp: 40, maxHp: 40, atk: 20, grd: 5, agi: 7 } });
+    const e1 = makeUnit({
+      id: 'e1',
+      team: Team.ENEMY,
+      position: Position.BACK,
+      stats: { hp: 30, maxHp: 30, atk: 8, grd: 3, agi: 5 },
+    });
+    const e2 = makeUnit({
+      id: 'e2',
+      team: Team.ENEMY,
+      position: Position.BACK,
+      stats: { hp: 30, maxHp: 30, atk: 15, grd: 3, agi: 5 },
+    });
+    const e3 = makeUnit({
+      id: 'e3',
+      team: Team.ENEMY,
+      position: Position.FRONT,
+      stats: { hp: 40, maxHp: 40, atk: 20, grd: 5, agi: 7 },
+    });
 
     const result = selectTarget(source, Target.ENEMY_BACK_HIGHEST_ATK, [source, e1, e2, e3]);
     expect(result?.id).toBe('e2'); // 후열 중 ATK 최고
@@ -64,8 +79,18 @@ describe('HIGHEST_ATK 타겟 셀렉터', () => {
 
   it('후열 적이 없으면 전열로 폴백', () => {
     const source = makeUnit({ id: 'src', team: Team.PLAYER });
-    const e1 = makeUnit({ id: 'e1', team: Team.ENEMY, position: Position.FRONT, stats: { hp: 40, maxHp: 40, atk: 12, grd: 5, agi: 7 } });
-    const e2 = makeUnit({ id: 'e2', team: Team.ENEMY, position: Position.FRONT, stats: { hp: 40, maxHp: 40, atk: 18, grd: 5, agi: 7 } });
+    const e1 = makeUnit({
+      id: 'e1',
+      team: Team.ENEMY,
+      position: Position.FRONT,
+      stats: { hp: 40, maxHp: 40, atk: 12, grd: 5, agi: 7 },
+    });
+    const e2 = makeUnit({
+      id: 'e2',
+      team: Team.ENEMY,
+      position: Position.FRONT,
+      stats: { hp: 40, maxHp: 40, atk: 18, grd: 5, agi: 7 },
+    });
 
     const result = selectTarget(source, Target.ENEMY_BACK_HIGHEST_ATK, [source, e1, e2]);
     expect(result?.id).toBe('e2'); // 폴백 → 전열 중 ATK 최고
@@ -75,9 +100,24 @@ describe('HIGHEST_ATK 타겟 셀렉터', () => {
 describe('ENEMY_BACK_LOWEST_HP 타겟 셀렉터', () => {
   it('ENEMY_BACK 중 HP가 가장 낮은 유닛 선택', () => {
     const source = makeUnit({ id: 'src', team: Team.PLAYER });
-    const e1 = makeUnit({ id: 'e1', team: Team.ENEMY, position: Position.BACK, stats: { hp: 25, maxHp: 30, atk: 8, grd: 3, agi: 5 } });
-    const e2 = makeUnit({ id: 'e2', team: Team.ENEMY, position: Position.BACK, stats: { hp: 10, maxHp: 30, atk: 12, grd: 3, agi: 5 } });
-    const e3 = makeUnit({ id: 'e3', team: Team.ENEMY, position: Position.FRONT, stats: { hp: 5, maxHp: 40, atk: 10, grd: 5, agi: 7 } });
+    const e1 = makeUnit({
+      id: 'e1',
+      team: Team.ENEMY,
+      position: Position.BACK,
+      stats: { hp: 25, maxHp: 30, atk: 8, grd: 3, agi: 5 },
+    });
+    const e2 = makeUnit({
+      id: 'e2',
+      team: Team.ENEMY,
+      position: Position.BACK,
+      stats: { hp: 10, maxHp: 30, atk: 12, grd: 3, agi: 5 },
+    });
+    const e3 = makeUnit({
+      id: 'e3',
+      team: Team.ENEMY,
+      position: Position.FRONT,
+      stats: { hp: 5, maxHp: 40, atk: 10, grd: 5, agi: 7 },
+    });
 
     const result = selectTarget(source, Target.ENEMY_BACK_LOWEST_HP, [source, e1, e2, e3]);
     expect(result?.id).toBe('e2'); // 후열 중 HP 최저
@@ -132,11 +172,13 @@ describe('SWAP 효과 — ActionResolver 통합', () => {
         id: 'test_swap',
         name: 'Test Swap',
         description: 'Swap test',
-        effects: [{
-          type: 'SWAP',
-          target: Target.ENEMY_BACK,
-          swapTarget: Target.ENEMY_FRONT,
-        }],
+        effects: [
+          {
+            type: 'SWAP',
+            target: Target.ENEMY_BACK,
+            swapTarget: Target.ENEMY_FRONT,
+          },
+        ],
       },
     };
 
@@ -144,9 +186,9 @@ describe('SWAP 효과 — ActionResolver 통합', () => {
     const result = executeAction(controller, slot, state);
 
     const swapped = result.units;
-    expect(swapped.find(u => u.id === 'ef')!.position).toBe(Position.BACK);
-    expect(swapped.find(u => u.id === 'eb')!.position).toBe(Position.FRONT);
-    expect(result.events.some(e => e.type === 'UNIT_SWAPPED')).toBe(true);
+    expect(swapped.find((u) => u.id === 'ef')!.position).toBe(Position.BACK);
+    expect(swapped.find((u) => u.id === 'eb')!.position).toBe(Position.FRONT);
+    expect(result.events.some((e) => e.type === 'UNIT_SWAPPED')).toBe(true);
   });
 
   it('SWAP 파트너가 없으면 no-op', () => {
@@ -161,11 +203,13 @@ describe('SWAP 효과 — ActionResolver 통합', () => {
         id: 'test_swap',
         name: 'Test Swap',
         description: 'Swap test',
-        effects: [{
-          type: 'SWAP',
-          target: Target.ENEMY_BACK,
-          swapTarget: Target.ENEMY_FRONT,
-        }],
+        effects: [
+          {
+            type: 'SWAP',
+            target: Target.ENEMY_BACK,
+            swapTarget: Target.ENEMY_FRONT,
+          },
+        ],
       },
     };
 
@@ -173,14 +217,29 @@ describe('SWAP 효과 — ActionResolver 통합', () => {
     const result = executeAction(controller, slot, state);
 
     // ENEMY_FRONT 없으므로 폴백으로 BACK에서 선택 → 같은 유닛이거나 같은 포지션 → no-op
-    expect(result.events.filter(e => e.type === 'UNIT_SWAPPED')).toHaveLength(0);
+    expect(result.events.filter((e) => e.type === 'UNIT_SWAPPED')).toHaveLength(0);
   });
 
   it('Break Formation — ENEMY_BACK 중 ATK 최고를 SWAP', () => {
     const controller = makeUnit({ id: 'ctrl', team: Team.PLAYER });
-    const eFront = makeUnit({ id: 'ef', team: Team.ENEMY, position: Position.FRONT, stats: { hp: 50, maxHp: 50, atk: 8, grd: 5, agi: 8 } });
-    const eBack1 = makeUnit({ id: 'eb1', team: Team.ENEMY, position: Position.BACK, stats: { hp: 30, maxHp: 30, atk: 14, grd: 3, agi: 6 } });
-    const eBack2 = makeUnit({ id: 'eb2', team: Team.ENEMY, position: Position.BACK, stats: { hp: 30, maxHp: 30, atk: 9, grd: 3, agi: 7 } });
+    const eFront = makeUnit({
+      id: 'ef',
+      team: Team.ENEMY,
+      position: Position.FRONT,
+      stats: { hp: 50, maxHp: 50, atk: 8, grd: 5, agi: 8 },
+    });
+    const eBack1 = makeUnit({
+      id: 'eb1',
+      team: Team.ENEMY,
+      position: Position.BACK,
+      stats: { hp: 30, maxHp: 30, atk: 14, grd: 3, agi: 6 },
+    });
+    const eBack2 = makeUnit({
+      id: 'eb2',
+      team: Team.ENEMY,
+      position: Position.BACK,
+      stats: { hp: 30, maxHp: 30, atk: 9, grd: 3, agi: 7 },
+    });
 
     const slot: ActionSlot = {
       condition: { type: 'ALWAYS' },
@@ -188,11 +247,13 @@ describe('SWAP 효과 — ActionResolver 통합', () => {
         id: 'break_formation',
         name: 'Break Formation',
         description: 'Swap highest ATK back enemy with front',
-        effects: [{
-          type: 'SWAP',
-          target: Target.ENEMY_BACK_HIGHEST_ATK,
-          swapTarget: Target.ENEMY_FRONT,
-        }],
+        effects: [
+          {
+            type: 'SWAP',
+            target: Target.ENEMY_BACK_HIGHEST_ATK,
+            swapTarget: Target.ENEMY_FRONT,
+          },
+        ],
       },
     };
 
@@ -200,9 +261,9 @@ describe('SWAP 효과 — ActionResolver 통합', () => {
     const result = executeAction(controller, slot, state);
 
     // eb1(ATK 14)이 전열로, ef가 후열로
-    expect(result.units.find(u => u.id === 'eb1')!.position).toBe(Position.FRONT);
-    expect(result.units.find(u => u.id === 'ef')!.position).toBe(Position.BACK);
-    expect(result.units.find(u => u.id === 'eb2')!.position).toBe(Position.BACK); // 변경 없음
+    expect(result.units.find((u) => u.id === 'eb1')!.position).toBe(Position.FRONT);
+    expect(result.units.find((u) => u.id === 'ef')!.position).toBe(Position.BACK);
+    expect(result.units.find((u) => u.id === 'eb2')!.position).toBe(Position.BACK); // 변경 없음
   });
 });
 
@@ -214,7 +275,7 @@ describe('Controller cardTemplates', () => {
   });
 
   it('특수 카드 ID 확인', () => {
-    const ids = controllerDef.cardTemplates.map(t => t.id);
+    const ids = controllerDef.cardTemplates.map((t) => t.id);
     expect(ids).toContain('controller_gravity_pull');
     expect(ids).toContain('controller_expose_weakness');
     expect(ids).toContain('controller_displace');
@@ -224,7 +285,7 @@ describe('Controller cardTemplates', () => {
   });
 
   it('Gravity Pull — 순수 PULL (DELAY 없음)', () => {
-    const gp = controllerDef.cardTemplates.find(t => t.id === 'controller_gravity_pull')!;
+    const gp = controllerDef.cardTemplates.find((t) => t.id === 'controller_gravity_pull')!;
     expect(gp.rarity).toBe(Rarity.RARE);
     expect(gp.effectTemplates).toHaveLength(1);
     expect(gp.effectTemplates[0].type).toBe('PUSH');
@@ -232,26 +293,26 @@ describe('Controller cardTemplates', () => {
   });
 
   it('Expose Weakness — ENEMY_BACK_LOWEST_HP 타겟', () => {
-    const ew = controllerDef.cardTemplates.find(t => t.id === 'controller_expose_weakness')!;
+    const ew = controllerDef.cardTemplates.find((t) => t.id === 'controller_expose_weakness')!;
     expect(ew.rarity).toBe(Rarity.RARE);
     expect(ew.effectTemplates[0].targetPool).toEqual([Target.ENEMY_BACK_LOWEST_HP]);
   });
 
   it('Displace — SWAP COMMON', () => {
-    const d = controllerDef.cardTemplates.find(t => t.id === 'controller_displace')!;
+    const d = controllerDef.cardTemplates.find((t) => t.id === 'controller_displace')!;
     expect(d.rarity).toBe(Rarity.COMMON);
     expect(d.effectTemplates[0].type).toBe('SWAP');
     expect(d.effectTemplates[0].swapTarget).toEqual(Target.ENEMY_FRONT);
   });
 
   it('Break Formation — SWAP RARE + HIGHEST_ATK', () => {
-    const bf = controllerDef.cardTemplates.find(t => t.id === 'controller_break_formation')!;
+    const bf = controllerDef.cardTemplates.find((t) => t.id === 'controller_break_formation')!;
     expect(bf.rarity).toBe(Rarity.RARE);
     expect(bf.effectTemplates[0].targetPool).toEqual([Target.ENEMY_BACK_HIGHEST_ATK]);
   });
 
   it('Disrupt — POSITION_FRONT 조건, DAMAGE + DELAY', () => {
-    const d = controllerDef.cardTemplates.find(t => t.id === 'controller_disrupt')!;
+    const d = controllerDef.cardTemplates.find((t) => t.id === 'controller_disrupt')!;
     expect(d.rarity).toBe(Rarity.COMMON);
     expect(d.condition.type).toBe('POSITION_FRONT');
     expect(d.effectTemplates).toHaveLength(2);
@@ -260,13 +321,13 @@ describe('Controller cardTemplates', () => {
   });
 
   it('Mind Jolt — ALWAYS 조건, RARE', () => {
-    const mj = controllerDef.cardTemplates.find(t => t.id === 'controller_mind_jolt')!;
+    const mj = controllerDef.cardTemplates.find((t) => t.id === 'controller_mind_jolt')!;
     expect(mj.rarity).toBe(Rarity.RARE);
     expect(mj.condition.type).toBe('ALWAYS');
   });
 
   it('generateCardVariant로 Displace 카드 생성 — swapTarget 포함', () => {
-    const template = controllerDef.cardTemplates.find(t => t.id === 'controller_displace')!;
+    const template = controllerDef.cardTemplates.find((t) => t.id === 'controller_displace')!;
     const card = generateCardVariant(template, 123);
     expect(card.effects[0].type).toBe('SWAP');
     expect(card.effects[0].swapTarget).toEqual(Target.ENEMY_FRONT);

@@ -1,4 +1,12 @@
-import type { BattleState, HeroAbility, BattleEvent, Action, ActionCondition, BattleUnit, QueuedEditData } from '../types';
+import type {
+  BattleState,
+  HeroAbility,
+  BattleEvent,
+  Action,
+  ActionCondition,
+  BattleUnit,
+  QueuedEditData,
+} from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
 import { applyDamage, applyShield, applyHeal, calculateDamage } from './DamageSystem';
@@ -44,19 +52,17 @@ export function executeIntervention(
 
   for (const effect of ability.effects) {
     // 타겟 유닛이 명시된 경우 해당 유닛에 직접 적용
-    let target = targetUnitId
-      ? units.find(u => u.id === targetUnitId && u.isAlive)
-      : null;
+    let target = targetUnitId ? units.find((u) => u.id === targetUnitId && u.isAlive) : null;
 
     switch (effect.type) {
       case 'SHIELD': {
         if (!target) {
-          const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
+          const allies = units.filter((u) => u.team === Team.PLAYER && u.isAlive);
           target = allies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
         }
         if (target) {
           const result = applyShield(target, effect.value ?? 0, state.round, state.turn);
-          units = units.map(u => u.id === target!.id ? result.unit : u);
+          units = units.map((u) => (u.id === target!.id ? result.unit : u));
           allEvents.push(...result.events);
         }
         break;
@@ -64,13 +70,13 @@ export function executeIntervention(
 
       case 'DAMAGE': {
         if (!target) {
-          const enemies = units.filter(u => u.team === Team.ENEMY && u.isAlive);
+          const enemies = units.filter((u) => u.team === Team.ENEMY && u.isAlive);
           target = enemies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
         }
         if (target) {
           const dmg = Math.floor((effect.value ?? 1) * 15); // 히어로 기본 공격력 15
           const result = applyDamage(target, dmg, 'hero', state.round, state.turn);
-          units = units.map(u => u.id === target!.id ? result.unit : u);
+          units = units.map((u) => (u.id === target!.id ? result.unit : u));
           allEvents.push(...result.events);
         }
         break;
@@ -78,15 +84,13 @@ export function executeIntervention(
 
       case 'PUSH': {
         if (!target) {
-          const enemies = units.filter(
-            u => u.team === Team.ENEMY && u.isAlive && u.position === Position.FRONT,
-          );
+          const enemies = units.filter((u) => u.team === Team.ENEMY && u.isAlive && u.position === Position.FRONT);
           target = enemies[0];
         }
         if (target) {
           const pos = effect.position ?? Position.BACK;
           const result = pushUnit(target, pos, 'hero', state.round, state.turn);
-          units = units.map(u => u.id === target!.id ? result.unit : u);
+          units = units.map((u) => (u.id === target!.id ? result.unit : u));
           allEvents.push(...result.events);
         }
         break;
@@ -94,12 +98,12 @@ export function executeIntervention(
 
       case 'HEAL': {
         if (!target) {
-          const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
+          const allies = units.filter((u) => u.team === Team.PLAYER && u.isAlive);
           target = allies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
         }
         if (target) {
           const result = applyHeal(target, effect.value ?? 0, state.round, state.turn);
-          units = units.map(u => u.id === target!.id ? result.unit : u);
+          units = units.map((u) => (u.id === target!.id ? result.unit : u));
           allEvents.push(...result.events);
         }
         break;
@@ -107,7 +111,7 @@ export function executeIntervention(
 
       case 'BUFF': {
         if (!target) {
-          const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
+          const allies = units.filter((u) => u.team === Team.PLAYER && u.isAlive);
           target = allies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
         }
         if (target && effect.buffType) {
@@ -119,7 +123,7 @@ export function executeIntervention(
             sourceId: 'hero',
           };
           const result = applyBuff(target, buff, state.round, state.turn);
-          units = units.map(u => u.id === target!.id ? result.unit : u);
+          units = units.map((u) => (u.id === target!.id ? result.unit : u));
           allEvents.push(...result.events);
         }
         break;
@@ -127,7 +131,7 @@ export function executeIntervention(
 
       case 'DEBUFF': {
         if (!target) {
-          const enemies = units.filter(u => u.team === Team.ENEMY && u.isAlive);
+          const enemies = units.filter((u) => u.team === Team.ENEMY && u.isAlive);
           target = enemies.sort((a, b) => a.stats.hp - b.stats.hp)[0];
         }
         if (target && effect.buffType) {
@@ -139,7 +143,7 @@ export function executeIntervention(
             sourceId: 'hero',
           };
           const result = applyBuff(target, buff, state.round, state.turn);
-          units = units.map(u => u.id === target!.id ? result.unit : u);
+          units = units.map((u) => (u.id === target!.id ? result.unit : u));
           allEvents.push(...result.events);
         }
         break;
@@ -147,7 +151,7 @@ export function executeIntervention(
 
       case 'DELAY_TURN': {
         if (!target) {
-          const enemies = units.filter(u => u.team === Team.ENEMY && u.isAlive);
+          const enemies = units.filter((u) => u.team === Team.ENEMY && u.isAlive);
           target = enemies[0];
         }
         if (target) {
@@ -158,7 +162,7 @@ export function executeIntervention(
 
       case 'ADVANCE_TURN': {
         if (!target) {
-          const allies = units.filter(u => u.team === Team.PLAYER && u.isAlive);
+          const allies = units.filter((u) => u.team === Team.PLAYER && u.isAlive);
           target = allies[0];
         }
         if (target) {
@@ -188,9 +192,7 @@ export function executeIntervention(
  * EFFECT → executeIntervention 위임
  * EDIT_ACTION → queuedEditData로 heroEditAction 내부 로직 실행
  */
-export function executeQueuedAbility(
-  state: BattleState,
-): { state: BattleState; events: BattleEvent[] } {
+export function executeQueuedAbility(state: BattleState): { state: BattleState; events: BattleEvent[] } {
   const { queuedAbility, queuedTargetId, queuedEditData } = state.hero;
   if (!queuedAbility) {
     return { state, events: [] };
@@ -227,7 +229,7 @@ export function heroEditAction(
     return { state, events: [] };
   }
 
-  const target = state.units.find(u => u.id === targetUnitId && u.isAlive);
+  const target = state.units.find((u) => u.id === targetUnitId && u.isAlive);
   if (!target) {
     return { state, events: [] };
   }
@@ -242,7 +244,7 @@ export function heroEditAction(
     return { state, events: [] };
   }
 
-  const units = state.units.map(u => u.id === targetUnitId ? updatedUnit : u);
+  const units = state.units.map((u) => (u.id === targetUnitId ? updatedUnit : u));
 
   const event: BattleEvent = {
     id: uid(),

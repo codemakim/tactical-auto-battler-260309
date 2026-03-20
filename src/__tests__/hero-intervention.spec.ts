@@ -109,9 +109,7 @@ describe('히어로 개입 시스템', () => {
     state = heroIntervene(state, shieldAbility); // 큐잉
     state = stepBattle(state).state; // 발동 → 이벤트 기록
 
-    const heroEvents = state.events
-      .slice(eventsBefore)
-      .filter(e => e.type === 'HERO_INTERVENTION');
+    const heroEvents = state.events.slice(eventsBefore).filter((e) => e.type === 'HERO_INTERVENTION');
     expect(heroEvents.length).toBeGreaterThan(0);
   });
 
@@ -119,19 +117,17 @@ describe('히어로 개입 시스템', () => {
     let state = setup();
     state = stepBattle(state).state;
 
-    const targetUnit = state.units.find(u => u.team === Team.PLAYER)!;
+    const targetUnit = state.units.find((u) => u.team === Team.PLAYER)!;
     const eventsBefore = state.events.length;
 
     // 큐잉: 즉시 실드 적용 안 됨
     state = heroIntervene(state, shieldAbility, targetUnit.id);
-    const allyAfterQueue = state.units.find(u => u.id === targetUnit.id)!;
+    const allyAfterQueue = state.units.find((u) => u.id === targetUnit.id)!;
     expect(allyAfterQueue.shield).toBe(0); // 아직 미적용
 
     // 다음 stepBattle에서 발동 → SHIELD_APPLIED 이벤트 확인
     state = stepBattle(state).state;
-    const shieldEvents = state.events
-      .slice(eventsBefore)
-      .filter(e => e.type === 'SHIELD_APPLIED');
+    const shieldEvents = state.events.slice(eventsBefore).filter((e) => e.type === 'SHIELD_APPLIED');
     expect(shieldEvents.length).toBeGreaterThan(0);
   });
 
@@ -139,9 +135,7 @@ describe('히어로 개입 시스템', () => {
     let state = setup();
     state = stepBattle(state).state;
 
-    const frontEnemy = state.units.find(
-      u => u.team === Team.ENEMY && u.position === Position.FRONT,
-    )!;
+    const frontEnemy = state.units.find((u) => u.team === Team.ENEMY && u.position === Position.FRONT)!;
 
     const eventsBefore = state.events.length;
     // 큐잉
@@ -150,13 +144,11 @@ describe('히어로 개입 시스템', () => {
     state = stepBattle(state).state;
 
     // HERO_INTERVENTION 이벤트 확인 (push 발동됨)
-    const heroEvents = state.events
-      .slice(eventsBefore)
-      .filter(e => e.type === 'HERO_INTERVENTION');
+    const heroEvents = state.events.slice(eventsBefore).filter((e) => e.type === 'HERO_INTERVENTION');
     expect(heroEvents.length).toBeGreaterThan(0);
 
     // 밀린 유닛의 포지션 확인 (이후 유닛 행동에 의해 변경되지 않았다면 BACK)
-    const pushed = state.units.find(u => u.id === frontEnemy.id);
+    const pushed = state.units.find((u) => u.id === frontEnemy.id);
     if (pushed?.isAlive) {
       expect(pushed.position).toBe(Position.BACK);
     }
@@ -177,7 +169,7 @@ describe('히어로 개입 시스템', () => {
     expect(canIntervene(state)).toBe(true);
 
     // 개입 큐잉 (§18: 즉시 발동이 아닌 큐잉)
-    const targetAlly = state.units.find(u => u.team === Team.PLAYER && u.isAlive)!;
+    const targetAlly = state.units.find((u) => u.team === Team.PLAYER && u.isAlive)!;
     state = heroIntervene(state, shieldAbility, targetAlly.id);
 
     // 큐잉 후에도 전투가 계속 진행 가능
@@ -198,23 +190,21 @@ describe('히어로 개입 시스템', () => {
     state = stepBattle(state).state; // phase 전환
 
     // 아직 모든 유닛이 행동하지 않은 상태
-    const unactedCount = state.units.filter(u => u.isAlive && !u.hasActedThisRound).length;
+    const unactedCount = state.units.filter((u) => u.isAlive && !u.hasActedThisRound).length;
 
     if (unactedCount > 0 && canIntervene(state)) {
-      const ally = state.units.find(u => u.team === Team.PLAYER && u.isAlive)!;
+      const ally = state.units.find((u) => u.team === Team.PLAYER && u.isAlive)!;
 
       // §18: 큐잉 직후에는 아직 효과 미적용
       state = heroIntervene(state, shieldAbility, ally.id);
-      const allyAfterQueue = state.units.find(u => u.id === ally.id)!;
+      const allyAfterQueue = state.units.find((u) => u.id === ally.id)!;
       expect(allyAfterQueue.shield).toBe(0); // 아직 미적용
 
       // 다음 스텝에서 개입이 유닛 행동 직전에 발동 → HERO_INTERVENTION 이벤트 기록
       const prevEventCount = state.events.length;
       state = stepBattle(state).state;
 
-      const heroEvents = state.events
-        .slice(prevEventCount)
-        .filter(e => e.type === 'HERO_INTERVENTION');
+      const heroEvents = state.events.slice(prevEventCount).filter((e) => e.type === 'HERO_INTERVENTION');
       expect(heroEvents.length).toBe(1);
 
       // 이후 전투가 계속 진행됨

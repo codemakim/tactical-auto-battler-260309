@@ -31,7 +31,7 @@ export function createCharacterDef(
     name,
     characterClass,
     baseStats: { ...template.baseStats },
-    baseActionSlots: template.testActionSlots.map(slot => ({ ...slot })),
+    baseActionSlots: template.testActionSlots.map((slot) => ({ ...slot })),
     trainingsUsed,
     trainingPotential,
   };
@@ -63,11 +63,7 @@ function randInt(rand: () => number, min: number, max: number): number {
  * trainingPotential도 2~5 범위에서 랜덤
  * 고정 testActionSlots 사용 (테스트 전용)
  */
-export function generateCharacterDef(
-  name: string,
-  characterClass: CharacterClass,
-  seed: number,
-): CharacterDefinition {
+export function generateCharacterDef(name: string, characterClass: CharacterClass, seed: number): CharacterDefinition {
   const template = CLASS_DEFINITIONS[characterClass];
   if (!template) throw new Error(`Unknown character class: ${characterClass}`);
   const range = template.statRange;
@@ -103,12 +99,8 @@ export function generateCharacterDef(
  * actionSlots는 baseActionSlots의 복사본으로 시작하며, 런 중 replaceActionSlot으로 교체 가능.
  * 런 리셋 시 baseActionSlots를 참조해 원래 슬롯으로 복원한다.
  */
-export function createUnit(
-  def: CharacterDefinition,
-  team: Team,
-  position: Position,
-): BattleUnit {
-  const baseSlots = def.baseActionSlots.map(slot => ({ ...slot }));
+export function createUnit(def: CharacterDefinition, team: Team, position: Position): BattleUnit {
+  const baseSlots = def.baseActionSlots.map((slot) => ({ ...slot }));
 
   return {
     id: nextId(team, def.name),
@@ -127,7 +119,7 @@ export function createUnit(
     shield: 0,
     buffs: [],
     actionSlots: baseSlots,
-    baseActionSlots: def.baseActionSlots.map(slot => ({ ...slot })),
+    baseActionSlots: def.baseActionSlots.map((slot) => ({ ...slot })),
     isAlive: true,
     hasActedThisRound: false,
     trainingsUsed: def.trainingsUsed,

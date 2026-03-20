@@ -1,4 +1,14 @@
-import type { Action, ActionEffect, CharacterClass, BattleUnit, ActionCondition, CardTemplate, ActionTargetType, ActionSlot, Rarity } from '../types';
+import type {
+  Action,
+  ActionEffect,
+  CharacterClass,
+  BattleUnit,
+  ActionCondition,
+  CardTemplate,
+  ActionTargetType,
+  ActionSlot,
+  Rarity,
+} from '../types';
 
 /**
  * 시드 기반 간단한 난수 생성 (결정론적)
@@ -23,7 +33,7 @@ function seededRandom(seed: number): () => number {
 export function generateCardVariant(template: CardTemplate, seed: number): Action {
   const rand = seededRandom(seed);
 
-  const effects: ActionEffect[] = template.effectTemplates.map(et => {
+  const effects: ActionEffect[] = template.effectTemplates.map((et) => {
     const multiplier = et.multiplierPool[Math.floor(rand() * et.multiplierPool.length)];
     const target: ActionTargetType = et.targetPool[Math.floor(rand() * et.targetPool.length)];
 
@@ -99,9 +109,7 @@ export function generateRewardFromTemplates(
   seed: number,
 ): Action[] {
   // 클래스 호환 필터
-  const compatible = templates.filter(
-    t => !t.classRestriction || t.classRestriction === characterClass,
-  );
+  const compatible = templates.filter((t) => !t.classRestriction || t.classRestriction === characterClass);
 
   const pickCount = Math.min(count, compatible.length);
   if (pickCount === 0) return [];
@@ -116,9 +124,7 @@ export function generateRewardFromTemplates(
   }
 
   // 각 템플릿마다 고유 시드로 변형 생성
-  return shuffled.slice(0, pickCount).map((t, i) =>
-    generateCardVariant(t, seed + i + 1),
-  );
+  return shuffled.slice(0, pickCount).map((t, i) => generateCardVariant(t, seed + i + 1));
 }
 
 /** 희귀도별 가중치 */
@@ -133,11 +139,7 @@ const RARITY_WEIGHTS: Record<string, number> = {
  * 카드 템플릿 풀에서 가중치 기반으로 초기 액션 슬롯 추첨.
  * 캐릭터 생성 시 cardTemplates에서 count장을 중복 없이 뽑아 ActionSlot[]로 반환.
  */
-export function drawInitialCards(
-  templates: CardTemplate[],
-  count: number,
-  seed: number,
-): ActionSlot[] {
+export function drawInitialCards(templates: CardTemplate[], count: number, seed: number): ActionSlot[] {
   const rand = seededRandom(seed);
   const remaining = [...templates];
   const result: ActionSlot[] = [];
@@ -191,7 +193,7 @@ export function replaceActionSlot(
   }
 
   const newSlots = unit.actionSlots.map((slot, i) =>
-    i === slotIndex ? { condition: newCondition, action: newAction } : { ...slot }
+    i === slotIndex ? { condition: newCondition, action: newAction } : { ...slot },
   );
 
   return {
@@ -208,7 +210,7 @@ export function replaceActionSlot(
 export function resetRunActions(unit: BattleUnit): BattleUnit {
   return {
     ...unit,
-    actionSlots: unit.baseActionSlots.map(slot => ({ ...slot })),
+    actionSlots: unit.baseActionSlots.map((slot) => ({ ...slot })),
   };
 }
 
@@ -221,7 +223,7 @@ export function resetBattleActions(unit: BattleUnit): BattleUnit {
   if (!unit.preBattleActionSlots) return unit;
   return {
     ...unit,
-    actionSlots: unit.preBattleActionSlots.map(slot => ({ ...slot })),
+    actionSlots: unit.preBattleActionSlots.map((slot) => ({ ...slot })),
     preBattleActionSlots: undefined,
   };
 }

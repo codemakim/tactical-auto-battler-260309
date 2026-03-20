@@ -65,6 +65,8 @@ src/
 - `npm test` - Run tests (vitest)
 - `npm run test:watch` - Watch mode
 - `npx tsx src/sim.ts` - 전투 시뮬레이션 실행 (콘솔 로그 출력)
+- `npm run format` - Prettier 포매팅 적용 (작업 완료 후 커밋 전 실행)
+- `npm run format:check` - 포매팅 검사만 (CI용)
 
 ## Conventions
 - Korean comments where helpful

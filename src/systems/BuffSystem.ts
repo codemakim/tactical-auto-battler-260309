@@ -29,9 +29,9 @@ export function applyBuff(
 
   if (buff.type === BuffType.COVER) {
     // COVER: 기존 COVER가 있으면 duration만 갱신, 없으면 새로 추가
-    const existing = unit.buffs.find(b => b.type === BuffType.COVER);
+    const existing = unit.buffs.find((b) => b.type === BuffType.COVER);
     if (existing) {
-      newBuffs = unit.buffs.map(b =>
+      newBuffs = unit.buffs.map((b) =>
         b.id === existing.id ? { ...b, duration: buff.duration, sourceId: buff.sourceId } : b,
       );
     } else {
@@ -50,16 +50,18 @@ export function applyBuff(
 
   return {
     unit: updated,
-    events: [{
-      id: uid(),
-      type: eventType,
-      round,
-      turn,
-      timestamp: Date.now(),
-      sourceId: buff.sourceId,
-      targetId: unit.id,
-      data: { buffType: buff.type, value: buff.value, duration: buff.duration },
-    }],
+    events: [
+      {
+        id: uid(),
+        type: eventType,
+        round,
+        turn,
+        timestamp: Date.now(),
+        sourceId: buff.sourceId,
+        targetId: unit.id,
+        data: { buffType: buff.type, value: buff.value, duration: buff.duration },
+      },
+    ],
   };
 }
 
@@ -74,12 +76,24 @@ export function getEffectiveStats(unit: BattleUnit): Stats {
 
   for (const buff of unit.buffs) {
     switch (buff.type) {
-      case BuffType.ATK_UP: atkMod += buff.value; break;
-      case BuffType.ATK_DOWN: atkMod -= buff.value; break;
-      case BuffType.GUARD_UP: grdMod += buff.value; break;
-      case BuffType.GUARD_DOWN: grdMod -= buff.value; break;
-      case BuffType.AGI_UP: agiMod += buff.value; break;
-      case BuffType.AGI_DOWN: agiMod -= buff.value; break;
+      case BuffType.ATK_UP:
+        atkMod += buff.value;
+        break;
+      case BuffType.ATK_DOWN:
+        atkMod -= buff.value;
+        break;
+      case BuffType.GUARD_UP:
+        grdMod += buff.value;
+        break;
+      case BuffType.GUARD_DOWN:
+        grdMod -= buff.value;
+        break;
+      case BuffType.AGI_UP:
+        agiMod += buff.value;
+        break;
+      case BuffType.AGI_DOWN:
+        agiMod -= buff.value;
+        break;
       // POISON, REGEN, STUN은 스탯에 영향 없음
     }
   }
@@ -96,11 +110,7 @@ export function getEffectiveStats(unit: BattleUnit): Stats {
  * 버프 지속시간 감소 (라운드 종료 시 호출)
  * duration을 1 줄이고, 0이 되면 제거
  */
-export function tickBuffs(
-  unit: BattleUnit,
-  round: number,
-  turn: number,
-): { unit: BattleUnit; events: BattleEvent[] } {
+export function tickBuffs(unit: BattleUnit, round: number, turn: number): { unit: BattleUnit; events: BattleEvent[] } {
   const events: BattleEvent[] = [];
   const remaining: Buff[] = [];
 
@@ -198,5 +208,5 @@ export function processStatusEffects(
  * 스턴 여부 확인
  */
 export function isStunned(unit: BattleUnit): boolean {
-  return unit.buffs.some(b => b.type === BuffType.STUN);
+  return unit.buffs.some((b) => b.type === BuffType.STUN);
 }

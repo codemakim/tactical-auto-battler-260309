@@ -53,7 +53,7 @@ describe('히어로 개입 큐잉 (§18)', () => {
     let state = setup();
     state = stepBattle(state).state;
 
-    const ally = state.units.find(u => u.team === Team.PLAYER)!;
+    const ally = state.units.find((u) => u.team === Team.PLAYER)!;
     state = queueIntervention(state, shieldAbility, ally.id);
 
     expect(state.hero.queuedTargetId).toBe(ally.id);
@@ -63,12 +63,12 @@ describe('히어로 개입 큐잉 (§18)', () => {
     let state = setup();
     state = stepBattle(state).state;
 
-    const ally = state.units.find(u => u.team === Team.PLAYER)!;
+    const ally = state.units.find((u) => u.team === Team.PLAYER)!;
     const shieldBefore = ally.shield;
 
     state = queueIntervention(state, shieldAbility, ally.id);
 
-    const allyAfter = state.units.find(u => u.id === ally.id)!;
+    const allyAfter = state.units.find((u) => u.id === ally.id)!;
     expect(allyAfter.shield).toBe(shieldBefore); // 즉시 적용 안 됨
   });
 
@@ -100,14 +100,14 @@ describe('히어로 개입 큐잉 (§18)', () => {
     let state = setup();
     state = stepBattle(state).state; // 라운드 시작
 
-    const ally = state.units.find(u => u.team === Team.PLAYER)!;
+    const ally = state.units.find((u) => u.team === Team.PLAYER)!;
     state = queueIntervention(state, shieldAbility, ally.id);
 
     // 다음 턴 실행
     state = stepBattle(state).state;
 
     // 개입이 실행되어 실드가 적용되어 있어야 함
-    const allyAfter = state.units.find(u => u.id === ally.id)!;
+    const allyAfter = state.units.find((u) => u.id === ally.id)!;
     expect(allyAfter.shield).toBeGreaterThan(0);
   });
 
@@ -141,9 +141,7 @@ describe('히어로 개입 큐잉 (§18)', () => {
     state = queueIntervention(state, shieldAbility);
     state = stepBattle(state).state;
 
-    const interventionEvents = state.events
-      .slice(eventsCountBefore)
-      .filter(e => e.type === 'HERO_INTERVENTION');
+    const interventionEvents = state.events.slice(eventsCountBefore).filter((e) => e.type === 'HERO_INTERVENTION');
 
     expect(interventionEvents.length).toBe(1);
   });
@@ -157,8 +155,8 @@ describe('히어로 개입 큐잉 (§18)', () => {
     state = stepBattle(state).state;
 
     const newEvents = state.events.slice(eventsBefore);
-    const interventionIdx = newEvents.findIndex(e => e.type === 'HERO_INTERVENTION');
-    const actionIdx = newEvents.findIndex(e => e.type === 'ACTION_EXECUTED');
+    const interventionIdx = newEvents.findIndex((e) => e.type === 'HERO_INTERVENTION');
+    const actionIdx = newEvents.findIndex((e) => e.type === 'ACTION_EXECUTED');
 
     expect(interventionIdx).toBeGreaterThanOrEqual(0); // HERO_INTERVENTION 존재
     if (actionIdx >= 0) {
@@ -171,14 +169,14 @@ describe('히어로 개입 큐잉 (§18)', () => {
     state = stepBattle(state).state;
 
     const enemy = state.units
-      .filter(u => u.team === Team.ENEMY && u.isAlive)
+      .filter((u) => u.team === Team.ENEMY && u.isAlive)
       .sort((a, b) => a.stats.hp - b.stats.hp)[0]!;
     const hpBefore = enemy.stats.hp;
 
     state = queueIntervention(state, damageAbility);
     state = stepBattle(state).state;
 
-    const enemyAfter = state.units.find(u => u.id === enemy.id)!;
+    const enemyAfter = state.units.find((u) => u.id === enemy.id)!;
     // 히어로 데미지가 적용되거나, 사망해서 isAlive가 false인 경우
     expect(enemyAfter.stats.hp < hpBefore || !enemyAfter.isAlive).toBe(true);
   });

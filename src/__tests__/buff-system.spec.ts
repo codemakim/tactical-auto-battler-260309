@@ -185,7 +185,7 @@ describe('버프 시스템 - 지속시간 감소 (라운드 종료)', () => {
     const result = tickBuffs(unit, 1, 1);
     const remaining = result.unit.buffs;
     // duration 3 → 2 (유지)
-    expect(remaining.find(b => b.id === '1')?.duration).toBe(2);
+    expect(remaining.find((b) => b.id === '1')?.duration).toBe(2);
   });
 
   it('tickBuffs: duration이 0이 되면 버프가 제거된다', () => {
@@ -203,12 +203,10 @@ describe('버프 시스템 - 지속시간 감소 (라운드 종료)', () => {
 
   it('tickBuffs: 만료된 버프에 대해 BUFF_EXPIRED 이벤트가 생성된다', () => {
     const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    unit.buffs = [
-      { id: '1', type: BuffType.GUARD_UP, value: 3, duration: 1, sourceId: 'src' },
-    ];
+    unit.buffs = [{ id: '1', type: BuffType.GUARD_UP, value: 3, duration: 1, sourceId: 'src' }];
 
     const result = tickBuffs(unit, 1, 1);
-    expect(result.events.some(e => e.type === 'BUFF_EXPIRED')).toBe(true);
+    expect(result.events.some((e) => e.type === 'BUFF_EXPIRED')).toBe(true);
   });
 
   it('tickBuffs: 버프가 없으면 아무 일도 안 한다', () => {
@@ -239,7 +237,7 @@ describe('버프 시스템 - 상태이상 처리 (라운드 시작)', () => {
     unit.buffs = [{ id: '1', type: BuffType.POISON, value: 5, duration: 2, sourceId: 'src' }];
 
     const result = processStatusEffects(unit, 1, 1);
-    expect(result.events.some(e => e.type === 'STATUS_EFFECT_TICK')).toBe(true);
+    expect(result.events.some((e) => e.type === 'STATUS_EFFECT_TICK')).toBe(true);
   });
 
   it('POISON: HP가 0 이하가 되면 유닛이 사망한다', () => {
@@ -250,7 +248,7 @@ describe('버프 시스템 - 상태이상 처리 (라운드 시작)', () => {
     const result = processStatusEffects(unit, 1, 1);
     expect(result.unit.stats.hp).toBe(0);
     expect(result.unit.isAlive).toBe(false);
-    expect(result.events.some(e => e.type === 'UNIT_DIED')).toBe(true);
+    expect(result.events.some((e) => e.type === 'UNIT_DIED')).toBe(true);
   });
 
   it('REGEN: 라운드 시작 시 value만큼 HP가 회복된다', () => {

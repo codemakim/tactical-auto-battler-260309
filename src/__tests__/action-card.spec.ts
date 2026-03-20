@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { CharacterClass, Team, Position, Rarity, Target } from '../types';
 import type { Action, ActionCondition } from '../types';
-import {
-  replaceActionSlot,
-  resetRunActions,
-} from '../systems/ActionCardSystem';
+import { replaceActionSlot, resetRunActions } from '../systems/ActionCardSystem';
 
 // --- 테스트용 헬퍼 액션 ---
 
@@ -26,21 +23,13 @@ describe('액션 카드 시스템', () => {
 
   describe('액션 슬롯 교체 (replaceActionSlot)', () => {
     it('캐릭터는 기본 3개 액션 슬롯을 가진다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       expect(unit.actionSlots).toHaveLength(3);
     });
 
     it('슬롯 0(최우선)을 새 액션으로 교체할 수 있다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const newAction = makeAction('new_power_attack', { rarity: Rarity.EPIC });
       const newCondition: ActionCondition = { type: 'HP_ABOVE', value: 50 };
@@ -53,11 +42,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('슬롯 1을 교체할 수 있다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const newAction = makeAction('slot1_replacement');
       const updated = replaceActionSlot(unit, 1, newAction, { type: 'ALWAYS' });
@@ -67,11 +52,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('슬롯 2(마지막)도 교체할 수 있다 — 모든 슬롯이 교체 대상이다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const lastIndex = unit.actionSlots.length - 1; // 2
       const newAction = makeAction('last_slot_replacement', { rarity: Rarity.LEGENDARY });
@@ -83,11 +64,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('교체하지 않은 다른 슬롯은 그대로 유지된다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const slot1Before = unit.actionSlots[1].action.id;
       const slot2Before = unit.actionSlots[2].action.id;
@@ -99,22 +76,14 @@ describe('액션 카드 시스템', () => {
     });
 
     it('유효하지 않은 인덱스는 null을 반환한다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       expect(replaceActionSlot(unit, -1, makeAction('x'), { type: 'ALWAYS' })).toBeNull();
       expect(replaceActionSlot(unit, 99, makeAction('x'), { type: 'ALWAYS' })).toBeNull();
     });
 
     it('원본 유닛은 변경되지 않는다 (불변성)', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const originalSlot0Id = unit.actionSlots[0].action.id;
       replaceActionSlot(unit, 0, makeAction('new'), { type: 'ALWAYS' });
@@ -123,11 +92,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('3개 슬롯을 모두 교체할 수 있다', () => {
-      let unit = createUnit(
-        createCharacterDef('L', CharacterClass.LANCER),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      let unit = createUnit(createCharacterDef('L', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
 
       // 모든 슬롯을 새 액션으로 교체
       unit = replaceActionSlot(unit, 0, makeAction('run_action_a'), { type: 'POSITION_FRONT' })!;
@@ -144,11 +109,7 @@ describe('액션 카드 시스템', () => {
 
   describe('런 리셋 (resetRunActions)', () => {
     it('리셋 후 원래 3개 기본 슬롯으로 복원된다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const originalSlot0Id = unit.actionSlots[0].action.id;
       const originalSlot1Id = unit.actionSlots[1].action.id;
@@ -170,11 +131,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('3개 슬롯 모두 교체 후 리셋하면 원래 클래스 슬롯이 복원된다', () => {
-      const unit = createUnit(
-        createCharacterDef('A', CharacterClass.ARCHER),
-        Team.PLAYER,
-        Position.BACK,
-      );
+      const unit = createUnit(createCharacterDef('A', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
 
       // 모든 슬롯 교체
       let modified = replaceActionSlot(unit, 0, makeAction('x0'), { type: 'ALWAYS' })!;
@@ -190,11 +147,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('스탯은 변경되지 않는다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       // 스탯 수정 (런 중 강화 시뮬레이션)
       const modifiedUnit = { ...unit, stats: { ...unit.stats, hp: 50, atk: 99 } };
@@ -206,11 +159,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('원본 유닛은 변경되지 않는다 (불변성)', () => {
-      const unit = createUnit(
-        createCharacterDef('A', CharacterClass.ARCHER),
-        Team.PLAYER,
-        Position.BACK,
-      );
+      const unit = createUnit(createCharacterDef('A', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
 
       const modified = replaceActionSlot(unit, 0, makeAction('temp'), { type: 'ALWAYS' })!;
       resetRunActions(modified);
@@ -220,11 +169,7 @@ describe('액션 카드 시스템', () => {
     });
 
     it('리셋 후 baseActionSlots는 유지된다', () => {
-      const unit = createUnit(
-        createCharacterDef('W', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const modified = replaceActionSlot(unit, 0, makeAction('temp'), { type: 'ALWAYS' })!;
       const reset = resetRunActions(modified);

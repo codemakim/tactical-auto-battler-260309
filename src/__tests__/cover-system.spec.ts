@@ -200,24 +200,25 @@ describe('CoverSystem', () => {
       });
 
       const result = applyDamageWithCover(
-        archer,      // 원래 타겟
-        20,          // 데미지
-        enemy.id,    // 공격자
+        archer, // 원래 타겟
+        20, // 데미지
+        enemy.id, // 공격자
         [guardian, archer, enemy],
-        1, 1,
+        1,
+        1,
       );
 
       // archer는 피해 없음
-      const updatedArcher = result.units.find(u => u.id === 'archer')!;
+      const updatedArcher = result.units.find((u) => u.id === 'archer')!;
       expect(updatedArcher.stats.hp).toBe(40);
 
       // guardian이 대신 피격 (실드 10 흡수 + HP 10 감소)
-      const updatedGuardian = result.units.find(u => u.id === 'guardian')!;
+      const updatedGuardian = result.units.find((u) => u.id === 'guardian')!;
       expect(updatedGuardian.stats.hp).toBe(40);
       expect(updatedGuardian.shield).toBe(0);
 
       // COVER_TRIGGERED 이벤트 존재
-      const coverEvent = result.events.find(e => e.type === 'COVER_TRIGGERED');
+      const coverEvent = result.events.find((e) => e.type === 'COVER_TRIGGERED');
       expect(coverEvent).toBeDefined();
       expect(coverEvent!.targetId).toBe('guardian');
       expect(coverEvent!.data?.originalTargetId).toBe('archer');
@@ -235,17 +236,13 @@ describe('CoverSystem', () => {
         team: Team.ENEMY,
       });
 
-      const result = applyDamageWithCover(
-        archer, 20, enemy.id,
-        [archer, enemy],
-        1, 1,
-      );
+      const result = applyDamageWithCover(archer, 20, enemy.id, [archer, enemy], 1, 1);
 
-      const updatedArcher = result.units.find(u => u.id === 'archer')!;
+      const updatedArcher = result.units.find((u) => u.id === 'archer')!;
       expect(updatedArcher.stats.hp).toBe(20);
 
       // COVER_TRIGGERED 이벤트 없음
-      const coverEvent = result.events.find(e => e.type === 'COVER_TRIGGERED');
+      const coverEvent = result.events.find((e) => e.type === 'COVER_TRIGGERED');
       expect(coverEvent).toBeUndefined();
     });
 
@@ -266,22 +263,18 @@ describe('CoverSystem', () => {
         team: Team.ENEMY,
       });
 
-      const result = applyDamageWithCover(
-        archer, 20, enemy.id,
-        [guardian, archer, enemy],
-        1, 1,
-      );
+      const result = applyDamageWithCover(archer, 20, enemy.id, [guardian, archer, enemy], 1, 1);
 
-      const updatedGuardian = result.units.find(u => u.id === 'guardian')!;
+      const updatedGuardian = result.units.find((u) => u.id === 'guardian')!;
       expect(updatedGuardian.isAlive).toBe(false);
       expect(updatedGuardian.stats.hp).toBe(0);
 
       // archer는 무사
-      const updatedArcher = result.units.find(u => u.id === 'archer')!;
+      const updatedArcher = result.units.find((u) => u.id === 'archer')!;
       expect(updatedArcher.stats.hp).toBe(50);
 
       // UNIT_DIED 이벤트
-      const diedEvent = result.events.find(e => e.type === 'UNIT_DIED');
+      const diedEvent = result.events.find((e) => e.type === 'UNIT_DIED');
       expect(diedEvent).toBeDefined();
       expect(diedEvent!.targetId).toBe('guardian');
     });
@@ -301,13 +294,9 @@ describe('CoverSystem', () => {
       });
       const enemy = makeUnit({ id: 'enemy', team: Team.ENEMY });
 
-      const result = applyDamageWithCover(
-        archer, 10, enemy.id,
-        [guardian, archer, enemy],
-        1, 1,
-      );
+      const result = applyDamageWithCover(archer, 10, enemy.id, [guardian, archer, enemy], 1, 1);
 
-      const updatedGuardian = result.units.find(u => u.id === 'guardian')!;
+      const updatedGuardian = result.units.find((u) => u.id === 'guardian')!;
       expect(updatedGuardian.shield).toBe(5); // 15 - 10
       expect(updatedGuardian.stats.hp).toBe(50); // HP 무손실
     });
@@ -328,28 +317,19 @@ describe('CoverSystem', () => {
       const enemy = makeUnit({ id: 'enemy', team: Team.ENEMY });
 
       // 첫 번째 공격
-      const r1 = applyDamageWithCover(
-        archer, 10, enemy.id,
-        [guardian, archer, enemy],
-        1, 1,
-      );
-      const g1 = r1.units.find(u => u.id === 'guardian')!;
-      expect(g1.buffs.some(b => b.type === BuffType.COVER)).toBe(true); // 버프 유지
+      const r1 = applyDamageWithCover(archer, 10, enemy.id, [guardian, archer, enemy], 1, 1);
+      const g1 = r1.units.find((u) => u.id === 'guardian')!;
+      expect(g1.buffs.some((b) => b.type === BuffType.COVER)).toBe(true); // 버프 유지
 
       // 두 번째 공격 (업데이트된 유닛으로)
-      const r2 = applyDamageWithCover(
-        r1.units.find(u => u.id === 'archer')!,
-        10, enemy.id,
-        r1.units,
-        1, 2,
-      );
-      const g2 = r2.units.find(u => u.id === 'guardian')!;
+      const r2 = applyDamageWithCover(r1.units.find((u) => u.id === 'archer')!, 10, enemy.id, r1.units, 1, 2);
+      const g2 = r2.units.find((u) => u.id === 'guardian')!;
       expect(g2.shield).toBe(10); // 30 - 10 - 10
       expect(g2.stats.hp).toBe(50); // HP 무손실
 
       // 두 번 다 COVER_TRIGGERED
-      expect(r1.events.filter(e => e.type === 'COVER_TRIGGERED')).toHaveLength(1);
-      expect(r2.events.filter(e => e.type === 'COVER_TRIGGERED')).toHaveLength(1);
+      expect(r1.events.filter((e) => e.type === 'COVER_TRIGGERED')).toHaveLength(1);
+      expect(r2.events.filter((e) => e.type === 'COVER_TRIGGERED')).toHaveLength(1);
     });
   });
 });

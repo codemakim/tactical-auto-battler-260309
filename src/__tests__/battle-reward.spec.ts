@@ -2,11 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { CharacterClass, Difficulty, Team, Position } from '../types';
 import type { BattleState, RunState, BattleReward } from '../types';
-import {
-  calculateGoldReward,
-  generateBattleRewards,
-  applyReward,
-} from '../systems/BattleRewardSystem';
+import { calculateGoldReward, generateBattleRewards, applyReward } from '../systems/BattleRewardSystem';
 
 // --- 테스트용 헬퍼 ---
 
@@ -185,11 +181,7 @@ describe('전투 보상 시스템 (BattleRewardSystem)', () => {
     });
 
     it('applyReward로 temporaryActions에 선택 액션이 추가된다', () => {
-      const warrior = createUnit(
-        createCharacterDef('Hero', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const warrior = createUnit(createCharacterDef('Hero', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const runState = makeRunState({ gold: 100, temporaryActions: [] });
       const selectedAction = { id: 'warrior_heavy_slam', name: 'Heavy Slam', description: 'desc', effects: [] };
@@ -213,11 +205,7 @@ describe('전투 보상 시스템 (BattleRewardSystem)', () => {
     });
 
     it('유효하지 않은 슬롯 인덱스로 교체 시도 시 골드만 반영된다', () => {
-      const warrior = createUnit(
-        createCharacterDef('Hero', CharacterClass.WARRIOR),
-        Team.PLAYER,
-        Position.FRONT,
-      );
+      const warrior = createUnit(createCharacterDef('Hero', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
 
       const runState = makeRunState({ gold: 100, temporaryActions: [] });
       const selectedAction = { id: 'some_action', name: 'Action', description: '', effects: [] };

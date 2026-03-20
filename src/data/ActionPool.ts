@@ -18,27 +18,21 @@ export const UNIVERSAL_CARD_TEMPLATES: CardTemplate[] = [
     name: 'Guard',
     rarity: Rarity.COMMON,
     condition: { type: 'ALWAYS' },
-    effectTemplates: [
-      { type: 'SHIELD', stat: 'grd', multiplierPool: [0.8, 1.0, 1.2], targetPool: [Target.SELF] },
-    ],
+    effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [0.8, 1.0, 1.2], targetPool: [Target.SELF] }],
   },
   {
     id: 'universal_recover',
     name: 'Recover',
     rarity: Rarity.COMMON,
     condition: { type: 'ALWAYS' },
-    effectTemplates: [
-      { type: 'HEAL', multiplierPool: [15, 20, 25], targetPool: [Target.SELF] },
-    ],
+    effectTemplates: [{ type: 'HEAL', multiplierPool: [15, 20, 25], targetPool: [Target.SELF] }],
   },
   {
     id: 'universal_rally',
     name: 'Rally',
     rarity: Rarity.RARE,
     condition: { type: 'ALWAYS' },
-    effectTemplates: [
-      { type: 'HEAL', multiplierPool: [10, 15, 20], targetPool: [Target.ALLY_LOWEST_HP] },
-    ],
+    effectTemplates: [{ type: 'HEAL', multiplierPool: [10, 15, 20], targetPool: [Target.ALLY_LOWEST_HP] }],
   },
   {
     id: 'universal_feint',

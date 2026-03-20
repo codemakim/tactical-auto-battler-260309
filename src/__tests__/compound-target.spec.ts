@@ -95,7 +95,7 @@ describe('복합 타겟 시스템', () => {
       const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
 
       p2.stats.hp = 10; // 전열 아군 중 최저
-      p3.stats.hp = 5;  // 전체 최저이지만 후열
+      p3.stats.hp = 5; // 전체 최저이지만 후열
 
       const targetType: ActionTargetType = { side: 'ALLY', position: 'FRONT', select: 'LOWEST_HP' };
       const target = selectTarget(p1, targetType, [p1, p2, p3]);
