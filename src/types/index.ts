@@ -171,6 +171,7 @@ export interface Action {
   isBasic?: boolean; // true for character's unique basic action
   rarity?: Rarity; // 액션 카드 희귀도
   classRestriction?: CharacterClass; // 특정 클래스 전용 (없으면 범용)
+  defensivePriority?: boolean; // true면 턴 순서에서 공격 행동보다 먼저 실행
 }
 
 export interface ActionSlot {
@@ -200,6 +201,7 @@ export interface CardTemplate {
   classRestriction?: CharacterClass;
   condition: ActionCondition;
   effectTemplates: EffectTemplate[];
+  defensivePriority?: boolean; // 생성된 Action에 전달
 }
 
 // === Character Stats ===

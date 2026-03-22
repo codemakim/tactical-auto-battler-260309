@@ -116,6 +116,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_shield_wall',
               name: 'Shield Wall',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -130,6 +131,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_advance_guard',
               name: 'Advance Guard',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -144,6 +146,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_heavy_shield',
               name: 'Heavy Shield',
+              defensivePriority: true,
               description: '',
               effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
               rarity: 'COMMON',
@@ -520,6 +523,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_shield_wall',
               name: 'Shield Wall',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -534,6 +538,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_advance_guard',
               name: 'Advance Guard',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -548,6 +553,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_heavy_shield',
               name: 'Heavy Shield',
+              defensivePriority: true,
               description: '',
               effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
               rarity: 'COMMON',
@@ -743,6 +749,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_shield_wall',
               name: 'Shield Wall',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -757,6 +764,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_advance_guard',
               name: 'Advance Guard',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -771,6 +779,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_heavy_shield',
               name: 'Heavy Shield',
+              defensivePriority: true,
               description: '',
               effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
               rarity: 'COMMON',
@@ -1022,6 +1031,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_shield_wall',
               name: 'Shield Wall',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -1036,6 +1046,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_advance_guard',
               name: 'Advance Guard',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -1050,6 +1061,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_heavy_shield',
               name: 'Heavy Shield',
+              defensivePriority: true,
               description: '',
               effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
               rarity: 'COMMON',
@@ -1248,6 +1260,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_shield_wall',
               name: 'Shield Wall',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -1262,6 +1275,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_advance_guard',
               name: 'Advance Guard',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -1276,6 +1290,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_heavy_shield',
               name: 'Heavy Shield',
+              defensivePriority: true,
               description: '',
               effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
               rarity: 'COMMON',
@@ -1611,6 +1626,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_shield_wall',
               name: 'Shield Wall',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -1625,6 +1641,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_advance_guard',
               name: 'Advance Guard',
+              defensivePriority: true,
               description: '',
               effects: [
                 { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -1639,6 +1656,7 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
             action: {
               id: 'guardian_heavy_shield',
               name: 'Heavy Shield',
+              defensivePriority: true,
               description: '',
               effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
               rarity: 'COMMON',

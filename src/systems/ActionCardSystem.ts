@@ -55,6 +55,7 @@ export function generateCardVariant(template: CardTemplate, seed: number): Actio
     effects,
     rarity: template.rarity,
     classRestriction: template.classRestriction,
+    ...(template.defensivePriority && { defensivePriority: true }),
   };
 }
 

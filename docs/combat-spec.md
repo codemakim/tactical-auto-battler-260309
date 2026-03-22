@@ -101,6 +101,22 @@ Rules:
 - If an effect changes turn order, indicators update instantly.
 - Dead units are removed from order.
 
+## 4.1 Defensive Action Priority (방어 행동 우선권)
+
+방어 행동(`defensivePriority: true`)을 실행할 유닛은 같은 턴에서 비방어 유닛보다 먼저 행동한다.
+
+정렬 키:
+1. `defensivePriority` 여부 (방어 먼저)
+2. AGI (높은 순)
+3. HP 비율 (높은 순, tiebreaker)
+
+이 규칙은 매 턴 재평가된다. 유닛의 조건(포지션, HP 등)이 변경되면 다음 턴 순서에 반영된다.
+
+초기 적용 대상: Guardian의 순수 방어 카드 (Shield Wall, Advance Guard, Heavy Shield, Bulwark, Aegis, Rally Guard).
+공격+방어 혼합 카드(Taunt Slam 등)는 우선권 미부여.
+
+설계 근거: "무거운 갑옷을 입어서 이동은 느려도, 방패를 드는 반응은 돌진보다 빠르다."
+
 ---
 
 # 5. Round Definition

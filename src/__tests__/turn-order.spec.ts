@@ -1,24 +1,28 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { calculateFullTurnOrder, accelerateUnit, delayUnit } from '../core/TurnOrderManager';
+import { createBattleState } from '../core/BattleEngine';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { CharacterClass, Team, Position } from '../types';
 
 describe('턴 순서 시스템', () => {
   beforeEach(() => resetUnitCounter());
 
-  it('AGI가 높은 유닛이 먼저 행동한다', () => {
-    // Assassin(AGI:16) > Archer(AGI:14) > Lancer(AGI:12) > Warrior(AGI:8)
+  it('AGI가 높은 유닛이 먼저 행동한다 (비방어 유닛끼리)', () => {
+    // Assassin(AGI:11) > Archer(AGI:9) > Lancer(AGI:7) > Warrior(AGI:6)
+    // 모두 비방어 행동이므로 AGI 순서대로
     const assassin = createUnit(createCharacterDef('Assassin', CharacterClass.ASSASSIN), Team.PLAYER, Position.BACK);
     const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const archer = createUnit(createCharacterDef('Archer', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);
     const lancer = createUnit(createCharacterDef('Lancer', CharacterClass.LANCER), Team.ENEMY, Position.FRONT);
 
-    const order = calculateFullTurnOrder([warrior, assassin, archer, lancer]);
+    const state = createBattleState([assassin, warrior], [archer, lancer], [], []);
+    const order = calculateFullTurnOrder([warrior, assassin, archer, lancer], state);
 
-    expect(order[0]).toBe(assassin.id); // AGI 16
-    expect(order[1]).toBe(archer.id); // AGI 14
-    expect(order[2]).toBe(lancer.id); // AGI 12
-    expect(order[3]).toBe(warrior.id); // AGI 8
+    // 비방어끼리 AGI 순
+    expect(order[0]).toBe(assassin.id);
+    expect(order[1]).toBe(archer.id);
+    expect(order[2]).toBe(lancer.id);
+    expect(order[3]).toBe(warrior.id);
   });
 
   it('피아가 섞여서 행동한다 (AGI 순서대로)', () => {
@@ -26,9 +30,10 @@ describe('턴 순서 시스템', () => {
     const eAssassin = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const pArcher = createUnit(createCharacterDef('P-Archer', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
 
-    const order = calculateFullTurnOrder([pWarrior, eAssassin, pArcher]);
+    const state = createBattleState([pWarrior, pArcher], [eAssassin], [], []);
+    const order = calculateFullTurnOrder([pWarrior, eAssassin, pArcher], state);
 
-    // E-Assassin(16) → P-Archer(14) → P-Warrior(8) : 피아 섞임
+    // E-Assassin(11) → P-Archer(9) → P-Warrior(6) : 피아 섞임
     expect(order[0]).toBe(eAssassin.id);
     expect(order[1]).toBe(pArcher.id);
     expect(order[2]).toBe(pWarrior.id);
@@ -39,7 +44,8 @@ describe('턴 순서 시스템', () => {
     const dead = createUnit(createCharacterDef('Dead', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     dead.isAlive = false;
 
-    const order = calculateFullTurnOrder([alive, dead]);
+    const state = createBattleState([alive], [dead], [], []);
+    const order = calculateFullTurnOrder([alive, dead], state);
 
     expect(order).toHaveLength(1);
     expect(order[0]).toBe(alive.id);

@@ -13,7 +13,9 @@ import { resolveDelayedEffects } from '../systems/DelayedEffectSystem';
 export function startRound(state: BattleState): BattleState {
   const newRound = state.round + 1;
   let units = state.units.map((u) => ({ ...u, hasActedThisRound: false }));
-  const turnOrder = calculateFullTurnOrder(units);
+  // 방어 우선권 판단을 위해 임시 state 생성 (units 업데이트 반영)
+  const tempState = { ...state, units, round: newRound, turn: 0 };
+  const turnOrder = calculateFullTurnOrder(units, tempState);
 
   const event: BattleEvent = {
     id: uid(),
@@ -87,8 +89,8 @@ export function startRound(state: BattleState): BattleState {
  * 다음 행동할 유닛 가져오기
  */
 export function getNextActor(state: BattleState): BattleUnit | null {
-  // 아직 행동하지 않은 유닛 중 턴 순서대로
-  const remaining = calculateTurnOrder(state.units);
+  // 아직 행동하지 않은 유닛 중 방어 우선권 + AGI 순서대로
+  const remaining = calculateTurnOrder(state.units, state);
   if (remaining.length === 0) return null;
 
   const nextId = remaining[0];

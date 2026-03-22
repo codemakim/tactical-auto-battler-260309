@@ -448,6 +448,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
           id: 'guardian_advance_guard',
           name: 'Advance Guard',
           isBasic: true,
+          defensivePriority: true,
           description: 'Move to front, gain GRD x1.2 shield, and enter cover mode.',
           effects: [
             { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
@@ -463,6 +464,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
           id: 'guardian_shield_wall',
           name: 'Shield Wall',
           isBasic: true,
+          defensivePriority: true,
           description: 'Gain GRD x1.0 shield, shield lowest HP ally for GRD x0.8, and enter cover mode.',
           effects: [
             { type: 'SHIELD', value: 1.0, stat: 'grd', target: Target.SELF },
@@ -478,6 +480,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
           id: 'guardian_heavy_shield',
           name: 'Heavy Shield',
           isBasic: true,
+          defensivePriority: true,
           description: 'Emergency GRD x1.5 shield when low on health.',
           effects: [{ type: 'SHIELD', value: 1.5, stat: 'grd', target: Target.SELF }],
           rarity: Rarity.COMMON,
@@ -490,6 +493,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         id: 'guardian_advance_guard',
         name: 'Advance Guard',
         rarity: Rarity.COMMON,
+        defensivePriority: true,
         condition: { type: 'POSITION_BACK' },
         effectTemplates: [
           { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
@@ -501,6 +505,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         id: 'guardian_shield_wall',
         name: 'Shield Wall',
         rarity: Rarity.COMMON,
+        defensivePriority: true,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
           { type: 'SHIELD', stat: 'grd', multiplierPool: [0.8, 1.0, 1.2], targetPool: [Target.SELF] },
@@ -512,6 +517,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         id: 'guardian_heavy_shield',
         name: 'Heavy Shield',
         rarity: Rarity.COMMON,
+        defensivePriority: true,
         condition: { type: 'HP_BELOW', value: 50 },
         effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [1.3, 1.5, 1.7], targetPool: [Target.SELF] }],
       },
@@ -519,6 +525,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         id: 'guardian_bulwark',
         name: 'Bulwark',
         rarity: Rarity.COMMON,
+        defensivePriority: true,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [1.1, 1.3, 1.5], targetPool: [Target.SELF] }],
       },
@@ -539,6 +546,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         name: 'Aegis',
         rarity: Rarity.EPIC,
         classRestriction: CharacterClass.GUARDIAN,
+        defensivePriority: true,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [{ type: 'SHIELD', stat: 'grd', multiplierPool: [2.0], targetPool: [Target.SELF] }],
       },
@@ -547,6 +555,7 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         name: 'Rally Guard',
         rarity: Rarity.RARE,
         classRestriction: CharacterClass.GUARDIAN,
+        defensivePriority: true,
         condition: { type: 'POSITION_FRONT' },
         effectTemplates: [
           { type: 'SHIELD', stat: 'grd', multiplierPool: [0.5, 0.6, 0.7], targetPool: [Target.SELF] },
