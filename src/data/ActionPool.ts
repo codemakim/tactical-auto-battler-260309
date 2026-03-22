@@ -4,6 +4,22 @@ import { CLASS_DEFINITIONS } from './ClassDefinitions';
 // === Universal Card Templates (범용, 모든 클래스 사용 가능) ===
 
 export const UNIVERSAL_CARD_TEMPLATES: CardTemplate[] = [
+  // --- 위치 이동 카드 ---
+  {
+    id: 'universal_advance',
+    name: 'Advance',
+    rarity: Rarity.COMMON,
+    condition: { type: 'POSITION_BACK' },
+    effectTemplates: [{ type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' }],
+  },
+  {
+    id: 'universal_withdraw',
+    name: 'Withdraw',
+    rarity: Rarity.COMMON,
+    condition: { type: 'POSITION_FRONT' },
+    effectTemplates: [{ type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'BACK' }],
+  },
+  // --- 전투 카드 ---
   {
     id: 'universal_quick_strike',
     name: 'Quick Strike',

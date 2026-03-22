@@ -15,7 +15,8 @@ function nextId(team: Team, name: string): string {
 }
 
 /**
- * 클래스 템플릿에서 CharacterDefinition 생성 (고정 스탯 + testActionSlots 사용, 테스트 전용)
+ * [테스트 전용] 고정 스탯 + 고정 액션 슬롯(testActionSlots)으로 CharacterDefinition 생성.
+ * 결정론적 테스트를 위한 헬퍼 — 실제 게임에서는 generateCharacterDef()를 사용할 것.
  */
 export function createCharacterDef(
   name: string,
@@ -59,9 +60,9 @@ function randInt(rand: () => number, min: number, max: number): number {
 }
 
 /**
- * 클래스 범위 내 랜덤 스탯으로 CharacterDefinition 생성 (§23.5)
- * trainingPotential도 2~5 범위에서 랜덤
- * 고정 testActionSlots 사용 (테스트 전용)
+ * [게임용] 클래스 범위 내 랜덤 스탯 + 카드풀에서 랜덤 3장 추첨으로 CharacterDefinition 생성 (§23.5).
+ * trainingPotential도 2~5 범위에서 랜덤.
+ * 시드 기반 결정론적 — 같은 시드면 같은 캐릭터가 생성된다.
  */
 export function generateCharacterDef(name: string, characterClass: CharacterClass, seed: number): CharacterDefinition {
   const template = CLASS_DEFINITIONS[characterClass];

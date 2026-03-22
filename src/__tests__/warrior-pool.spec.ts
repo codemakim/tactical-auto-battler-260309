@@ -15,11 +15,11 @@ describe('전사 카드풀', () => {
     expect(templates).toHaveLength(10);
   });
 
-  it('클래스 전용 COMMON 7장, RARE 3장', () => {
+  it('클래스 전용 COMMON 6장, RARE 4장', () => {
     const common = templates.filter((t) => (t.rarity ?? 'COMMON') === Rarity.COMMON);
     const rare = templates.filter((t) => t.rarity === Rarity.RARE);
-    expect(common).toHaveLength(7);
-    expect(rare).toHaveLength(3);
+    expect(common).toHaveLength(6);
+    expect(rare).toHaveLength(4);
   });
 
   it('getAllTemplatesForClass는 클래스 전용 + 공용 카드 합산', () => {
@@ -27,9 +27,11 @@ describe('전사 카드풀', () => {
     expect(all).toHaveLength(templates.length + UNIVERSAL_CARD_TEMPLATES.length);
   });
 
-  it('공용 카드 5종 포함', () => {
-    expect(UNIVERSAL_CARD_TEMPLATES).toHaveLength(5);
+  it('공용 카드 7종 포함 (이동 2 + 전투 5)', () => {
+    expect(UNIVERSAL_CARD_TEMPLATES).toHaveLength(7);
     const ids = UNIVERSAL_CARD_TEMPLATES.map((t) => t.id);
+    expect(ids).toContain('universal_advance');
+    expect(ids).toContain('universal_withdraw');
     expect(ids).toContain('universal_quick_strike');
     expect(ids).toContain('universal_guard');
     expect(ids).toContain('universal_recover');
@@ -58,10 +60,12 @@ describe('전사 카드풀', () => {
     expect(card.effectTemplates[0]).toMatchObject({ type: 'SHIELD', multiplierPool: [1.1, 1.2, 1.3], stat: 'grd' });
   });
 
-  it('Advance: POSITION_BACK, MOVE FRONT', () => {
-    const card = templates.find((t) => t.id === 'warrior_advance')!;
+  it('Battle Charge: POSITION_BACK, MOVE FRONT + DAMAGE ATK×[0.9~1.1] (RARE)', () => {
+    const card = templates.find((t) => t.id === 'warrior_battle_charge')!;
     expect(card.condition.type).toBe('POSITION_BACK');
+    expect(card.rarity).toBe(Rarity.RARE);
     expect(card.effectTemplates[0]).toMatchObject({ type: 'MOVE', position: 'FRONT' });
+    expect(card.effectTemplates[1]).toMatchObject({ type: 'DAMAGE', multiplierPool: [0.9, 1.0, 1.1], stat: 'atk' });
   });
 
   it('Hold Ground: POSITION_FRONT, GRD×[0.9~1.1] (전열 유지용)', () => {

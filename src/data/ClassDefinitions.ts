@@ -57,13 +57,13 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
         },
       },
       {
-        condition: { type: 'POSITION_FRONT' },
+        condition: { type: 'POSITION_BACK' },
         action: {
-          id: 'warrior_strike',
-          name: 'Strike',
+          id: 'warrior_advance',
+          name: 'Advance',
           isBasic: true,
-          description: 'Basic melee attack.',
-          effects: [{ type: 'DAMAGE', value: 1.0, stat: 'atk', target: Target.ENEMY_FRONT }],
+          description: 'Move to front line.',
+          effects: [{ type: 'MOVE', target: Target.SELF, position: 'FRONT' }],
           rarity: Rarity.COMMON,
         },
       },
@@ -96,12 +96,17 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
           { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
         ],
       },
+      // Battle Charge — 후열에서 전열로 돌진 + 데미지 (범용 Advance의 상위 호환)
       {
-        id: 'warrior_advance',
-        name: 'Advance',
-        rarity: Rarity.COMMON,
+        id: 'warrior_battle_charge',
+        name: 'Battle Charge',
+        rarity: Rarity.RARE,
+        classRestriction: CharacterClass.WARRIOR,
         condition: { type: 'POSITION_BACK' },
-        effectTemplates: [{ type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' }],
+        effectTemplates: [
+          { type: 'MOVE', multiplierPool: [0], targetPool: [Target.SELF], position: 'FRONT' },
+          { type: 'DAMAGE', stat: 'atk', multiplierPool: [0.9, 1.0, 1.1], targetPool: [Target.ENEMY_FRONT] },
+        ],
       },
       {
         id: 'warrior_hold_ground',
