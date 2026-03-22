@@ -565,10 +565,10 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
       {
         condition: { type: 'ENEMY_FRONT_EXISTS' },
         action: {
-          id: 'controller_reposition',
-          name: 'Reposition',
+          id: 'controller_banish',
+          name: 'Banish',
           isBasic: true,
-          description: 'Push an enemy to the back and deal minor damage.',
+          description: 'Banish an enemy to the back and deal minor damage.',
           effects: [
             { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
             { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
@@ -602,8 +602,8 @@ export const CLASS_DEFINITIONS: Record<string, ClassTemplate> = {
     cardTemplates: [
       // --- 기본 카드 ---
       {
-        id: 'controller_reposition',
-        name: 'Reposition',
+        id: 'controller_banish',
+        name: 'Banish',
         rarity: Rarity.COMMON,
         condition: { type: 'ENEMY_FRONT_EXISTS' },
         effectTemplates: [

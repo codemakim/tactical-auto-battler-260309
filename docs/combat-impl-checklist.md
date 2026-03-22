@@ -67,6 +67,7 @@
 - [x] PushEnemy (PUSH)
 - [x] ChargeAttack (복합 효과 순서 검증 완료)
 - [x] Reposition (아군 위치 변경 — ALLY_ANY, ALLY_LOWEST_HP 타겟팅)
+- [x] Banish (Controller 기본 — 적 전열을 후열로 밀기 + 소량 데미지, PUSH 효과 사용)
 - [x] ApplyBuff (BUFF/DEBUFF 효과, BuffType 기반, 지속시간)
 - [x] DelayTurn (액션 효과로 연결 완료)
 - [x] AdvanceTurn (액션 효과로 연결 완료)

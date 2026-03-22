@@ -95,7 +95,7 @@ interface ManualTeams {
 //  🎮 시나리오 선택 — 이름만 바꿔서 실행!
 //     '' (빈 문자열) = 랜덤/환경변수 모드
 // ══════════════════════════════════════════════════════
-const MANUAL_SCENARIO = 'CLASS_IDENTITY_SMOKE_TEST';
+const MANUAL_SCENARIO = 'CONTROLLER_ENABLES_ARCHER';
 
 const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
   // ─────────────────────────────────────────────────
@@ -333,8 +333,8 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
           {
             condition: { type: 'ENEMY_FRONT_EXISTS' },
             action: {
-              id: 'controller_reposition',
-              name: 'Reposition',
+              id: 'controller_banish',
+              name: 'Banish',
               description: '',
               effects: [
                 { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
@@ -605,8 +605,8 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
           {
             condition: { type: 'ENEMY_FRONT_EXISTS' },
             action: {
-              id: 'controller_reposition',
-              name: 'Reposition',
+              id: 'controller_banish',
+              name: 'Banish',
               description: '',
               effects: [
                 { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
@@ -1427,8 +1427,8 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
           {
             condition: { type: 'ENEMY_FRONT_EXISTS' },
             action: {
-              id: 'controller_reposition',
-              name: 'Reposition',
+              id: 'controller_banish',
+              name: 'Banish',
               description: '',
               effects: [
                 { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
@@ -1563,8 +1563,8 @@ const MANUAL_SCENARIOS: Record<string, ManualTeams> = {
           {
             condition: { type: 'ENEMY_FRONT_EXISTS' },
             action: {
-              id: 'controller_reposition',
-              name: 'Reposition',
+              id: 'controller_banish',
+              name: 'Banish',
               description: '',
               effects: [
                 { type: 'DAMAGE', value: 0.6, stat: 'atk', target: Target.ENEMY_FRONT },
