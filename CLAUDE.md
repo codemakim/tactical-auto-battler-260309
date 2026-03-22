@@ -56,6 +56,8 @@ src/
 - `docs/delayed-effect-spec.md` - 지연 효과 시스템 명세 (§7.2)
 - `docs/cover-system-spec.md` - 커버 시스템 명세 (§25, COVER 버프 기반 대신 피격)
 - `docs/hero-system-spec.md` - 영웅 시스템 명세 (§26~§28, 공통 능력 + 특화 능력)
+- `docs/run-system-spec.md` - 런 시스템 명세 (5스테이지 런 루프, 카드 인벤토리, 편성)
+- `docs/enemy-encounter-spec.md` - 적 인카운터 명세 (4종 아키타입, 스테이지별 편성)
 - `docs/combat-impl-checklist.md` - 구현 상태 체크리스트 (스펙 섹션별 대응)
 
 ## Key Commands
