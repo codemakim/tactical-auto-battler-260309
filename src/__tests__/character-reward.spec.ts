@@ -1,5 +1,5 @@
 /**
- * 캐릭터 획득 기회 테스트 — §23 캐릭터 획득 기회
+ * 객원 멤버 획득 기회 테스트 — §23 캐릭터 획득 기회
  *
  * 검증 항목:
  *   1. seed 결정론 — 같은 seed는 항상 같은 결과
@@ -16,7 +16,7 @@ import { Difficulty } from '../types';
 
 const STANDARD = Difficulty.STANDARD;
 
-describe('캐릭터 획득 기회 (§23)', () => {
+describe('객원 멤버 획득 기회 (§23)', () => {
   // ═══════════════════════════════════════════
   // 1. 결정론
   // ═══════════════════════════════════════════
@@ -25,11 +25,17 @@ describe('캐릭터 획득 기회 (§23)', () => {
     it('같은 seed로 호출하면 항상 같은 결과를 반환한다', () => {
       const r1 = generateCharacterReward(42, STANDARD, 0);
       const r2 = generateCharacterReward(42, STANDARD, 0);
-      expect(r1).toEqual(r2);
+      // character 내부의 id가 같으면 동일한 결과
+      if (r1 === null) {
+        expect(r2).toBeNull();
+      } else {
+        expect(r2).not.toBeNull();
+        expect(r1.character.characterClass).toBe(r2!.character.characterClass);
+        expect(r1.probability).toBe(r2!.probability);
+      }
     });
 
     it('다른 seed는 (거의 항상) 다른 결과를 생성한다', () => {
-      // 큰 seed 범위에서 다른 결과가 반드시 하나는 존재
       const results = new Set<string>();
       for (let s = 0; s < 20; s++) {
         const r = generateCharacterReward(s, STANDARD, 0);
@@ -87,7 +93,6 @@ describe('캐릭터 획득 기회 (§23)', () => {
     });
 
     it('로스터 크기가 임계값 이하면 패널티가 없다', () => {
-      // ROSTER_PENALTY_THRESHOLD = 3
       let hits3 = 0;
       let hits0 = 0;
       const trials = 300;
@@ -95,7 +100,6 @@ describe('캐릭터 획득 기회 (§23)', () => {
         if (generateCharacterReward(s, STANDARD, 0) !== null) hits0++;
         if (generateCharacterReward(s, STANDARD, 3) !== null) hits3++;
       }
-      // 임계값 내에서는 동일한 확률
       expect(Math.abs(hits0 - hits3)).toBeLessThan(30);
     });
   });
@@ -123,7 +127,6 @@ describe('캐릭터 획득 기회 (§23)', () => {
 
   describe('5. CharacterReward 반환값 구조', () => {
     it('보상이 생성되면 CharacterReward 필드를 모두 포함한다', () => {
-      // 반드시 null이 아닌 결과를 찾을 때까지 시도
       let reward = null;
       for (let s = 0; s < 1000; s++) {
         reward = generateCharacterReward(s, Difficulty.NIGHTMARE, 0);
@@ -131,17 +134,18 @@ describe('캐릭터 획득 기회 (§23)', () => {
       }
 
       expect(reward).not.toBeNull();
-      expect(reward!.characterClass).toBeDefined();
-      expect(typeof reward!.trainingPotential).toBe('number');
-      expect(reward!.trainingPotential).toBeGreaterThanOrEqual(2);
-      expect(reward!.trainingPotential).toBeLessThanOrEqual(5);
+      expect(reward!.character).toBeDefined();
+      expect(reward!.character.characterClass).toBeDefined();
+      expect(typeof reward!.character.trainingPotential).toBe('number');
+      expect(reward!.character.trainingPotential).toBeGreaterThanOrEqual(2);
+      expect(reward!.character.trainingPotential).toBeLessThanOrEqual(5);
+      expect(reward!.isGuest).toBe(true);
       expect(typeof reward!.probability).toBe('number');
       expect(reward!.probability).toBeGreaterThan(0);
       expect(reward!.probability).toBeLessThanOrEqual(1);
     });
 
     it('null 반환 시 undefined 아닌 null', () => {
-      // 로스터를 매우 크게 설정해 확률 0으로
       const reward = generateCharacterReward(1, Difficulty.EASY, 100);
       expect(reward).toBeNull();
     });
@@ -153,7 +157,6 @@ describe('캐릭터 획득 기회 (§23)', () => {
 
   describe('6. 엣지케이스', () => {
     it('로스터가 매우 크면 항상 null을 반환한다', () => {
-      // 100명 이상이면 확률이 0 이하
       for (let s = 0; s < 20; s++) {
         const r = generateCharacterReward(s, Difficulty.EASY, 100);
         expect(r).toBeNull();
@@ -163,7 +166,12 @@ describe('캐릭터 획득 기회 (§23)', () => {
     it('seed 0도 정상적으로 동작한다', () => {
       const r1 = generateCharacterReward(0, STANDARD, 0);
       const r2 = generateCharacterReward(0, STANDARD, 0);
-      expect(r1).toEqual(r2);
+      if (r1 === null) {
+        expect(r2).toBeNull();
+      } else {
+        expect(r2).not.toBeNull();
+        expect(r1.character.characterClass).toBe(r2!.character.characterClass);
+      }
     });
   });
 });

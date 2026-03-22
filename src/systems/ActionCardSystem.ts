@@ -105,12 +105,14 @@ function buildDescription(name: string, effects: ActionEffect[]): string {
  */
 export function generateRewardFromTemplates(
   templates: CardTemplate[],
-  characterClass: CharacterClass,
+  characterClass: CharacterClass | undefined,
   count: number,
   seed: number,
 ): Action[] {
-  // 클래스 호환 필터
-  const compatible = templates.filter((t) => !t.classRestriction || t.classRestriction === characterClass);
+  // 클래스 호환 필터 (characterClass가 undefined면 모든 템플릿 사용 — 파티 전체 풀)
+  const compatible = characterClass
+    ? templates.filter((t) => !t.classRestriction || t.classRestriction === characterClass)
+    : templates;
 
   const pickCount = Math.min(count, compatible.length);
   if (pickCount === 0) return [];

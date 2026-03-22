@@ -394,46 +394,123 @@ export interface BattleEvent {
   data?: Record<string, unknown>;
 }
 
+// === Card Instance (런 중 인벤토리 카드) ===
+
+export interface CardInstance {
+  instanceId: string; // 고유 ID
+  templateId: string; // 원본 CardTemplate 참조
+  action: Action; // 확정된 액션 (multiplier, target 등 롤링 완료)
+  classRestriction?: CharacterClass; // 클래스 제한 (없으면 공용)
+  rarity: Rarity;
+}
+
+// === Enemy Archetype (적 아키타입) ===
+
+export const EnemyArchetype = {
+  BRUTE: 'BRUTE',
+  GUARD: 'GUARD',
+  RANGER: 'RANGER',
+  DISRUPTOR: 'DISRUPTOR',
+} as const;
+export type EnemyArchetype = (typeof EnemyArchetype)[keyof typeof EnemyArchetype];
+
+/** 아키타입 → 기반 아군 클래스 매핑 (스탯 참조용) */
+export const ARCHETYPE_CLASS_MAP: Record<EnemyArchetype, string> = {
+  [EnemyArchetype.BRUTE]: CharacterClass.WARRIOR,
+  [EnemyArchetype.GUARD]: CharacterClass.GUARDIAN,
+  [EnemyArchetype.RANGER]: CharacterClass.ARCHER,
+  [EnemyArchetype.DISRUPTOR]: CharacterClass.CONTROLLER,
+};
+
+/** 적 아키타입 정의 (행동셋 포함) */
+export interface EnemyArchetypeDefinition {
+  archetype: EnemyArchetype;
+  name: string;
+  baseClass: string; // 스탯 범위 참조할 아군 클래스
+  defaultPosition: Position;
+  actionSlots: ActionSlot[]; // 고정 행동 3슬롯
+}
+
+/** 스테이지 인카운터: 어떤 아키타입이 몇 명 등장하는지 */
+export interface EncounterSlot {
+  archetype: EnemyArchetype;
+  count: number;
+}
+
+export interface StageEncounter {
+  stage: number;
+  slots: EncounterSlot[];
+  /** 스테이지 내 변형 (Stage 4 등), seed로 선택 */
+  variants?: EncounterSlot[][];
+}
+
 // === Run State ===
+
+export const RunStatus = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  VICTORY: 'VICTORY',
+  DEFEAT: 'DEFEAT',
+} as const;
+export type RunStatus = (typeof RunStatus)[keyof typeof RunStatus];
 
 export interface RunState {
   currentStage: number;
-  difficulty: Difficulty;
+  maxStages: number; // 5 (4 normal + 1 boss)
+  seed: number;
+
+  /** 출전 멤버 정의 (3 combat + 1 reserve) */
+  party: CharacterDefinition[];
+  /** 벤치 (객원 등, 출전하지 않는 캐릭터) */
+  bench: CharacterDefinition[];
+  /** 런 중 획득한 카드 인벤토리 */
+  cardInventory: CardInstance[];
+  /** 카드 장착 매핑: characterDefId → slotIndex → CardInstance.instanceId */
+  equippedCards: Record<string, Record<number, string>>;
+
   gold: number;
-  temporaryActions: Action[];
+  retryAvailable: boolean; // 현재 스테이지 재도전 가능 여부
+
+  status: RunStatus;
+
+  /** 런 시작 시 스냅샷 — 런 종료 시 복원용 */
+  preRunPartySnapshot: CharacterDefinition[];
 }
 
 // === Battle Reward ===
 
 export interface BattleReward {
   gold: number;
-  actionOptions: Action[];
+  cardOptions: CardInstance[]; // 선택 가능한 카드 인스턴스 목록
 }
 
-// === Character Reward ===
+// === Character Reward (객원 멤버) ===
 
 export interface CharacterReward {
-  characterClass: CharacterClass;
-  trainingPotential: number; // 랜덤 생성된 잠재력 (2~5)
-  probability: number; // 이 보상이 생성된 확률 (0~1, 디버그/UI용)
+  character: CharacterDefinition;
+  isGuest: true; // 런 종료 시 퇴장
+  probability: number; // 이 보상이 생성된 확률 (디버그/UI용)
 }
 
 // === Game Config ===
 
 export interface GameConfig {
+  initialRosterSlots: number; // 초기 로스터 슬롯 수
   maxRosterSize: number;
   teamSize: number;
   reserveSize: number;
   actionSlotsPerCharacter: number;
   heroInterventionsPerRound: number;
   maxRoundsPerBattle: number;
+  runStages: number; // 런 스테이지 수
 }
 
 export const DEFAULT_GAME_CONFIG: GameConfig = {
-  maxRosterSize: 5,
+  initialRosterSlots: 6,
+  maxRosterSize: 10,
   teamSize: 3,
   reserveSize: 1,
   actionSlotsPerCharacter: 3,
   heroInterventionsPerRound: 1,
   maxRoundsPerBattle: 20,
+  runStages: 5,
 };

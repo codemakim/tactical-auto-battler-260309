@@ -1,16 +1,9 @@
-import type {
-  BattleState,
-  RunState,
-  BattleReward,
-  Action,
-  BattleUnit,
-  ActionCondition,
-  CharacterReward,
-} from '../types';
-import { Difficulty, Team } from '../types';
-import { generateRewardFromTemplates, replaceActionSlot } from './ActionCardSystem';
+import type { BattleState, RunState, BattleReward, CardInstance, CharacterReward, CharacterDefinition } from '../types';
+import { Difficulty, Rarity, Team } from '../types';
+import { generateRewardFromTemplates } from './ActionCardSystem';
 import { getAvailableClasses } from '../data/ClassDefinitions';
 import { getAllTemplatesForClass } from '../data/ActionPool';
+import { generateCharacterDef } from '../entities/UnitFactory';
 
 // 난이도별 골드 배율
 const DIFFICULTY_GOLD_MULTIPLIER: Record<string, number> = {
@@ -51,26 +44,61 @@ export function calculateGoldReward(state: BattleState, difficulty: Difficulty):
 }
 
 /**
- * 전투 보상 생성
- * 골드 계산 + 액션 카드 5개 옵션 생성 (클래스 호환 필터링 포함)
- * 결정론적: seed 기반
- *
- * characterClass를 지정하지 않으면 범용 액션만 포함된 풀에서 선택
+ * 시드 기반 간단한 난수 (mulberry32)
  */
-export function generateBattleRewards(state: BattleState, runState: RunState, seed: number): BattleReward {
-  const gold = calculateGoldReward(state, runState.difficulty);
+function seededRand(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-  // 플레이어 팀의 첫 번째 생존 유닛 클래스를 기준으로 액션 옵션 생성
-  // (UI에서 유닛별로 선택할 수 있도록 옵션 생성은 단일 호출로 처리)
-  const playerUnit = state.units.find((u) => u.team === Team.PLAYER && u.isAlive);
-  const characterClass = playerUnit?.characterClass;
+let cardInstanceCounter = 0;
 
-  // 클래스 전용 + 공용 카드 템플릿에서 변형 생성
-  const templates = characterClass ? getAllTemplatesForClass(characterClass) : [];
-  const actionOptions =
-    characterClass && templates.length > 0 ? generateRewardFromTemplates(templates, characterClass, 5, seed) : [];
+/** 카드 인스턴스 ID 카운터 리셋 (테스트용) */
+export function resetCardInstanceCounter(): void {
+  cardInstanceCounter = 0;
+}
 
-  return { gold, actionOptions };
+/**
+ * 전투 보상 생성
+ * 골드 계산 + 파티 전체 클래스 풀 기반 카드 5개 옵션 생성
+ * 결정론적: seed 기반
+ */
+export function generateBattleRewards(
+  state: BattleState,
+  partyClasses: string[],
+  seed: number,
+  difficulty: Difficulty = Difficulty.STANDARD,
+): BattleReward {
+  const gold = calculateGoldReward(state, difficulty);
+
+  // 파티 전체 클래스의 템플릿을 합쳐서 풀 구성
+  const allTemplates = partyClasses.flatMap((cls) => getAllTemplatesForClass(cls));
+
+  // 템플릿이 없으면 빈 옵션
+  if (allTemplates.length === 0) {
+    return { gold, cardOptions: [] };
+  }
+
+  // 카드 변형 생성 (classRestriction 없이 범용으로 생성 — 각 템플릿이 자체 classRestriction 보유)
+  const actions = generateRewardFromTemplates(allTemplates, undefined, 5, seed);
+  const rand = seededRand(seed + 5000);
+
+  // Action → CardInstance 변환
+  const cardOptions: CardInstance[] = actions.map((action) => ({
+    instanceId: `card_${++cardInstanceCounter}`,
+    templateId: action.id,
+    action,
+    classRestriction: action.classRestriction,
+    rarity: action.rarity ?? Rarity.COMMON,
+  }));
+
+  return { gold, cardOptions };
 }
 
 // 캐릭터 획득 기본 확률
@@ -90,27 +118,9 @@ const ROSTER_PENALTY_THRESHOLD = 3;
 const CHARACTER_CLASSES = getAvailableClasses();
 
 /**
- * 시드 기반 간단한 난수 (mulberry32)
- */
-function seededRand(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s |= 0;
-    s = (s + 0x6d2b79f5) | 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
- * 캐릭터 획득 기회 계산
- * 전투 승리 시 새 캐릭터를 획득할 확률을 계산하고, 보상 생성
+ * 객원 멤버 획득 기회 계산
+ * 전투 승리 시 객원 캐릭터를 획득할 확률을 계산하고, 보상 생성
  * 결정론적: seed 기반
- *
- * @param seed 랜덤 시드
- * @param difficulty 현재 난이도
- * @param currentRosterSize 현재 로스터 크기
  */
 export function generateCharacterReward(
   seed: number,
@@ -131,43 +141,27 @@ export function generateCharacterReward(
   const classIdx = Math.floor(rand() * CHARACTER_CLASSES.length);
   const characterClass = CHARACTER_CLASSES[classIdx];
 
-  // 훈련 잠재력: 2~5 랜덤 (§23.5)
-  const trainingPotential = 2 + Math.floor(rand() * 4);
+  // 객원 캐릭터 생성
+  const guestName = `Guest ${characterClass}`;
+  const character = generateCharacterDef(guestName, characterClass, seed + 2000);
 
-  return { characterClass, trainingPotential, probability };
+  return { character, isGuest: true, probability };
 }
 
 /**
- * 보상 적용
- * 골드를 RunState에 추가하고 선택한 액션 카드를 유닛 슬롯에 교체
- * 액션 미선택 시 골드만 적용
+ * 보상 적용 (골드 + 선택한 카드를 인벤토리에 추가)
  * 불변성: 새 RunState 반환
  */
-export function applyReward(
-  runState: RunState,
-  reward: BattleReward,
-  selectedAction?: Action,
-  targetUnit?: BattleUnit,
-  slotIndex?: number,
-  newCondition?: ActionCondition,
-): RunState {
+export function applyReward(runState: RunState, reward: BattleReward, selectedCard?: CardInstance): RunState {
   const newGold = runState.gold + reward.gold;
 
-  // 액션 미선택 시 골드만 반영
-  if (!selectedAction || !targetUnit || slotIndex === undefined) {
+  // 카드 미선택 시 골드만 반영
+  if (!selectedCard) {
     return { ...runState, gold: newGold };
   }
 
-  const condition: ActionCondition = newCondition ?? { type: 'ALWAYS' };
-  const updatedUnit = replaceActionSlot(targetUnit, slotIndex, selectedAction, condition);
+  // 카드 인벤토리에 추가
+  const newInventory = [...runState.cardInventory, selectedCard];
 
-  // 슬롯 교체 실패 시(유효하지 않은 인덱스 등) 골드만 반영
-  if (!updatedUnit) {
-    return { ...runState, gold: newGold };
-  }
-
-  // temporaryActions에 선택한 액션 추가 (RunState 추적용)
-  const newTemporaryActions = [...runState.temporaryActions, selectedAction];
-
-  return { ...runState, gold: newGold, temporaryActions: newTemporaryActions };
+  return { ...runState, gold: newGold, cardInventory: newInventory };
 }
