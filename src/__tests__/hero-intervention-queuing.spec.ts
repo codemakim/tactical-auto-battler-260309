@@ -193,4 +193,37 @@ describe('히어로 개입 큐잉 (§18)', () => {
     expect(state.turn).toBeGreaterThan(turnBefore);
     expect(state.hero.queuedAbility).toBeUndefined();
   });
+
+  // === 이슈 #3: 라운드 경계에서 큐잉된 능력 처리 ===
+
+  it('라운드 종료 시 미실행된 큐잉 능력은 클리어된다', () => {
+    let state = setup();
+    state = stepBattle(state).state; // 라운드 시작
+
+    // 모든 유닛 행동 후 마지막 턴에서 큐잉 (실행 기회 없음)
+    // → 모든 턴 진행
+    while (state.phase !== BattlePhase.ROUND_END && state.phase !== BattlePhase.BATTLE_END) {
+      state = stepBattle(state).state;
+    }
+
+    if (state.isFinished) return; // 전투 종료면 테스트 불필요
+
+    // 라운드 종료 상태에서 강제로 큐잉 (이미 횟수 리셋되지 않은 상태이므로 직접 설정)
+    state = {
+      ...state,
+      hero: {
+        ...state.hero,
+        interventionsRemaining: 1,
+        queuedAbility: shieldAbility,
+        queuedTargetId: state.units.find((u) => u.team === Team.PLAYER && u.isAlive)?.id,
+      },
+    };
+
+    // 다음 라운드 시작
+    state = stepBattle(state).state;
+
+    // 새 라운드에서는 이전 라운드의 큐잉이 클리어되어야 함
+    expect(state.hero.queuedAbility).toBeUndefined();
+    expect(state.hero.queuedTargetId).toBeUndefined();
+  });
 });

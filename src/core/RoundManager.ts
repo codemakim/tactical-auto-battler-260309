@@ -34,6 +34,37 @@ export function startRound(state: BattleState): BattleState {
     return result.unit;
   });
 
+  // 독 데미지로 한쪽이 전멸했으면 즉시 전투 종료
+  const winner = checkWinner(units);
+  if (winner !== null) {
+    const endEvent: BattleEvent = {
+      id: uid(),
+      type: 'BATTLE_END',
+      round: newRound,
+      turn: 0,
+      timestamp: Date.now(),
+      data: { winner, reason: 'poison_death' },
+    };
+    return {
+      ...state,
+      units,
+      round: newRound,
+      turn: 0,
+      turnOrder,
+      phase: BattlePhase.BATTLE_END,
+      isFinished: true,
+      winner,
+      hero: {
+        ...state.hero,
+        interventionsRemaining: state.hero.maxInterventionsPerRound,
+        queuedAbility: undefined,
+        queuedTargetId: undefined,
+        queuedEditData: undefined,
+      },
+      events: [...state.events, event, ...statusEvents, endEvent],
+    };
+  }
+
   return {
     ...state,
     units,
@@ -44,6 +75,9 @@ export function startRound(state: BattleState): BattleState {
     hero: {
       ...state.hero,
       interventionsRemaining: state.hero.maxInterventionsPerRound,
+      queuedAbility: undefined,
+      queuedTargetId: undefined,
+      queuedEditData: undefined,
     },
     events: [...state.events, event, ...statusEvents],
   };

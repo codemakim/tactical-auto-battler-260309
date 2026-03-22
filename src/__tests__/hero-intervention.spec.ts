@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // heroIntervene = queueIntervention의 UI용 래퍼. 즉시 실행이 아닌 큐잉 방식 (§18).
 // 타이밍·큐잉 세부 동작 테스트는 hero-intervention-queuing.spec.ts 참고.
 import { createBattleState, stepBattle, heroIntervene } from '../core/BattleEngine';
-import { canIntervene } from '../systems/HeroInterventionSystem';
+import { canIntervene, executeIntervention } from '../systems/HeroInterventionSystem';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase, Target, AbilityCategory, AbilityType } from '../types';
-import type { HeroAbility } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, Target, AbilityCategory, AbilityType, BuffType } from '../types';
+import type { HeroAbility, BattleUnit, BattleState } from '../types';
 
 describe('히어로 개입 시스템', () => {
   beforeEach(() => resetUnitCounter());
@@ -210,5 +210,53 @@ describe('히어로 개입 시스템', () => {
       // 이후 전투가 계속 진행됨
       expect(state.turn).toBeGreaterThan(0);
     }
+  });
+
+  // === 이슈 #1: 히어로 DAMAGE가 COVER 시스템을 우회하는 버그 ===
+
+  it('히어로 DAMAGE 능력은 COVER 유닛이 대신 피격해야 한다', () => {
+    // 후열 적 타겟 + 전열 COVER 유닛 → 히어로 공격 시 COVER 발동
+    const p1 = createUnit(createCharacterDef('P-Warrior', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
+    const e1 = createUnit(createCharacterDef('E-Archer', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);
+    const e2 = createUnit(createCharacterDef('E-Guardian', CharacterClass.GUARDIAN), Team.ENEMY, Position.FRONT);
+
+    // e2(Guardian)에 COVER 버프 부여
+    const e2WithCover: BattleUnit = {
+      ...e2,
+      buffs: [{ id: 'cover-1', type: BuffType.COVER, value: 0, duration: 3, sourceId: e2.id }],
+    };
+
+    let state = createBattleState([p1], [e1, e2WithCover], [], []);
+
+    const damageAbility: HeroAbility = {
+      id: 'hero_fireball',
+      name: 'Fireball',
+      description: 'Deal damage to enemy',
+      effects: [{ type: 'DAMAGE', value: 1, target: Target.ENEMY_ANY }],
+      category: AbilityCategory.UNIQUE,
+      abilityType: AbilityType.EFFECT,
+    };
+
+    // 라운드 시작
+    state = stepBattle(state).state;
+
+    const e1Before = state.units.find((u) => u.id === e1.id)!;
+    const e2Before = state.units.find((u) => u.id === e2WithCover.id)!;
+    const e1HpBefore = e1Before.stats.hp;
+    const e2HpBefore = e2Before.stats.hp;
+
+    // 히어로가 후열 적(e1)을 타겟으로 DAMAGE 발동
+    const result = executeIntervention(state, damageAbility, e1.id);
+
+    const e1After = result.state.units.find((u) => u.id === e1.id)!;
+    const e2After = result.state.units.find((u) => u.id === e2WithCover.id)!;
+
+    // COVER 발동: e1(후열)은 피해 없고 e2(전열 COVER)가 대신 피격
+    expect(e1After.stats.hp).toBe(e1HpBefore); // 후열 타겟 무피해
+    expect(e2After.stats.hp).toBeLessThan(e2HpBefore); // COVER 유닛이 대신 피격
+
+    // COVER_TRIGGERED 이벤트 확인
+    const coverEvents = result.events.filter((e) => e.type === 'COVER_TRIGGERED');
+    expect(coverEvents.length).toBe(1);
   });
 });

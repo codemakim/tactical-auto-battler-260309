@@ -9,7 +9,7 @@ import type {
 } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
-import { applyDamage, applyShield, applyHeal, calculateDamage } from './DamageSystem';
+import { applyDamage, applyDamageWithCover, applyShield, applyHeal, calculateDamage } from './DamageSystem';
 import { pushUnit } from './PositionSystem';
 import { applyBuff } from './BuffSystem';
 import { accelerateUnit, delayUnit } from '../core/TurnOrderManager';
@@ -75,8 +75,8 @@ export function executeIntervention(
         }
         if (target) {
           const dmg = Math.floor((effect.value ?? 1) * 15); // 히어로 기본 공격력 15
-          const result = applyDamage(target, dmg, 'hero', state.round, state.turn);
-          units = units.map((u) => (u.id === target!.id ? result.unit : u));
+          const result = applyDamageWithCover(target, dmg, 'hero', units, state.round, state.turn);
+          units = result.units;
           allEvents.push(...result.events);
         }
         break;

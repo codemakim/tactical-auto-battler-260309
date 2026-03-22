@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createBattleState, stepBattle, runFullBattle } from '../core/BattleEngine';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, Team, Position, BattlePhase } from '../types';
-import type { BattleState } from '../types';
+import { CharacterClass, Team, Position, BattlePhase, BuffType } from '../types';
+import type { BattleState, BattleUnit } from '../types';
 import { resetUid } from '../utils/uid';
 import { endRound } from '../core/RoundManager';
 
@@ -611,5 +611,130 @@ describe('이벤트 ID 고유성', () => {
     // 모든 ID가 고유한지 확인
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
+  });
+
+  // === 이슈 #2: 라운드 시작 독 데미지로 전멸 시 전투 종료 ===
+
+  it('라운드 시작 독 데미지로 한 팀이 전멸하면 즉시 전투가 종료된다', () => {
+    // HP 1인 적 유닛 하나 + 독 버프, 아군 1명
+    const pDef = createCharacterDef('P-Warrior', CharacterClass.WARRIOR);
+    const eDef = createCharacterDef('E-Warrior', CharacterClass.WARRIOR);
+    const p1 = createUnit(pDef, Team.PLAYER, Position.FRONT);
+    let e1 = createUnit(eDef, Team.ENEMY, Position.FRONT);
+
+    // e1의 HP를 1로 설정하고 독 버프 부여 (라운드 시작 시 독 데미지로 사망)
+    e1 = {
+      ...e1,
+      stats: { ...e1.stats, hp: 1 },
+      buffs: [{ id: 'poison-1', type: BuffType.POISON, value: 5, duration: 3, sourceId: p1.id }],
+    };
+
+    let state = createBattleState([p1], [e1], [], []);
+
+    // 라운드 1 시작 → 독 데미지 → e1 사망 → 전투 종료여야 함
+    state = stepBattle(state).state;
+
+    // 독으로 e1이 사망했으므로 전투가 종료되어야 한다
+    const e1After = state.units.find((u) => u.id === e1.id)!;
+    expect(e1After.isAlive).toBe(false);
+    expect(state.isFinished).toBe(true);
+    expect(state.winner).toBe(Team.PLAYER);
+    expect(state.phase).toBe(BattlePhase.BATTLE_END);
+  });
+
+  it('라운드 시작 독 데미지로 양팀 모두 전멸하면 ENEMY 승리 (무승부 규칙)', () => {
+    const pDef = createCharacterDef('P-Warrior', CharacterClass.WARRIOR);
+    const eDef = createCharacterDef('E-Warrior', CharacterClass.WARRIOR);
+    let p1 = createUnit(pDef, Team.PLAYER, Position.FRONT);
+    let e1 = createUnit(eDef, Team.ENEMY, Position.FRONT);
+
+    // 양쪽 모두 HP 1 + 독
+    p1 = {
+      ...p1,
+      stats: { ...p1.stats, hp: 1 },
+      buffs: [{ id: 'poison-p', type: BuffType.POISON, value: 5, duration: 3, sourceId: e1.id }],
+    };
+    e1 = {
+      ...e1,
+      stats: { ...e1.stats, hp: 1 },
+      buffs: [{ id: 'poison-e', type: BuffType.POISON, value: 5, duration: 3, sourceId: p1.id }],
+    };
+
+    let state = createBattleState([p1], [e1], [], []);
+    state = stepBattle(state).state;
+
+    expect(state.isFinished).toBe(true);
+    expect(state.winner).toBe(Team.ENEMY); // 무승부 = ENEMY 승리
+  });
+
+  // === 이슈 #4: 지연 효과로 부여된 독이 다음 라운드 시작 시 틱 (의도된 동작 확인) ===
+
+  it('endRound 지연 효과로 부여된 POISON은 다음 startRound에서 첫 틱이 발생한다', () => {
+    const pDef = createCharacterDef('P-Warrior', CharacterClass.WARRIOR);
+    const eDef = createCharacterDef('E-Warrior', CharacterClass.WARRIOR);
+    const p1 = createUnit(pDef, Team.PLAYER, Position.FRONT);
+    const e1 = createUnit(eDef, Team.ENEMY, Position.FRONT);
+
+    let state = createBattleState([p1], [e1], [], []);
+
+    // 라운드 1 시작
+    state = stepBattle(state).state;
+
+    // 지연 효과 직접 주입: 1라운드 후 POISON 버프 부여
+    state = {
+      ...state,
+      delayedEffects: [
+        {
+          id: 'delayed-poison-1',
+          sourceId: p1.id,
+          targetId: e1.id,
+          effectType: 'BUFF' as const,
+          value: 10,
+          remainingRounds: 1,
+          buffType: BuffType.POISON,
+          buffDuration: 2,
+        },
+      ],
+    };
+
+    // 라운드 1 모든 턴 진행 → 라운드 종료 (지연 효과 발동 → POISON 부여)
+    while (state.phase !== BattlePhase.ROUND_END && state.phase !== BattlePhase.BATTLE_END) {
+      state = stepBattle(state).state;
+    }
+    if (state.isFinished) return;
+
+    // endRound에서 POISON 버프가 부여되었는지 확인
+    const e1AfterRound1 = state.units.find((u) => u.id === e1.id)!;
+    const hasPoisonBuff = e1AfterRound1.buffs.some((b) => b.type === BuffType.POISON);
+    expect(hasPoisonBuff).toBe(true);
+
+    const hpBeforeRound2 = e1AfterRound1.stats.hp;
+
+    // 라운드 2 시작 → startRound에서 POISON 틱
+    state = stepBattle(state).state;
+
+    const e1AfterRound2Start = state.units.find((u) => u.id === e1.id)!;
+    // 독 데미지로 HP가 감소해야 함 (유예 없이 즉시 틱 = 의도된 동작)
+    expect(e1AfterRound2Start.stats.hp).toBeLessThan(hpBeforeRound2);
+  });
+
+  // === 이슈 #5: ACTION_RESOLVE 페이즈 전환 테스트 ===
+
+  it('ACTION_RESOLVE 페이즈에서 stepBattle 호출 시 TURN_END로 전환된다', () => {
+    const pDef = createCharacterDef('P-Warrior', CharacterClass.WARRIOR);
+    const eDef = createCharacterDef('E-Warrior', CharacterClass.WARRIOR);
+    const p1 = createUnit(pDef, Team.PLAYER, Position.FRONT);
+    const e1 = createUnit(eDef, Team.ENEMY, Position.FRONT);
+
+    let state = createBattleState([p1], [e1], [], []);
+
+    // 강제로 ACTION_RESOLVE 상태 설정
+    state = { ...state, phase: BattlePhase.ACTION_RESOLVE, round: 1, turn: 1 };
+
+    const result = stepBattle(state);
+    expect(result.state.phase).toBe(BattlePhase.TURN_END);
+    // 다른 상태는 변경되지 않아야 함
+    expect(result.state.round).toBe(1);
+    expect(result.state.turn).toBe(1);
   });
 });
