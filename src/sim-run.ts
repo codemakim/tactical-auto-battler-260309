@@ -277,9 +277,21 @@ function logBattleEvent(
     return;
   }
 
+  if (ev.type === 'OVERSEER_WRATH_WARNING') {
+    const cd = ev.data?.countdown;
+    log(`    ⚡ 관리자의 진노! ${ev.data?.message ?? ''} (카운트다운: ${cd})`);
+    return;
+  }
+
+  if (ev.type === 'OVERSEER_WRATH_LIFTED') {
+    log(`    ✦ 관리자의 진노 해소 — ${ev.data?.message ?? ''}`);
+    return;
+  }
+
   if (ev.type === 'BATTLE_END') {
     const winner = ev.data?.winner;
-    log(`\n    ══ 전투 종료! 승자: ${winner === Team.PLAYER ? 'PLAYER' : 'ENEMY'} ══`);
+    const reason = ev.data?.reason ? ` [${ev.data.reason}]` : '';
+    log(`\n    ══ 전투 종료! 승자: ${winner === Team.PLAYER ? 'PLAYER' : 'ENEMY'}${reason} ══`);
     return;
   }
 }

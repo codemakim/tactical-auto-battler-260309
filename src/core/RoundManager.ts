@@ -6,6 +6,7 @@ import { selectAction, executeAction } from '../systems/ActionResolver';
 import { processStatusEffects, tickBuffs } from '../systems/BuffSystem';
 import { executeQueuedAbility } from '../systems/HeroInterventionSystem';
 import { resolveDelayedEffects } from '../systems/DelayedEffectSystem';
+import { checkStalemate } from '../systems/StalemateDetector';
 
 /**
  * 라운드 시작: 턴 순서 계산, 유닛 상태 초기화
@@ -67,7 +68,8 @@ export function startRound(state: BattleState): BattleState {
     };
   }
 
-  return {
+  // §22.1 교착 방지 검사
+  const preStaleState: BattleState = {
     ...state,
     units,
     round: newRound,
@@ -83,6 +85,19 @@ export function startRound(state: BattleState): BattleState {
     },
     events: [...state.events, event, ...statusEvents],
   };
+
+  const stalemateResult = checkStalemate(preStaleState);
+  const staleEvents = stalemateResult.events;
+  let resultState = stalemateResult.state;
+
+  if (staleEvents.length > 0) {
+    resultState = {
+      ...resultState,
+      events: [...resultState.events, ...staleEvents],
+    };
+  }
+
+  return resultState;
 }
 
 /**

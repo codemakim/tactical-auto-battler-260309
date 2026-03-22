@@ -2608,10 +2608,21 @@ function logEvent(ev: BattleEvent, state: BattleState, preStepUnits?: BattleUnit
     return;
   }
 
+  if (ev.type === 'OVERSEER_WRATH_WARNING') {
+    console.log(`  ⚡ 관리자의 진노! ${ev.data?.message ?? ''} (카운트다운: ${ev.data?.countdown})`);
+    return;
+  }
+
+  if (ev.type === 'OVERSEER_WRATH_LIFTED') {
+    console.log(`  ✦ 관리자의 진노 해소 — ${ev.data?.message ?? ''}`);
+    return;
+  }
+
   if (ev.type === 'BATTLE_END') {
     const winner = ev.data?.winner;
+    const reason = ev.data?.reason ? ` [${ev.data.reason}]` : '';
     console.log(`\n══════════════════════════════════════════`);
-    console.log(`  전투 종료! 승자: ${winner === Team.PLAYER ? 'PLAYER 🎉' : 'ENEMY 😈'}`);
+    console.log(`  전투 종료! 승자: ${winner === Team.PLAYER ? 'PLAYER 🎉' : 'ENEMY 😈'}${reason}`);
     console.log(`  총 라운드: ${ev.round}, 총 이벤트: ${current.events.length}`);
     return;
   }

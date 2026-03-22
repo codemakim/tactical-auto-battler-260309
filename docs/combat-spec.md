@@ -574,6 +574,19 @@ or
 all player units dead
 ```
 
+or
+
+```
+stalemate detected → Overseer's Wrath countdown reaches 0 (see stalemate-spec.md §22.1~§22.3)
+```
+
+## 22.1 Stalemate Prevention (교착 방지)
+
+플레이어 측 생존 유닛 전원이 공격 수단(DAMAGE 효과)을 완전히 상실하면
+**"관리자의 진노"** 카운트다운(3라운드)이 시작되고, 해소되지 않으면 강제 패배한다.
+
+상세 규칙: `docs/stalemate-spec.md` 참조.
+
 ---
 
 # 23. Battle Rewards

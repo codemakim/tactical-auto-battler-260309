@@ -292,6 +292,7 @@ export interface BattleState {
   isFinished: boolean;
   winner: Team | null;
   seed: number; // 결정론적 재현을 위한 랜덤 시드
+  stalemateCountdown?: number; // §22.1 교착 카운트다운 (없으면 교착 아님)
 }
 
 // === Battle Result (전투 종료 후 출력) ===
@@ -378,6 +379,8 @@ export type BattleEventType =
   | 'UNIT_SWAPPED'
   | 'COVER_TRIGGERED'
   | 'ACTION_EDITED'
+  | 'OVERSEER_WRATH_WARNING'
+  | 'OVERSEER_WRATH_LIFTED'
   | 'ROUND_END'
   | 'BATTLE_END';
 
