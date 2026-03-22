@@ -216,7 +216,7 @@
 6개 클래스 카드 풀 완비 (ClassDefinitions.ts cardTemplates 기준)
 
 ### Warrior
-- 기본: Shield Bash(딜+실드), Fortify(HP<50 긴급실드), Strike(기본), Advance(후열→전열), Hold Ground(전열 실드)
+- 기본: Shield Bash(딜+실드), Fortify(HP<50 긴급실드), Strike(기본), Battle Charge(RARE 후열→전열 돌진+딜), Hold Ground(전열 실드)
 - 특수: Heavy Slam(RARE 고배율), Iron Wall(전열 실드), Driving Blow(RARE 딜+PUSH), Execution Cut(HP<30 마무리, COMMON/RARE 2종)
 
 ### Lancer
@@ -244,6 +244,18 @@
 - 탈출(1장): Withdraw(HP<40 딜+후퇴, 의도적으로 적음)
 - 핵심 킬(1장): Shadow Strike(EPIC FRONT에서 후열 x1.8~2.0 처형)
 
+## 범용 카드 풀 현황
+
+ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
+
+- [x] Advance (COMMON, 후열→전열 이동)
+- [x] Withdraw (COMMON, 전열→후열 이동)
+- [x] Quick Strike (COMMON, 전열 저배율 딜)
+- [x] Guard (COMMON, 범용 실드)
+- [x] Recover (COMMON, 자가 회복)
+- [x] Rally (RARE, 아군 회복)
+- [x] Feint (RARE, 딜+DELAY)
+
 ## 테스트 현황
 
-- 28개 테스트 파일, 351개 테스트 전체 통과 (2026-03-19 기준)
+- 29개 테스트 파일, 369개 테스트 전체 통과 (2026-03-22 기준)

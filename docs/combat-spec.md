@@ -241,6 +241,7 @@ HP_BELOW_PERCENT(n)      - unit HP ratio < n%
 ALLY_HP_BELOW_PERCENT(n) - any ally HP ratio < n%
 ENEMY_IN_FRONT           - at least one enemy unit at FRONT
 ENEMY_IN_BACK            - at least one enemy unit at BACK
+ENEMY_HP_BELOW(n)        - at least one enemy has HP ratio < n%
 LOWEST_HP_ENEMY          - always true; used as targeting hint (target = lowest HP enemy)
 FIRST_ACTION_THIS_ROUND  - this is the first action of the current round (turn counter = 1, resets each round)
 HAS_HERO_BUFF            - unit has an active hero-applied shield (MVP: shield > 0)
@@ -326,6 +327,8 @@ Reposition
 ApplyBuff
 DelayTurn
 AdvanceTurn
+Swap (swap positions of two units)
+Pull (pull enemy to FRONT — uses PUSH with position: FRONT)
 ```
 
 Effects must be deterministic.
@@ -357,7 +360,7 @@ ActionTargetType = { side, position, select }
 
 side:     SELF | ENEMY | ALLY
 position: FRONT | BACK | ANY   (side=SELF일 때 무시)
-select:   HIGHEST_AGI | LOWEST_HP | RANDOM | FASTEST_TURN | FIRST
+select:   HIGHEST_AGI | LOWEST_HP | HIGHEST_ATK | RANDOM | FASTEST_TURN | FIRST
 ```
 
 ### 편의 상수 (기존 타겟과 1:1 대응)
@@ -369,6 +372,8 @@ Target.ENEMY_BACK     = { side: ENEMY, position: BACK,  select: HIGHEST_AGI }
 Target.ENEMY_ANY      = { side: ENEMY, position: ANY,   select: LOWEST_HP }
 Target.ALLY_LOWEST_HP = { side: ALLY,  position: ANY,   select: LOWEST_HP }
 Target.ALLY_ANY       = { side: ALLY,  position: ANY,   select: FIRST }
+Target.ENEMY_BACK_LOWEST_HP   = { side: ENEMY, position: BACK, select: LOWEST_HP }
+Target.ENEMY_BACK_HIGHEST_ATK = { side: ENEMY, position: BACK, select: HIGHEST_ATK }
 ```
 
 ### 선택 기준 (select)
@@ -377,6 +382,7 @@ Target.ALLY_ANY       = { side: ALLY,  position: ANY,   select: FIRST }
 |--------|------|
 | HIGHEST_AGI | AGI가 가장 높은 유닛 (동률: 배열 순서) |
 | LOWEST_HP | 현재 HP가 가장 낮은 유닛 |
+| HIGHEST_ATK | ATK가 가장 높은 유닛 (동률: 배열 순서) |
 | RANDOM | 후보 중 무작위 선택 |
 | FASTEST_TURN | 턴 순서가 가장 빠른 유닛 (state 없으면 HIGHEST_AGI 폴백) |
 | FIRST | 배열 첫 번째 유닛 |

@@ -171,6 +171,8 @@ Cards are defined as **templates** with variant axes. When a card is obtained as
 ```
 CardTemplate:
   id, name, rarity, condition
+  classRestriction?                        ← class-specific card
+  defensivePriority?                       ← if true, unit acts before attackers (§4.1)
   effectTemplates:
     - type, stat
       multiplierPool: [1.0, 1.1, 1.2]    ← pick one
@@ -269,6 +271,22 @@ When rewards are generated:
 
 - class-specific actions may appear
 - universal actions may appear
+
+## Universal Card Pool (범용 카드 풀)
+
+All classes can use these cards. Defined in `ActionPool.ts`:
+
+```
+Advance       (COMMON) — POSITION_BACK → MOVE to FRONT
+Withdraw      (COMMON) — POSITION_FRONT → MOVE to BACK
+Quick Strike  (COMMON) — POSITION_FRONT → DAMAGE x0.7~0.9 (low ATK multiplier)
+Guard         (COMMON) — ALWAYS → SHIELD x0.8~1.2
+Recover       (COMMON) — ALWAYS → HEAL 15~25
+Rally         (RARE)   — ALWAYS → HEAL ally 10~20
+Feint         (RARE)   — POSITION_FRONT → DAMAGE x0.4~0.6 + DELAY_TURN
+```
+
+Universal cards have no `classRestriction` and appear in all class reward pools.
 
 ---
 
