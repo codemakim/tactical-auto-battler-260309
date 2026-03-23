@@ -5,7 +5,7 @@
  */
 import type { CharacterDefinition, HeroType, Position } from '../types';
 import { CharacterClass, HeroType as HT } from '../types';
-import { generateCharacterDef } from '../entities/UnitFactory';
+import { createCharacterDef } from '../entities/UnitFactory';
 
 // === 편성 슬롯 ===
 
@@ -35,13 +35,13 @@ export interface GameStateData {
   presets: FormationPreset[];
 }
 
-/** 초기 스타터 캐릭터 생성 */
+/** 초기 스타터 캐릭터 생성 — 고정 testActionSlots 사용 (일관된 초기 경험 보장) */
 function createStarterCharacters(): CharacterDefinition[] {
   return [
-    generateCharacterDef('Aldric', CharacterClass.WARRIOR, 1001),
-    generateCharacterDef('Lyra', CharacterClass.ARCHER, 1002),
-    generateCharacterDef('Theron', CharacterClass.GUARDIAN, 1003),
-    generateCharacterDef('Zara', CharacterClass.CONTROLLER, 1004),
+    createCharacterDef('Aldric', CharacterClass.WARRIOR),
+    createCharacterDef('Lyra', CharacterClass.ARCHER),
+    createCharacterDef('Theron', CharacterClass.GUARDIAN),
+    createCharacterDef('Zara', CharacterClass.CONTROLLER),
   ];
 }
 

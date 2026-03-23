@@ -101,15 +101,19 @@ export function startRound(state: BattleState): BattleState {
 }
 
 /**
- * 다음 행동할 유닛 가져오기
+ * 다음 행동할 유닛 가져오기.
+ * 라운드 시작 시 확정된 state.turnOrder를 기준으로,
+ * 아직 행동하지 않은 첫 유닛을 반환한다.
+ * (라운드 중 HP 변화 등으로 순서가 뒤바뀌지 않도록 캐시 사용)
  */
 export function getNextActor(state: BattleState): BattleUnit | null {
-  // 아직 행동하지 않은 유닛 중 방어 우선권 + AGI 순서대로
-  const remaining = calculateTurnOrder(state.units, state);
-  if (remaining.length === 0) return null;
-
-  const nextId = remaining[0];
-  return state.units.find((u) => u.id === nextId) ?? null;
+  for (const unitId of state.turnOrder) {
+    const unit = state.units.find((u) => u.id === unitId);
+    if (unit && unit.isAlive && !unit.hasActedThisRound) {
+      return unit;
+    }
+  }
+  return null;
 }
 
 /**

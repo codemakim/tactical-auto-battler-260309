@@ -326,11 +326,7 @@ export class SortieScene extends Phaser.Scene {
       disabled: true,
       onClick: () => {
         if (!this.selectedId) return;
-        // TODO: 런 시작 → BattleScene으로 전환
-        new UIModal(this, {
-          title: '출격!',
-          content: '전투 시스템 연결 준비 중...\n\n[ 다음 단계에서 구현 ]',
-        });
+        this.scene.start('BattleScene', { battlefieldId: this.selectedId });
       },
     });
   }
