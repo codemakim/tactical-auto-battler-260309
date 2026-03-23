@@ -30,7 +30,7 @@ export class MainMenuScene extends Phaser.Scene {
     startBtn.on('pointerover', () => startBtn.setColor('#7fbfff'));
     startBtn.on('pointerout', () => startBtn.setColor('#4a9eff'));
     startBtn.on('pointerdown', () => {
-      this.scene.start('BattleScene');
+      this.scene.start('TownScene');
     });
 
     // 버전

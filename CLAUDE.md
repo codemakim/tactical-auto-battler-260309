@@ -59,6 +59,7 @@ src/
 - `docs/run-system-spec.md` - 런 시스템 명세 (5스테이지 런 루프, 카드 인벤토리, 편성)
 - `docs/enemy-encounter-spec.md` - 적 인카운터 명세 (4종 아키타입, 스테이지별 편성)
 - `docs/stalemate-spec.md` - 교착 방지 명세 (§22.1, 관리자의 진노)
+- `docs/game-flow-spec.md` - 게임 플로우 명세 (로딩→타이틀→마을→편성→출격→전투→결과)
 - `docs/combat-impl-checklist.md` - 구현 상태 체크리스트 (스펙 섹션별 대응)
 
 ## Key Commands
