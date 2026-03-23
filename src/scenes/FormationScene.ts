@@ -12,6 +12,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UITheme } from '../ui/UITheme';
 import { UIPanel } from '../ui/UIPanel';
+import { UIToast } from '../ui/UIToast';
 import { UIButton } from '../ui/UIButton';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
@@ -28,12 +29,18 @@ interface SlotVisual {
   type: 'combat' | 'reserve';
 }
 
-// 아군은 왼쪽에서 오른쪽을 바라봄: BACK(좌) → FRONT(우)
+// 아군은 왼쪽에서 오른쪽을 바라봄: BACK(좌열) → FRONT(우열)
+// 열 기반 정렬 — 인원 변경에도 유연하게 대응
+const BACK_COL_X = 450;
+const FRONT_COL_X = 630;
+const SLOT_START_Y = 185;
+const SLOT_GAP_Y = 120;
+
 const SLOT_VISUALS: SlotVisual[] = [
-  { x: 460, y: 210, label: 'BACK', position: Position.BACK, type: 'combat' },
-  { x: 620, y: 170, label: 'FRONT 1', position: Position.FRONT, type: 'combat' },
-  { x: 620, y: 310, label: 'FRONT 2', position: Position.FRONT, type: 'combat' },
-  { x: 460, y: 420, label: 'RESERVE', position: Position.BACK, type: 'reserve' },
+  { x: BACK_COL_X, y: SLOT_START_Y, label: 'BACK 1', position: Position.BACK, type: 'combat' },
+  { x: FRONT_COL_X, y: SLOT_START_Y, label: 'FRONT 1', position: Position.FRONT, type: 'combat' },
+  { x: FRONT_COL_X, y: SLOT_START_Y + SLOT_GAP_Y, label: 'FRONT 2', position: Position.FRONT, type: 'combat' },
+  { x: BACK_COL_X, y: SLOT_START_Y + SLOT_GAP_Y * 2 + 20, label: 'RESERVE', position: Position.BACK, type: 'reserve' },
 ];
 
 const HERO_TYPES = [HeroType.COMMANDER, HeroType.MAGE, HeroType.SUPPORT] as const;
@@ -47,7 +54,7 @@ export class FormationScene extends Phaser.Scene {
   private detailContent!: Phaser.GameObjects.Text;
   private selectedRosterCharId: string | null = null;
   private selectedSlotIndex: number | null = null;
-  private guideText!: Phaser.GameObjects.Text;
+  private toast!: UIToast;
 
   constructor() {
     super({ key: 'FormationScene' });
@@ -67,7 +74,7 @@ export class FormationScene extends Phaser.Scene {
     this.createHeroSelector();
     this.createDetailPanel();
     this.createBottomButtons();
-    this.createGuideText();
+    this.toast = new UIToast(this, { y: GAME_HEIGHT - 110, duration: 2500 });
     this.refreshAll();
   }
 
@@ -214,38 +221,25 @@ export class FormationScene extends Phaser.Scene {
     if (this.selectedSlotIndex !== null) {
       this.assignToSlot(this.selectedSlotIndex, char.id);
     } else {
-      this.updateGuide(`${char.name} 선택됨 — 배치할 슬롯을 클릭하세요`);
+      this.toast.show(`${char.name} 선택됨 — 배치할 슬롯을 클릭하세요`);
     }
-  }
-
-  private createGuideText(): void {
-    this.guideText = this.add
-      .text(540, 490, '좌측에서 캐릭터를 선택 → 슬롯을 클릭하여 배치', {
-        ...UITheme.font.small,
-        color: '#556688',
-      })
-      .setOrigin(0.5);
-  }
-
-  private updateGuide(msg: string): void {
-    this.guideText.setText(msg);
-    this.guideText.setColor('#88aacc');
-    // 잠시 후 기본 색으로
-    this.time.delayedCall(2000, () => {
-      this.guideText.setColor('#556688');
-    });
   }
 
   // === 중앙: 전투 슬롯 ===
 
   private createSlots(): void {
-    // 포지션 라벨 (BACK←  →FRONT, 아군이 오른쪽을 바라봄)
-    this.add.text(460, 130, '← BACK', { ...UITheme.font.label, color: '#335577' }).setOrigin(0.5);
-    this.add.text(620, 130, 'FRONT →', { ...UITheme.font.label, color: '#557733' }).setOrigin(0.5);
+    // 열 라벨 (슬롯 위쪽, 겹치지 않게)
+    this.add.text(BACK_COL_X, SLOT_START_Y - 68, '← BACK', { ...UITheme.font.label, color: '#335577' }).setOrigin(0.5);
+    this.add
+      .text(FRONT_COL_X, SLOT_START_Y - 68, 'FRONT →', { ...UITheme.font.label, color: '#557733' })
+      .setOrigin(0.5);
 
     // 방향 안내
     this.add
-      .text(540, 105, '아군 진행 방향 →', { ...UITheme.font.small, color: '#444466' })
+      .text((BACK_COL_X + FRONT_COL_X) / 2, SLOT_START_Y - 88, '아군 진행 방향 →', {
+        ...UITheme.font.small,
+        color: '#444466',
+      })
       .setOrigin(0.5)
       .setFontSize(11);
 
@@ -355,7 +349,7 @@ export class FormationScene extends Phaser.Scene {
     if (this.selectedRosterCharId) {
       this.assignToSlot(index, this.selectedRosterCharId);
     } else {
-      this.updateGuide(`${SLOT_VISUALS[index].label} 슬롯 선택됨 — 좌측에서 캐릭터를 클릭하세요`);
+      this.toast.show(`${SLOT_VISUALS[index].label} 슬롯 선택됨 — 좌측에서 캐릭터를 클릭하세요`);
     }
 
     // 해당 슬롯의 캐릭터 정보 표시
@@ -419,7 +413,7 @@ export class FormationScene extends Phaser.Scene {
     this.selectedRosterCharId = null;
     this.selectedSlotIndex = null;
     this.refreshAll();
-    this.updateGuide(`${charName} → ${SLOT_VISUALS[slotIndex].label} 배치 완료!`);
+    this.toast.show(`${charName} → ${SLOT_VISUALS[slotIndex].label} 배치 완료!`);
   }
 
   private refreshSlots(): void {

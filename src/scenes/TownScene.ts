@@ -112,7 +112,7 @@ const BUILDINGS: BuildingDef[] = [
     size: 'xl',
     color: 0x3a2a0a,
     borderColor: 0xf59e0b,
-    implemented: false,
+    implemented: true,
   },
 ];
 
