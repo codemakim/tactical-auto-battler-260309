@@ -76,7 +76,7 @@ const BUILDINGS: BuildingDef[] = [
     size: 'md',
     color: 0x2a1a3a,
     borderColor: 0x8b5cf6,
-    implemented: false,
+    implemented: true,
   },
   {
     id: 'shop',
