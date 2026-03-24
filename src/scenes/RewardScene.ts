@@ -412,7 +412,7 @@ export class RewardScene extends Phaser.Scene {
       this.scene.start('RunResultScene', { runState: finalRunState });
     } else {
       // 다음 스테이지 → 편성
-      this.scene.start('FormationScene');
+      this.scene.start('RunMapScene');
     }
   }
 }

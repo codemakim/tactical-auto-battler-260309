@@ -351,7 +351,7 @@ export class SortieScene extends Phaser.Scene {
         const runState = createRunState(party, seed);
         gameState.setRunState(runState);
 
-        this.scene.start('BattleScene');
+        this.scene.start('RunMapScene');
       },
     });
   }

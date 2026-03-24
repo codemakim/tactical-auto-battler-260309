@@ -66,9 +66,8 @@ export class BattleScene extends Phaser.Scene {
   private battleLog: string[] = [];
   private heroBtn!: UIButton;
   private heroBtnPulse?: Phaser.Tweens.Tween;
-  private nextTurnBtn!: UIButton;
-  private autoBtn!: UIButton;
   private heroPanel?: Phaser.GameObjects.Container;
+  private introPlaying: boolean = false;
   private targetMode: boolean = false;
   private pendingAbility?: HeroAbility;
   private interventionPaused: boolean = false;
@@ -102,7 +101,106 @@ export class BattleScene extends Phaser.Scene {
     this.updateAllUnitVisuals();
     this.refreshTurnQueue();
     this.updateHeroBtn();
-    this.toast.show(`라운드 ${this.battleState.round} 시작`);
+
+    // 인트로 연출 → 자동 전투 시작
+    this.playIntro();
+  }
+
+  // === 인트로 연출 ===
+
+  private playIntro(): void {
+    this.introPlaying = true;
+    this.heroBtn.setDisabled(true);
+
+    const cx = GAME_WIDTH / 2;
+    const cy = GAME_HEIGHT / 2 - 40;
+
+    // "BATTLE" 텍스트
+    const battleText = this.add
+      .text(cx, cy, 'BATTLE', {
+        fontSize: '64px',
+        fontFamily: UITheme.font.family,
+        fontStyle: 'bold',
+        color: '#e0e0e0',
+      })
+      .setOrigin(0.5)
+      .setAlpha(0)
+      .setDepth(200);
+
+    // "START!" 텍스트
+    const startText = this.add
+      .text(cx, cy, 'START!', {
+        fontSize: '56px',
+        fontFamily: UITheme.font.family,
+        fontStyle: 'bold',
+        color: '#ffcc00',
+      })
+      .setOrigin(0.5)
+      .setAlpha(0)
+      .setScale(0.8)
+      .setDepth(200);
+
+    // 스킵 영역
+    const skipArea = this.add
+      .rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0)
+      .setInteractive()
+      .setDepth(199);
+
+    const finishIntro = () => {
+      skipArea.destroy();
+      battleText.destroy();
+      startText.destroy();
+      this.introPlaying = false;
+      this.updateHeroBtn();
+      this.startAutoPlay();
+    };
+
+    skipArea.once('pointerdown', () => {
+      // 진행 중인 인트로 트윈 모두 제거
+      this.tweens.killAll();
+      finishIntro();
+    });
+
+    // 타임라인
+    // 0.3s: BATTLE 페이드인
+    this.tweens.add({
+      targets: battleText,
+      alpha: 1,
+      duration: 300,
+      delay: 300,
+    });
+
+    // 1.3s: BATTLE 페이드아웃
+    this.tweens.add({
+      targets: battleText,
+      alpha: 0,
+      duration: 200,
+      delay: 1300,
+    });
+
+    // 1.5s: START! 페이드인 + 확대
+    this.tweens.add({
+      targets: startText,
+      alpha: 1,
+      scale: 1.1,
+      duration: 300,
+      delay: 1500,
+    });
+
+    // 2.3s: START! 페이드아웃
+    this.tweens.add({
+      targets: startText,
+      alpha: 0,
+      duration: 200,
+      delay: 2300,
+    });
+
+    // 2.5s: 인트로 종료 → 자동 전투 시작
+    this.time.delayedCall(2500, () => {
+      if (this.introPlaying) {
+        finishIntro();
+      }
+    });
   }
 
   // === 초기화 ===
@@ -443,7 +541,7 @@ export class BattleScene extends Phaser.Scene {
     bar.lineStyle(1, UITheme.colors.border);
     bar.lineBetween(0, GAME_HEIGHT - 80, GAME_WIDTH, GAME_HEIGHT - 80);
 
-    // 뒤로가기
+    // 퇴각
     new UIButton(this, {
       x: 16,
       y: GAME_HEIGHT - 64,
@@ -452,50 +550,28 @@ export class BattleScene extends Phaser.Scene {
       label: '< 퇴각',
       style: 'secondary',
       onClick: () => {
-        if (this.autoTimer) this.autoTimer.destroy();
-        this.scene.start('TownScene');
-      },
-    });
-
-    // 영웅 개입 버튼
-    this.heroBtn = new UIButton(this, {
-      x: BATTLE_CENTER_X - 90,
-      y: GAME_HEIGHT - 64,
-      width: 180,
-      height: 48,
-      label: '영웅 개입',
-      style: 'primary',
-      onClick: () => {
-        this.onHeroBtnClick();
-      },
-    });
-
-    // 다음 턴 버튼
-    this.nextTurnBtn = new UIButton(this, {
-      x: GAME_WIDTH - 320,
-      y: GAME_HEIGHT - 64,
-      width: 130,
-      height: 48,
-      label: '다음 턴 >',
-      style: 'secondary',
-      onClick: () => {
-        if (!this.battleState.isFinished && !this.interventionPaused) {
-          this.doStep();
+        this.stopAutoPlay();
+        const rs = gameState.runState;
+        if (rs) {
+          const defeatState: RunState = { ...rs, status: RunStatus.DEFEAT };
+          this.scene.start('RunResultScene', { runState: defeatState });
+        } else {
+          this.scene.start('TownScene');
         }
       },
     });
 
-    // 자동 전투 버튼
-    this.autoBtn = new UIButton(this, {
-      x: GAME_WIDTH - 170,
+    // 영웅 개입 버튼 (중앙, 크게)
+    this.heroBtn = new UIButton(this, {
+      x: BATTLE_CENTER_X - 100,
       y: GAME_HEIGHT - 64,
-      width: 150,
+      width: 200,
       height: 48,
-      label: '▶ 자동 전투',
-      style: 'secondary',
+      label: '영웅 개입',
+      style: 'primary',
       onClick: () => {
-        if (!this.interventionPaused) {
-          this.toggleAutoPlay();
+        if (!this.introPlaying) {
+          this.onHeroBtnClick();
         }
       },
     });
@@ -700,29 +776,19 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  /** 전투 일시정지 — 자동 전투 중이면 멈추고, 다음 턴 버튼 비활성화 */
+  /** 전투 일시정지 — 자동 전투 멈춤 */
   private pauseBattle(): void {
     this.interventionPaused = true;
     this.wasAutoPlaying = this.autoPlaying;
-    if (this.autoPlaying) {
-      this.autoPlaying = false;
-      if (this.autoTimer) {
-        this.autoTimer.destroy();
-        this.autoTimer = undefined;
-      }
-    }
-    this.nextTurnBtn.setDisabled(true);
-    this.autoBtn.setDisabled(true);
+    this.stopAutoPlay();
   }
 
   /** 전투 재개 — 이전 자동 전투 상태 복원 */
   private resumeBattle(): void {
     this.interventionPaused = false;
-    this.nextTurnBtn.setDisabled(false);
-    this.autoBtn.setDisabled(false);
     if (this.wasAutoPlaying) {
       this.wasAutoPlaying = false;
-      this.toggleAutoPlay();
+      this.startAutoPlay();
     }
   }
 
@@ -878,29 +944,27 @@ export class BattleScene extends Phaser.Scene {
     this.resumeBattle();
   }
 
-  private toggleAutoPlay(): void {
-    if (this.autoPlaying) {
-      this.autoPlaying = false;
-      if (this.autoTimer) {
-        this.autoTimer.destroy();
-        this.autoTimer = undefined;
-      }
-      this.toast.show('자동 전투 중지');
-    } else {
-      this.autoPlaying = true;
-      this.toast.show('자동 전투 시작');
-      this.autoTimer = this.time.addEvent({
-        delay: 1200,
-        callback: () => {
-          if (this.battleState.isFinished) {
-            this.autoPlaying = false;
-            if (this.autoTimer) this.autoTimer.destroy();
-            return;
-          }
-          this.doStep();
-        },
-        loop: true,
-      });
+  private startAutoPlay(): void {
+    if (this.autoPlaying) return;
+    this.autoPlaying = true;
+    this.autoTimer = this.time.addEvent({
+      delay: 1200,
+      callback: () => {
+        if (this.battleState.isFinished) {
+          this.stopAutoPlay();
+          return;
+        }
+        this.doStep();
+      },
+      loop: true,
+    });
+  }
+
+  private stopAutoPlay(): void {
+    this.autoPlaying = false;
+    if (this.autoTimer) {
+      this.autoTimer.destroy();
+      this.autoTimer = undefined;
     }
   }
 
@@ -924,11 +988,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private onBattleEnd(): void {
-    if (this.autoTimer) {
-      this.autoTimer.destroy();
-      this.autoTimer = undefined;
-    }
-    this.autoPlaying = false;
+    this.stopAutoPlay();
 
     const runState = this.getRunState();
     const result = calculateBattleResult(this.battleState, runState);

@@ -551,6 +551,22 @@ export interface RunResultData {
   cardsAcquired: number;
 }
 
+// === Run Map (노드맵) ===
+
+export const StageNodeStatus = {
+  COMPLETED: 'COMPLETED',
+  CURRENT: 'CURRENT',
+  UPCOMING: 'UPCOMING',
+  BOSS_UPCOMING: 'BOSS_UPCOMING',
+  BOSS_CURRENT: 'BOSS_CURRENT',
+} as const;
+export type StageNodeStatus = (typeof StageNodeStatus)[keyof typeof StageNodeStatus];
+
+export interface StageNodeState {
+  stage: number;
+  status: StageNodeStatus;
+}
+
 // === Game Config ===
 
 export interface GameConfig {

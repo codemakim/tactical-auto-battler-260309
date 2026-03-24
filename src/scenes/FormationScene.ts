@@ -599,10 +599,10 @@ export class FormationScene extends Phaser.Scene {
           return;
         }
 
-        // 런 진행 중이면 전투로, 아니면 마을로
+        // 런 진행 중이면 런맵으로, 아니면 마을로
         const runState = gameState.runState;
         if (runState && runState.status === RunStatus.IN_PROGRESS) {
-          this.scene.start('BattleScene');
+          this.scene.start('RunMapScene');
         } else {
           this.scene.start('TownScene');
         }
