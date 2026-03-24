@@ -517,6 +517,18 @@ export interface BattleResultData {
   maxStages: number;
 }
 
+// === Reward Phase (보상 화면 데이터) ===
+
+/** 보상 화면 표시용 데이터 (순수 함수 출력) */
+export interface RewardPhaseData {
+  goldEarned: number;
+  cardOptions: CardInstance[];
+  guestReward: CharacterReward | null;
+  currentStage: number;
+  maxStages: number;
+  isLastStage: boolean;
+}
+
 // === Game Config ===
 
 export interface GameConfig {

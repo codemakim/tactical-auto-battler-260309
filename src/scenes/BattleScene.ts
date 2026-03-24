@@ -1017,8 +1017,11 @@ export class BattleScene extends Phaser.Scene {
         label: '보상 확인',
         style: 'primary',
         onClick: () => {
-          // TODO: 보상 화면 구현 후 교체
-          this.scene.start('TownScene');
+          const runState = gameState.runState ?? this.getRunState();
+          this.scene.start('RewardScene', {
+            runState,
+            battleState: this.battleState,
+          });
         },
       }).container.setDepth(103);
     } else if (result.canRetry) {

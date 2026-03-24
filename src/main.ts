@@ -6,10 +6,11 @@ import { TownScene } from './scenes/TownScene';
 import { FormationScene } from './scenes/FormationScene';
 import { SortieScene } from './scenes/SortieScene';
 import { BattleScene } from './scenes/BattleScene';
+import { RewardScene } from './scenes/RewardScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   ...phaserConfig,
-  scene: [BootScene, MainMenuScene, TownScene, FormationScene, SortieScene, BattleScene],
+  scene: [BootScene, MainMenuScene, TownScene, FormationScene, SortieScene, BattleScene, RewardScene],
 };
 
 new Phaser.Game(config);
