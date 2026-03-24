@@ -354,6 +354,17 @@ export interface HeroState {
   queuedEditData?: QueuedEditData;
 }
 
+// === Hero Button State (UI 렌더링용) ===
+
+export const HeroButtonState = {
+  READY: 'READY',
+  QUEUED: 'QUEUED',
+  USED: 'USED',
+  TARGETING: 'TARGETING',
+  DISABLED: 'DISABLED',
+} as const;
+export type HeroButtonState = (typeof HeroButtonState)[keyof typeof HeroButtonState];
+
 // === Battle Log (for replay) ===
 
 export type BattleEventType =

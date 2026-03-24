@@ -15,11 +15,11 @@ import { UIToast } from '../ui/UIToast';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
 import { createBattleState, stepBattle, queueIntervention } from '../core/BattleEngine';
-import { canIntervene } from '../systems/HeroInterventionSystem';
+import { canIntervene, getHeroButtonState, cancelQueuedIntervention } from '../systems/HeroInterventionSystem';
 import { createUnit } from '../entities/UnitFactory';
 import { generateEncounter } from '../systems/EnemyGenerator';
 import { createStageBattleState } from '../core/RunManager';
-import { Team, Position, BattlePhase, AbilityType, Difficulty, RunStatus } from '../types';
+import { Team, Position, BattlePhase, AbilityType, Difficulty, RunStatus, HeroButtonState } from '../types';
 import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
 import { calculateBattleResult } from '../systems/BattleResultCalculator';
 import { processDefeat } from '../core/RunManager';
@@ -65,6 +65,7 @@ export class BattleScene extends Phaser.Scene {
   private autoTimer?: Phaser.Time.TimerEvent;
   private battleLog: string[] = [];
   private heroBtn!: UIButton;
+  private heroBtnPulse?: Phaser.Tweens.Tween;
   private nextTurnBtn!: UIButton;
   private autoBtn!: UIButton;
   private heroPanel?: Phaser.GameObjects.Container;
@@ -100,6 +101,7 @@ export class BattleScene extends Phaser.Scene {
     this.roundText.setText(`Round ${this.battleState.round}`);
     this.updateAllUnitVisuals();
     this.refreshTurnQueue();
+    this.updateHeroBtn();
     this.toast.show(`라운드 ${this.battleState.round} 시작`);
   }
 
@@ -461,7 +463,7 @@ export class BattleScene extends Phaser.Scene {
       y: GAME_HEIGHT - 64,
       width: 180,
       height: 48,
-      label: this.getHeroBtnLabel(),
+      label: '영웅 개입',
       style: 'primary',
       onClick: () => {
         this.onHeroBtnClick();
@@ -619,33 +621,83 @@ export class BattleScene extends Phaser.Scene {
 
   // === 영웅 개입 ===
 
-  private getHeroBtnLabel(): string {
-    const remaining = this.battleState.hero.interventionsRemaining;
-    return `영웅 개입 (${remaining})`;
+  private getHeroBtnState(): HeroButtonState {
+    return getHeroButtonState(this.battleState.hero, this.battleState.isFinished, this.targetMode);
   }
 
   private updateHeroBtn(): void {
-    const can = canIntervene(this.battleState);
-    this.heroBtn.setLabel(this.getHeroBtnLabel());
-    this.heroBtn.setDisabled(!can);
+    const btnState = this.getHeroBtnState();
+
+    // 펄스 정리
+    if (this.heroBtnPulse) {
+      this.heroBtnPulse.destroy();
+      this.heroBtnPulse = undefined;
+      this.heroBtn.container.setAlpha(1);
+    }
+
+    switch (btnState) {
+      case HeroButtonState.READY: {
+        const remaining = this.battleState.hero.interventionsRemaining;
+        this.heroBtn.setLabel(`영웅 개입 (${remaining})`);
+        this.heroBtn.setDisabled(false);
+        break;
+      }
+      case HeroButtonState.QUEUED: {
+        const abilityName = this.battleState.hero.queuedAbility?.name ?? '능력';
+        this.heroBtn.setLabel(`${abilityName} 대기중`);
+        this.heroBtn.setDisabled(false);
+        // 펄스 애니메이션
+        this.heroBtnPulse = this.tweens.add({
+          targets: this.heroBtn.container,
+          alpha: { from: 1, to: 0.7 },
+          duration: 500,
+          yoyo: true,
+          repeat: -1,
+        });
+        break;
+      }
+      case HeroButtonState.USED:
+        this.heroBtn.setLabel('개입 완료');
+        this.heroBtn.setDisabled(true);
+        break;
+      case HeroButtonState.TARGETING:
+        this.heroBtn.setLabel('취소');
+        this.heroBtn.setDisabled(false);
+        break;
+      case HeroButtonState.DISABLED:
+        this.heroBtn.setLabel('영웅 개입');
+        this.heroBtn.setDisabled(true);
+        break;
+    }
   }
 
   private onHeroBtnClick(): void {
-    if (!canIntervene(this.battleState)) {
-      this.toast.show('이번 라운드 개입 횟수를 모두 사용했습니다');
-      return;
+    const btnState = this.getHeroBtnState();
+
+    switch (btnState) {
+      case HeroButtonState.TARGETING:
+        this.cancelTargetMode();
+        return;
+      case HeroButtonState.QUEUED:
+        // 큐 취소
+        this.battleState = cancelQueuedIntervention(this.battleState);
+        this.updateHeroBtn();
+        this.toast.show('개입 취소');
+        return;
+      case HeroButtonState.USED:
+      case HeroButtonState.DISABLED:
+        this.toast.show('이번 라운드 개입 횟수를 모두 사용했습니다');
+        return;
+      case HeroButtonState.READY:
+        if (this.heroPanel) {
+          this.closeHeroPanel();
+          this.resumeBattle();
+          return;
+        }
+        this.pauseBattle();
+        this.openHeroPanel();
+        return;
     }
-    if (this.targetMode) {
-      this.cancelTargetMode();
-      return;
-    }
-    if (this.heroPanel) {
-      this.closeHeroPanel();
-      this.resumeBattle();
-      return;
-    }
-    this.pauseBattle();
-    this.openHeroPanel();
   }
 
   /** 전투 일시정지 — 자동 전투 중이면 멈추고, 다음 턴 버튼 비활성화 */
@@ -755,7 +807,7 @@ export class BattleScene extends Phaser.Scene {
     const targetTeam = isOffensive ? Team.ENEMY : Team.PLAYER;
 
     this.toast.show(`${ability.name} — 대상을 선택하세요 (또는 영웅 개입 버튼으로 취소)`);
-    this.heroBtn.setLabel('취소');
+    this.updateHeroBtn();
 
     // 타겟 가능한 유닛에 하이라이트 + 클릭 활성화
     for (const [unitId, visual] of this.unitVisuals) {

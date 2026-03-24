@@ -1,12 +1,14 @@
 import type {
   BattleState,
   HeroAbility,
+  HeroState,
   BattleEvent,
   Action,
   ActionCondition,
   BattleUnit,
   QueuedEditData,
 } from '../types';
+import { HeroButtonState } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
 import { applyDamage, applyDamageWithCover, applyShield, applyHeal, calculateDamage } from './DamageSystem';
@@ -269,5 +271,34 @@ export function heroEditAction(
   return {
     state: { ...state, units, hero: updatedHero },
     events: [event],
+  };
+}
+
+/**
+ * 영웅 개입 버튼의 UI 상태 계산 (순수 함수)
+ */
+export function getHeroButtonState(hero: HeroState, isFinished: boolean, isTargeting: boolean): HeroButtonState {
+  if (isFinished) return HeroButtonState.DISABLED;
+  if (isTargeting) return HeroButtonState.TARGETING;
+  if (hero.queuedAbility !== undefined) return HeroButtonState.QUEUED;
+  if (hero.interventionsRemaining > 0) return HeroButtonState.READY;
+  return HeroButtonState.USED;
+}
+
+/**
+ * 큐잉된 개입 취소 (순수 함수)
+ *
+ * queueIntervention은 interventionsRemaining을 차감하지 않으므로
+ * 큐 필드만 초기화하면 된다.
+ */
+export function cancelQueuedIntervention(state: BattleState): BattleState {
+  return {
+    ...state,
+    hero: {
+      ...state.hero,
+      queuedAbility: undefined,
+      queuedTargetId: undefined,
+      queuedEditData: undefined,
+    },
   };
 }
