@@ -14,11 +14,12 @@ import { UIButton } from '../ui/UIButton';
 import { UIToast } from '../ui/UIToast';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
-import { createBattleState, stepBattle } from '../core/BattleEngine';
+import { createBattleState, stepBattle, queueIntervention } from '../core/BattleEngine';
+import { canIntervene } from '../systems/HeroInterventionSystem';
 import { createUnit } from '../entities/UnitFactory';
 import { generateEncounter } from '../systems/EnemyGenerator';
-import { Team, Position, BattlePhase } from '../types';
-import type { BattleState, BattleUnit, BattleEvent } from '../types';
+import { Team, Position, BattlePhase, AbilityType } from '../types';
+import type { BattleState, BattleUnit, BattleEvent, HeroAbility } from '../types';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -60,6 +61,14 @@ export class BattleScene extends Phaser.Scene {
   private autoPlaying: boolean = false;
   private autoTimer?: Phaser.Time.TimerEvent;
   private battleLog: string[] = [];
+  private heroBtn!: UIButton;
+  private nextTurnBtn!: UIButton;
+  private autoBtn!: UIButton;
+  private heroPanel?: Phaser.GameObjects.Container;
+  private targetMode: boolean = false;
+  private pendingAbility?: HeroAbility;
+  private interventionPaused: boolean = false;
+  private wasAutoPlaying: boolean = false;
 
   constructor() {
     super({ key: 'BattleScene' });
@@ -69,6 +78,11 @@ export class BattleScene extends Phaser.Scene {
     this.unitVisuals = new Map();
     this.battleLog = [];
     this.autoPlaying = false;
+    this.heroPanel = undefined;
+    this.targetMode = false;
+    this.pendingAbility = undefined;
+    this.interventionPaused = false;
+    this.wasAutoPlaying = false;
 
     this.drawBackground();
     this.drawTopBar();
@@ -433,23 +447,20 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // 영웅 개입 버튼
-    new UIButton(this, {
+    this.heroBtn = new UIButton(this, {
       x: BATTLE_CENTER_X - 90,
       y: GAME_HEIGHT - 64,
       width: 180,
       height: 48,
-      label: '영웅 개입',
+      label: this.getHeroBtnLabel(),
       style: 'primary',
       onClick: () => {
-        new UIModal(this, {
-          title: '영웅 개입',
-          content: '영웅 능력 선택 UI는 다음 단계에서 구현됩니다.\n\n[ 준비 중 ]',
-        });
+        this.onHeroBtnClick();
       },
     });
 
     // 다음 턴 버튼
-    new UIButton(this, {
+    this.nextTurnBtn = new UIButton(this, {
       x: GAME_WIDTH - 320,
       y: GAME_HEIGHT - 64,
       width: 130,
@@ -457,14 +468,14 @@ export class BattleScene extends Phaser.Scene {
       label: '다음 턴 >',
       style: 'secondary',
       onClick: () => {
-        if (!this.battleState.isFinished) {
+        if (!this.battleState.isFinished && !this.interventionPaused) {
           this.doStep();
         }
       },
     });
 
     // 자동 전투 버튼
-    new UIButton(this, {
+    this.autoBtn = new UIButton(this, {
       x: GAME_WIDTH - 170,
       y: GAME_HEIGHT - 64,
       width: 150,
@@ -472,7 +483,9 @@ export class BattleScene extends Phaser.Scene {
       label: '▶ 자동 전투',
       style: 'secondary',
       onClick: () => {
-        this.toggleAutoPlay();
+        if (!this.interventionPaused) {
+          this.toggleAutoPlay();
+        }
       },
     });
   }
@@ -528,6 +541,7 @@ export class BattleScene extends Phaser.Scene {
     this.phaseText.setText(this.battleState.phase);
     this.updateAllUnitVisuals();
     this.refreshTurnQueue();
+    this.updateHeroBtn();
 
     // 전투 종료 체크
     if (this.battleState.isFinished) {
@@ -551,6 +565,11 @@ export class BattleScene extends Phaser.Scene {
             const actionName = ev.data?.actionName ?? '행동';
             toastMsg = target ? `${actor.name} → ${target.name} (${actionName})` : `${actor.name}: ${actionName}`;
           }
+          break;
+        }
+        case 'HERO_INTERVENTION': {
+          const abilityName = ev.data?.abilityName ?? '개입';
+          toastMsg = `영웅 개입: ${abilityName}`;
           break;
         }
         case 'DAMAGE_DEALT': {
@@ -587,6 +606,215 @@ export class BattleScene extends Phaser.Scene {
     if (toastMsg) {
       this.toast.show(toastMsg);
     }
+  }
+
+  // === 영웅 개입 ===
+
+  private getHeroBtnLabel(): string {
+    const remaining = this.battleState.hero.interventionsRemaining;
+    return `영웅 개입 (${remaining})`;
+  }
+
+  private updateHeroBtn(): void {
+    const can = canIntervene(this.battleState);
+    this.heroBtn.setLabel(this.getHeroBtnLabel());
+    this.heroBtn.setDisabled(!can);
+  }
+
+  private onHeroBtnClick(): void {
+    if (!canIntervene(this.battleState)) {
+      this.toast.show('이번 라운드 개입 횟수를 모두 사용했습니다');
+      return;
+    }
+    if (this.targetMode) {
+      this.cancelTargetMode();
+      return;
+    }
+    if (this.heroPanel) {
+      this.closeHeroPanel();
+      this.resumeBattle();
+      return;
+    }
+    this.pauseBattle();
+    this.openHeroPanel();
+  }
+
+  /** 전투 일시정지 — 자동 전투 중이면 멈추고, 다음 턴 버튼 비활성화 */
+  private pauseBattle(): void {
+    this.interventionPaused = true;
+    this.wasAutoPlaying = this.autoPlaying;
+    if (this.autoPlaying) {
+      this.autoPlaying = false;
+      if (this.autoTimer) {
+        this.autoTimer.destroy();
+        this.autoTimer = undefined;
+      }
+    }
+    this.nextTurnBtn.setDisabled(true);
+    this.autoBtn.setDisabled(true);
+  }
+
+  /** 전투 재개 — 이전 자동 전투 상태 복원 */
+  private resumeBattle(): void {
+    this.interventionPaused = false;
+    this.nextTurnBtn.setDisabled(false);
+    this.autoBtn.setDisabled(false);
+    if (this.wasAutoPlaying) {
+      this.wasAutoPlaying = false;
+      this.toggleAutoPlay();
+    }
+  }
+
+  private openHeroPanel(): void {
+    if (this.heroPanel) return;
+
+    const abilities = this.battleState.hero.abilities;
+    const panelW = 260;
+    const btnH = 48;
+    const gap = 8;
+    const panelH = abilities.length * (btnH + gap) + gap + 30;
+    const panelX = BATTLE_CENTER_X - panelW / 2;
+    const panelY = GAME_HEIGHT - 80 - panelH - 10;
+
+    this.heroPanel = this.add.container(panelX, panelY).setDepth(30);
+
+    // 패널 배경
+    const bg = this.add.graphics();
+    bg.fillStyle(0x0f1428, 0.95);
+    bg.fillRoundedRect(0, 0, panelW, panelH, 8);
+    bg.lineStyle(2, 0x4a8abb);
+    bg.strokeRoundedRect(0, 0, panelW, panelH, 8);
+    this.heroPanel.add(bg);
+
+    // 타이틀
+    const title = this.add
+      .text(panelW / 2, 12, `${this.battleState.hero.heroType} 능력`, {
+        fontSize: '14px',
+        fontFamily: UITheme.font.family,
+        color: '#ffcc00',
+      })
+      .setOrigin(0.5, 0);
+    this.heroPanel.add(title);
+
+    // 능력 버튼들
+    for (let i = 0; i < abilities.length; i++) {
+      const ability = abilities[i];
+      const isEditAction = ability.abilityType === AbilityType.EDIT_ACTION;
+      const y = 30 + i * (btnH + gap) + gap;
+
+      const btn = new UIButton(this, {
+        x: gap,
+        y,
+        width: panelW - gap * 2,
+        height: btnH,
+        label: isEditAction ? `${ability.name} (준비중)` : ability.name,
+        style: 'secondary',
+        disabled: isEditAction, // EDIT_ACTION은 MVP에서 비활성화
+        onClick: () => {
+          this.onAbilitySelect(ability);
+        },
+      });
+      this.heroPanel!.add(btn.container);
+    }
+  }
+
+  private closeHeroPanel(): void {
+    if (this.heroPanel) {
+      this.heroPanel.destroy();
+      this.heroPanel = undefined;
+    }
+  }
+
+  private onAbilitySelect(ability: HeroAbility): void {
+    this.closeHeroPanel();
+
+    // EFFECT 능력: 타겟 선택 모드 진입
+    if (ability.abilityType === AbilityType.EFFECT) {
+      this.pendingAbility = ability;
+      this.enterTargetMode(ability);
+    }
+  }
+
+  private enterTargetMode(ability: HeroAbility): void {
+    this.targetMode = true;
+
+    // 능력 효과에 따라 아군/적군 타겟 결정
+    const isOffensive = ability.effects.some(
+      (e) => e.type === 'DAMAGE' || e.type === 'DEBUFF' || e.type === 'PUSH' || e.type === 'DELAY_TURN',
+    );
+
+    const targetTeam = isOffensive ? Team.ENEMY : Team.PLAYER;
+
+    this.toast.show(`${ability.name} — 대상을 선택하세요 (또는 영웅 개입 버튼으로 취소)`);
+    this.heroBtn.setLabel('취소');
+
+    // 타겟 가능한 유닛에 하이라이트 + 클릭 활성화
+    for (const [unitId, visual] of this.unitVisuals) {
+      const unit = this.battleState.units.find((u) => u.id === unitId);
+      if (!unit || !unit.isAlive || unit.team !== targetTeam) continue;
+
+      // 하이라이트 테두리
+      const highlight = this.add.graphics();
+      highlight.lineStyle(3, 0xffcc00, 1);
+      highlight.strokeRoundedRect(-UNIT_W / 2 - 4, -UNIT_H / 2 - 4, UNIT_W + 8, UNIT_H + 8, 8);
+      visual.container.add(highlight);
+      visual.container.setData('highlight', highlight);
+
+      // 클릭 영역
+      const hitArea = this.add
+        .rectangle(0, 0, UNIT_W + 8, UNIT_H + 8, 0x000000, 0)
+        .setInteractive({ useHandCursor: true });
+      visual.container.add(hitArea);
+      visual.container.setData('targetHit', hitArea);
+
+      hitArea.on('pointerdown', () => {
+        this.onTargetSelect(unit.id);
+      });
+    }
+  }
+
+  private cancelTargetMode(): void {
+    this.targetMode = false;
+    this.pendingAbility = undefined;
+    this.cleanupTargetHighlights();
+    this.updateHeroBtn();
+    this.resumeBattle();
+    this.toast.show('개입 취소');
+  }
+
+  private cleanupTargetHighlights(): void {
+    for (const visual of this.unitVisuals.values()) {
+      const highlight = visual.container.getData('highlight') as Phaser.GameObjects.Graphics | undefined;
+      if (highlight) {
+        highlight.destroy();
+        visual.container.setData('highlight', undefined);
+      }
+      const hitArea = visual.container.getData('targetHit') as Phaser.GameObjects.Rectangle | undefined;
+      if (hitArea) {
+        hitArea.destroy();
+        visual.container.setData('targetHit', undefined);
+      }
+    }
+  }
+
+  private onTargetSelect(targetId: string): void {
+    if (!this.pendingAbility) return;
+
+    const ability = this.pendingAbility;
+    this.cleanupTargetHighlights();
+    this.targetMode = false;
+    this.pendingAbility = undefined;
+
+    // 큐잉
+    this.battleState = queueIntervention(this.battleState, ability, targetId);
+    this.updateHeroBtn();
+
+    const targetUnit = this.battleState.units.find((u) => u.id === targetId);
+    this.toast.show(`${ability.name} → ${targetUnit?.name ?? '?'}`);
+
+    // 개입 실행 (다음 턴에서 발동) 후 전투 재개
+    this.doStep();
+    this.resumeBattle();
   }
 
   private toggleAutoPlay(): void {
