@@ -22,7 +22,7 @@ import { createStageBattleState } from '../core/RunManager';
 import { Team, Position, BattlePhase, AbilityType, Difficulty, RunStatus } from '../types';
 import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
 import { calculateBattleResult } from '../systems/BattleResultCalculator';
-import { processDefeat, endRun } from '../core/RunManager';
+import { processDefeat } from '../core/RunManager';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -1056,10 +1056,13 @@ export class BattleScene extends Phaser.Scene {
         label: '포기',
         style: 'secondary',
         onClick: () => {
-          if (gameState.runState) {
-            gameState.setRunState(endRun({ ...gameState.runState, status: RunStatus.DEFEAT }));
+          const rs = gameState.runState;
+          if (rs) {
+            const defeatState = { ...rs, status: RunStatus.DEFEAT } as RunState;
+            this.scene.start('RunResultScene', { runState: defeatState });
+          } else {
+            this.scene.start('TownScene');
           }
-          this.scene.start('TownScene');
         },
       }).container.setDepth(103);
     } else {
@@ -1072,10 +1075,13 @@ export class BattleScene extends Phaser.Scene {
         label: '런 종료',
         style: 'secondary',
         onClick: () => {
-          if (gameState.runState) {
-            gameState.setRunState(endRun({ ...gameState.runState, status: RunStatus.DEFEAT }));
+          const rs = gameState.runState;
+          if (rs) {
+            const defeatState = { ...rs, status: RunStatus.DEFEAT } as RunState;
+            this.scene.start('RunResultScene', { runState: defeatState });
+          } else {
+            this.scene.start('TownScene');
           }
-          this.scene.start('TownScene');
         },
       }).container.setDepth(103);
     }

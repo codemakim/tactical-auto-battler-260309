@@ -529,6 +529,17 @@ export interface RewardPhaseData {
   isLastStage: boolean;
 }
 
+// === Run Result (런 결과 요약) ===
+
+/** 런 전체 결과 데이터 (RunResultScene 표시용) */
+export interface RunResultData {
+  victory: boolean;
+  stagesCleared: number;
+  maxStages: number;
+  goldEarned: number;
+  cardsAcquired: number;
+}
+
 // === Game Config ===
 
 export interface GameConfig {

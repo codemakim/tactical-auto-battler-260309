@@ -408,8 +408,8 @@ export class RewardScene extends Phaser.Scene {
     gameState.setRunState(finalRunState);
 
     if (this.rewardData.isLastStage) {
-      // 런 완료 → 마을 (RunResultScene 미구현)
-      this.scene.start('TownScene');
+      // 런 완료 → 결과 화면
+      this.scene.start('RunResultScene', { runState: finalRunState });
     } else {
       // 다음 스테이지 → 편성
       this.scene.start('FormationScene');

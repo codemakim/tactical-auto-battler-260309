@@ -64,7 +64,7 @@ function createDefaultFormation(characters: CharacterDefinition[]): FormationDat
  * 싱글톤 게임 상태 매니저
  * Scene 간 데이터 공유를 위해 전역 인스턴스 사용
  */
-class GameStateManager {
+export class GameStateManager {
   private state: GameStateData;
 
   constructor() {
