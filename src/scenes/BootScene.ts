@@ -26,7 +26,8 @@ export class BootScene extends Phaser.Scene {
       progressBox.destroy();
     });
 
-    // TODO: 에셋 로드
+    // 배경 이미지
+    this.load.image('town-bg', 'src/assets/backgrounds/town-bg.png');
   }
 
   create(): void {
