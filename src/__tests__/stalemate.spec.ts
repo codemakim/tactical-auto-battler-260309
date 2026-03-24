@@ -17,21 +17,17 @@ function makeDefenseOnlyUnit(name: string, team: Team, position: Position): Batt
   const unit = createUnit(createCharacterDef(name, CharacterClass.GUARDIAN), team, position);
   // 모든 슬롯을 SHIELD 전용으로 교체
   const shieldSlot: ActionSlot = {
-    slotIndex: 0,
     condition: { type: 'ALWAYS' as any },
     action: {
+      id: 'shield_only',
       name: 'Shield Only',
+      description: 'Shield only',
       effects: [{ type: 'SHIELD', value: 1.0 }],
-      target: { side: 'SELF' },
     },
   };
   return {
     ...unit,
-    actionSlots: [
-      { ...shieldSlot, slotIndex: 0 },
-      { ...shieldSlot, slotIndex: 1 },
-      { ...shieldSlot, slotIndex: 2 },
-    ],
+    actionSlots: [shieldSlot, shieldSlot, shieldSlot],
   };
 }
 
@@ -55,7 +51,7 @@ describe('hasAnyDamageCapability', () => {
   });
 
   it('죽은 유닛의 DAMAGE는 무시', () => {
-    const deadAttacker = { ...makeAttackerUnit('Dead', Team.PLAYER, Position.FRONT), isAlive: false, currentHp: 0 };
+    const deadAttacker = { ...makeAttackerUnit('Dead', Team.PLAYER, Position.FRONT), isAlive: false };
     const defender = makeDefenseOnlyUnit(CharacterClass.GUARDIAN, Team.PLAYER, Position.FRONT);
     expect(hasAnyDamageCapability([deadAttacker, defender])).toBe(false);
   });
@@ -90,7 +86,7 @@ describe('checkStalemate', () => {
     expect(result.state.stalemateCountdown).toBe(3);
     expect(result.events).toHaveLength(1);
     expect(result.events[0].type).toBe('OVERSEER_WRATH_WARNING');
-    expect(result.events[0].data.countdown).toBe(3);
+    expect(result.events[0].data!.countdown).toBe(3);
   });
 
   it('카운트다운 진행: 3→2→1→0(강제 패배)', () => {
@@ -102,7 +98,7 @@ describe('checkStalemate', () => {
     const r1 = checkStalemate({ ...state, stalemateCountdown: 3 });
     expect(r1.state.stalemateCountdown).toBe(2);
     expect(r1.events[0].type).toBe('OVERSEER_WRATH_WARNING');
-    expect(r1.events[0].data.countdown).toBe(2);
+    expect(r1.events[0].data!.countdown).toBe(2);
 
     // 카운트다운 2 → 1
     const r2 = checkStalemate({ ...r1.state, round: 3 });
@@ -114,7 +110,7 @@ describe('checkStalemate', () => {
     expect(r3.state.isFinished).toBe(true);
     expect(r3.state.winner).toBe(Team.ENEMY);
     expect(r3.events[0].type).toBe('BATTLE_END');
-    expect(r3.events[0].data.reason).toBe('overseer_wrath');
+    expect(r3.events[0].data!.reason).toBe('overseer_wrath');
   });
 
   it('카운트다운 중 DAMAGE 회복 시 해제 + OVERSEER_WRATH_LIFTED 이벤트', () => {
@@ -160,7 +156,7 @@ describe('startRound 통합', () => {
     expect(afterRound.phase).toBe(BattlePhase.BATTLE_END);
     const endEvents = afterRound.events.filter((e) => e.type === 'BATTLE_END');
     expect(endEvents.length).toBeGreaterThanOrEqual(1);
-    expect(endEvents[0].data.reason).toBe('overseer_wrath');
+    expect(endEvents[0].data!.reason).toBe('overseer_wrath');
   });
 });
 

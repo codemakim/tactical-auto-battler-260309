@@ -494,6 +494,29 @@ export interface CharacterReward {
   probability: number; // 이 보상이 생성된 확률 (디버그/UI용)
 }
 
+// === Battle Result (전투 결과 데이터) ===
+
+/** 유닛 생존 정보 (UI 표시용 플랫 구조) */
+export interface SurvivorInfo {
+  name: string;
+  characterClass: string;
+  currentHp: number;
+  maxHp: number;
+}
+
+/** 전투 결과 계산 데이터 (순수 함수 출력, Scene에서 렌더링) */
+export interface BattleResultData {
+  victory: boolean;
+  roundsElapsed: number;
+  survivingAllies: SurvivorInfo[];
+  fallenAllies: SurvivorInfo[];
+  goldEarned: number;
+  /** 패배 시 재도전 가능 여부 */
+  canRetry: boolean;
+  currentStage: number;
+  maxStages: number;
+}
+
 // === Game Config ===
 
 export interface GameConfig {

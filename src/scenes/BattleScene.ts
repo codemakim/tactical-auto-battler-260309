@@ -18,8 +18,10 @@ import { createBattleState, stepBattle, queueIntervention } from '../core/Battle
 import { canIntervene } from '../systems/HeroInterventionSystem';
 import { createUnit } from '../entities/UnitFactory';
 import { generateEncounter } from '../systems/EnemyGenerator';
-import { Team, Position, BattlePhase, AbilityType } from '../types';
-import type { BattleState, BattleUnit, BattleEvent, HeroAbility } from '../types';
+import { Team, Position, BattlePhase, AbilityType, Difficulty, RunStatus } from '../types';
+import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
+import { calculateBattleResult } from '../systems/BattleResultCalculator';
+import { processDefeat, endRun } from '../core/RunManager';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -843,6 +845,25 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  /** 런 상태 가져오기 (없으면 독립전투용 기본값 생성) */
+  private getRunState(): RunState {
+    return (
+      gameState.runState ?? {
+        currentStage: 1,
+        maxStages: 1,
+        seed: 0,
+        party: [],
+        bench: [],
+        cardInventory: [],
+        equippedCards: {},
+        gold: 0,
+        retryAvailable: false,
+        status: RunStatus.IN_PROGRESS,
+        preRunPartySnapshot: [],
+      }
+    );
+  }
+
   private onBattleEnd(): void {
     if (this.autoTimer) {
       this.autoTimer.destroy();
@@ -850,27 +871,203 @@ export class BattleScene extends Phaser.Scene {
     }
     this.autoPlaying = false;
 
-    const winner = this.battleState.winner;
-    const isVictory = winner === Team.PLAYER;
-    const reason = this.battleState.events.find((e) => e.type === 'BATTLE_END')?.data?.reason ?? '';
+    const runState = this.getRunState();
+    const result = calculateBattleResult(this.battleState, runState);
 
-    const title = isVictory ? '승리!' : '패배...';
-    const content = [
-      isVictory ? '적을 모두 쓰러뜨렸습니다!' : '아군이 전멸했습니다.',
-      '',
-      `라운드: ${this.battleState.round}`,
-      reason ? `사유: ${reason}` : '',
-      '',
-      '[ 마을로 돌아갑니다 ]',
-    ].join('\n');
+    // ── 딤 배경 ──
+    const dim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
+      .setInteractive()
+      .setDepth(100);
 
-    new UIModal(this, {
-      title,
-      content,
-      buttonLabel: '마을로',
-      onClose: () => {
-        this.scene.start('TownScene');
-      },
-    });
+    // ── 패널 ──
+    const panelW = 480;
+    const panelH = 420;
+    const panelX = (GAME_WIDTH - panelW) / 2;
+    const panelY = (GAME_HEIGHT - panelH) / 2;
+
+    const panelBg = this.add.graphics().setDepth(101);
+    panelBg.fillStyle(0x0f1428, 0.95);
+    panelBg.fillRoundedRect(panelX, panelY, panelW, panelH, 12);
+    panelBg.lineStyle(2, result.victory ? 0xffcc00 : 0xef4444);
+    panelBg.strokeRoundedRect(panelX, panelY, panelW, panelH, 12);
+
+    const cx = GAME_WIDTH / 2;
+    let y = panelY + 28;
+
+    // ── 타이틀 ──
+    this.add
+      .text(cx, y, result.victory ? '승리!' : '패배...', {
+        fontSize: '28px',
+        fontFamily: UITheme.font.family,
+        fontStyle: 'bold',
+        color: result.victory ? '#ffcc00' : '#ff4444',
+      })
+      .setOrigin(0.5)
+      .setDepth(102);
+    y += 36;
+
+    // ── 스테이지 + 라운드 ──
+    const stageLabel = gameState.runState ? `Stage ${result.currentStage} / ${result.maxStages}` : '';
+    const roundLabel = result.victory
+      ? `라운드 ${result.roundsElapsed} 클리어`
+      : `라운드 ${result.roundsElapsed}에서 패배`;
+
+    this.add
+      .text(cx, y, [stageLabel, roundLabel].filter(Boolean).join('  ·  '), {
+        fontSize: '14px',
+        fontFamily: UITheme.font.family,
+        color: '#8899aa',
+      })
+      .setOrigin(0.5)
+      .setDepth(102);
+    y += 30;
+
+    // ── 유닛 현황 ──
+    this.add
+      .text(panelX + 24, y, '아군 현황', {
+        fontSize: '13px',
+        fontFamily: UITheme.font.family,
+        color: '#aabbcc',
+      })
+      .setDepth(102);
+    y += 22;
+
+    const allAllies = [...result.survivingAllies, ...result.fallenAllies];
+    const hpBarW = 120;
+    const hpBarH = 10;
+
+    for (const ally of allAllies) {
+      const isDead = ally.currentHp <= 0;
+
+      // 이름 + 클래스
+      this.add
+        .text(panelX + 32, y, `${ally.name}`, {
+          fontSize: '13px',
+          fontFamily: UITheme.font.family,
+          color: isDead ? '#666677' : '#ccccdd',
+        })
+        .setDepth(102);
+
+      this.add
+        .text(panelX + 160, y, ally.characterClass, {
+          fontSize: '11px',
+          fontFamily: UITheme.font.family,
+          color: isDead ? '#555566' : '#7788aa',
+        })
+        .setDepth(102);
+
+      if (isDead) {
+        this.add
+          .text(panelX + 280, y, '전사', {
+            fontSize: '12px',
+            fontFamily: UITheme.font.family,
+            color: '#ff4444',
+          })
+          .setDepth(102);
+      } else {
+        // HP 바
+        const barX = panelX + 280;
+        const barG = this.add.graphics().setDepth(102);
+        barG.fillStyle(0x1a1a2e);
+        barG.fillRoundedRect(barX, y + 2, hpBarW, hpBarH, 3);
+        const ratio = ally.currentHp / ally.maxHp;
+        const barColor = ratio > 0.5 ? 0x22c55e : ratio > 0.25 ? 0xeab308 : 0xef4444;
+        barG.fillStyle(barColor);
+        barG.fillRoundedRect(barX, y + 2, Math.max(4, hpBarW * ratio), hpBarH, 3);
+
+        this.add
+          .text(barX + hpBarW + 8, y, `${ally.currentHp}/${ally.maxHp}`, {
+            fontSize: '11px',
+            fontFamily: UITheme.font.family,
+            color: '#8899aa',
+          })
+          .setDepth(102);
+      }
+
+      y += 24;
+    }
+
+    y += 8;
+
+    // ── 골드 ──
+    this.add
+      .text(cx, y, `+${result.goldEarned} Gold`, {
+        fontSize: '18px',
+        fontFamily: UITheme.font.family,
+        fontStyle: 'bold',
+        color: '#ffcc00',
+      })
+      .setOrigin(0.5)
+      .setDepth(102);
+    y += 40;
+
+    // ── 버튼 ──
+    const btnW = 160;
+    const btnH = 44;
+    const btnY = panelY + panelH - 60;
+
+    if (result.victory) {
+      // 승리: "보상 확인" (보상 화면 미구현이므로 마을로 복귀)
+      new UIButton(this, {
+        x: cx - btnW / 2,
+        y: btnY,
+        width: btnW,
+        height: btnH,
+        label: '보상 확인',
+        style: 'primary',
+        onClick: () => {
+          // TODO: 보상 화면 구현 후 교체
+          this.scene.start('TownScene');
+        },
+      }).container.setDepth(103);
+    } else if (result.canRetry) {
+      // 패배 + 리트라이 가능: "재도전" + "포기"
+      new UIButton(this, {
+        x: cx - btnW - 8,
+        y: btnY,
+        width: btnW,
+        height: btnH,
+        label: '재도전',
+        style: 'primary',
+        onClick: () => {
+          if (gameState.runState) {
+            gameState.setRunState(processDefeat(gameState.runState));
+          }
+          this.scene.start('FormationScene');
+        },
+      }).container.setDepth(103);
+
+      new UIButton(this, {
+        x: cx + 8,
+        y: btnY,
+        width: btnW,
+        height: btnH,
+        label: '포기',
+        style: 'secondary',
+        onClick: () => {
+          if (gameState.runState) {
+            gameState.setRunState(endRun({ ...gameState.runState, status: RunStatus.DEFEAT }));
+          }
+          this.scene.start('TownScene');
+        },
+      }).container.setDepth(103);
+    } else {
+      // 패배 + 리트라이 불가: "런 종료"
+      new UIButton(this, {
+        x: cx - btnW / 2,
+        y: btnY,
+        width: btnW,
+        height: btnH,
+        label: '런 종료',
+        style: 'secondary',
+        onClick: () => {
+          if (gameState.runState) {
+            gameState.setRunState(endRun({ ...gameState.runState, status: RunStatus.DEFEAT }));
+          }
+          this.scene.start('TownScene');
+        },
+      }).container.setDepth(103);
+    }
   }
 }

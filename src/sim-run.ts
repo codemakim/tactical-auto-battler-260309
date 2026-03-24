@@ -7,6 +7,8 @@
  * 각 전투의 상세 이벤트 로그를 포함합니다.
  */
 
+declare const process: { env: Record<string, string | undefined> };
+
 import { createCharacterDef, createUnit, resetUnitCounter } from './entities/UnitFactory';
 import { createBattleState, stepBattle, restorePreBattleActions } from './core/BattleEngine';
 import { CharacterClass, RunStatus, Team, Position } from './types';

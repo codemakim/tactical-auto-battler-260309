@@ -19,7 +19,7 @@ function makeUnit(name: string, team: Team, position: Position, agi: number): Ba
   const def = createCharacterDef(name, 'WARRIOR');
   const unit = createUnit(def, team, position);
   // AGI 직접 오버라이드
-  return { ...unit, stats: { ...unit.stats, agi }, baseStats: { ...unit.baseStats, agi } };
+  return { ...unit, stats: { ...unit.stats, agi } };
 }
 
 describe('턴 순서 정합성', () => {
