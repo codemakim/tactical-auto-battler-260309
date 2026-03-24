@@ -64,11 +64,11 @@ export interface BattleOutcome {
 }
 
 /**
- * 현재 스테이지 전투 실행
- * 파티 → BattleUnit 변환, 적 생성, 전투 실행
+ * 현재 스테이지 전투용 BattleState 생성 (실행 없음)
+ * Scene에서 stepBattle()로 한 턴씩 진행할 때 사용.
  * 풀피 리셋 적용 (run-system-spec §7)
  */
-export function executeStageBattle(runState: RunState, heroType?: HeroType): BattleOutcome {
+export function createStageBattleState(runState: RunState, heroType?: HeroType): BattleState {
   resetUnitCounter();
 
   const battleSeed = runState.seed + runState.currentStage * 1000;
@@ -80,7 +80,6 @@ export function executeStageBattle(runState: RunState, heroType?: HeroType): Bat
 
   const playerUnits = combatDefs.map((def, i) => {
     const unit = createUnit(def, Team.PLAYER, i < 2 ? Position.FRONT : Position.BACK);
-    // 장착된 카드 적용
     return applyEquippedCards(unit, def.id, runState);
   });
 
@@ -92,8 +91,15 @@ export function executeStageBattle(runState: RunState, heroType?: HeroType): Bat
   const enemyEncounter = generateEncounter(runState.currentStage, battleSeed);
   const enemyUnits = enemyEncounter.map((eu) => createUnit(eu.definition, Team.ENEMY, eu.position));
 
-  // 전투 실행
-  const initialState = createBattleState(playerUnits, enemyUnits, playerReserve, [], battleSeed, heroType);
+  return createBattleState(playerUnits, enemyUnits, playerReserve, [], battleSeed, heroType);
+}
+
+/**
+ * 현재 스테이지 전투 실행 (한번에 완료)
+ * 시뮬레이션용. Scene에서는 createStageBattleState() 사용.
+ */
+export function executeStageBattle(runState: RunState, heroType?: HeroType): BattleOutcome {
+  const initialState = createStageBattleState(runState, heroType);
   let finalState = runFullBattle(initialState);
   finalState = restorePreBattleActions(finalState);
 

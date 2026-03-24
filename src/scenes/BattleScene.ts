@@ -18,6 +18,7 @@ import { createBattleState, stepBattle, queueIntervention } from '../core/Battle
 import { canIntervene } from '../systems/HeroInterventionSystem';
 import { createUnit } from '../entities/UnitFactory';
 import { generateEncounter } from '../systems/EnemyGenerator';
+import { createStageBattleState } from '../core/RunManager';
 import { Team, Position, BattlePhase, AbilityType, Difficulty, RunStatus } from '../types';
 import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
 import { calculateBattleResult } from '../systems/BattleResultCalculator';
@@ -105,33 +106,39 @@ export class BattleScene extends Phaser.Scene {
   // === 초기화 ===
 
   private initBattle(): void {
-    const formation = gameState.formation;
+    const runState = gameState.runState;
 
-    // 플레이어 유닛 생성
-    const playerUnits: BattleUnit[] = [];
-    for (const slot of formation.slots) {
-      const def = gameState.getCharacter(slot.characterId);
-      if (def) {
-        playerUnits.push(createUnit(def, Team.PLAYER, slot.position));
+    if (runState) {
+      // 런 모드: RunManager에서 BattleState 생성
+      const heroType = gameState.formation.heroType;
+      this.battleState = createStageBattleState(runState, heroType);
+    } else {
+      // 독립 전투 모드 (폴백)
+      const formation = gameState.formation;
+
+      const playerUnits: BattleUnit[] = [];
+      for (const slot of formation.slots) {
+        const def = gameState.getCharacter(slot.characterId);
+        if (def) {
+          playerUnits.push(createUnit(def, Team.PLAYER, slot.position));
+        }
       }
-    }
 
-    // 교체 멤버
-    const playerReserve: BattleUnit[] = [];
-    if (formation.reserveId) {
-      const def = gameState.getCharacter(formation.reserveId);
-      if (def) {
-        playerReserve.push(createUnit(def, Team.PLAYER, Position.BACK));
+      const playerReserve: BattleUnit[] = [];
+      if (formation.reserveId) {
+        const def = gameState.getCharacter(formation.reserveId);
+        if (def) {
+          playerReserve.push(createUnit(def, Team.PLAYER, Position.BACK));
+        }
       }
+
+      const stage = 1;
+      const seed = Date.now();
+      const encounter = generateEncounter(stage, seed);
+      const enemyUnits = encounter.map((e) => createUnit(e.definition, Team.ENEMY, e.position));
+
+      this.battleState = createBattleState(playerUnits, enemyUnits, playerReserve, [], seed, formation.heroType);
     }
-
-    // 적 생성 (스테이지 1)
-    const stage = 1;
-    const seed = Date.now();
-    const encounter = generateEncounter(stage, seed);
-    const enemyUnits = encounter.map((e) => createUnit(e.definition, Team.ENEMY, e.position));
-
-    this.battleState = createBattleState(playerUnits, enemyUnits, playerReserve, [], seed, formation.heroType);
   }
 
   // === 배경/UI ===

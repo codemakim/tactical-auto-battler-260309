@@ -9,6 +9,8 @@ import { UIButton } from '../ui/UIButton';
 import { UIModal } from '../ui/UIModal';
 import { UIToast } from '../ui/UIToast';
 import { gameState } from '../core/GameState';
+import { createRunState } from '../core/RunManager';
+import type { CharacterDefinition } from '../types';
 
 interface BattlefieldDef {
   id: string;
@@ -326,7 +328,30 @@ export class SortieScene extends Phaser.Scene {
       disabled: true,
       onClick: () => {
         if (!this.selectedId) return;
-        this.scene.start('BattleScene', { battlefieldId: this.selectedId });
+
+        // 편성에서 파티 추출
+        const formation = gameState.formation;
+        const party: CharacterDefinition[] = [];
+        for (const slot of formation.slots) {
+          const def = gameState.getCharacter(slot.characterId);
+          if (def) party.push(def);
+        }
+        if (formation.reserveId) {
+          const reserve = gameState.getCharacter(formation.reserveId);
+          if (reserve) party.push(reserve);
+        }
+
+        if (party.length < 3) {
+          this.toast.show('편성이 부족합니다 (최소 3명)');
+          return;
+        }
+
+        // 런 생성
+        const seed = Date.now();
+        const runState = createRunState(party, seed);
+        gameState.setRunState(runState);
+
+        this.scene.start('BattleScene');
       },
     });
   }

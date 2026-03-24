@@ -16,7 +16,7 @@ import { UIToast } from '../ui/UIToast';
 import { UIButton } from '../ui/UIButton';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
-import { HeroType, Position } from '../types';
+import { HeroType, Position, RunStatus } from '../types';
 import type { CharacterDefinition } from '../types';
 import { HERO_DEFINITIONS } from '../data/HeroDefinitions';
 
@@ -591,13 +591,20 @@ export class FormationScene extends Phaser.Scene {
       label: '편성 완료',
       style: 'primary',
       onClick: () => {
-        if (this.isFormationValid()) {
-          this.scene.start('TownScene');
-        } else {
+        if (!this.isFormationValid()) {
           new UIModal(this, {
             title: '편성 오류',
             content: '출전 슬롯 3개를 모두 채워주세요.',
           });
+          return;
+        }
+
+        // 런 진행 중이면 전투로, 아니면 마을로
+        const runState = gameState.runState;
+        if (runState && runState.status === RunStatus.IN_PROGRESS) {
+          this.scene.start('BattleScene');
+        } else {
+          this.scene.start('TownScene');
         }
       },
     });
