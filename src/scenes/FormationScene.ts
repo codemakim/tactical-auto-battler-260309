@@ -348,6 +348,27 @@ export class FormationScene extends Phaser.Scene {
     bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 6);
   }
 
+  /** 시각적 슬롯 인덱스에 현재 배치된 캐릭터를 찾기 */
+  private getCharacterAtVisualSlot(visualIndex: number): CharacterDefinition | undefined {
+    const sv = SLOT_VISUALS[visualIndex];
+    const formation = gameState.formation;
+
+    if (sv.type === 'reserve') {
+      return formation.reserveId ? gameState.getCharacter(formation.reserveId) : undefined;
+    }
+
+    // combat 슬롯: 같은 position의 formation.slots 중 이 시각 슬롯에 매핑된 것 찾기
+    const samePositionSlots = formation.slots.filter((s) => s.position === sv.position && s.characterId);
+    // 같은 position의 시각 슬롯 중 몇 번째인지 계산
+    const samePositionVisuals = SLOT_VISUALS.map((v, i) => ({ ...v, index: i })).filter(
+      (v) => v.type === 'combat' && v.position === sv.position,
+    );
+    const orderInPosition = samePositionVisuals.findIndex((v) => v.index === visualIndex);
+
+    const slot = samePositionSlots[orderInPosition];
+    return slot ? gameState.getCharacter(slot.characterId) : undefined;
+  }
+
   private onSlotClick(index: number): void {
     this.selectedSlotIndex = index;
 
@@ -367,99 +388,154 @@ export class FormationScene extends Phaser.Scene {
     }
 
     // 해당 슬롯의 캐릭터 정보 표시
-    const formation = gameState.formation;
-    if (index < 3) {
-      const slot = formation.slots[index];
-      if (slot) {
-        const char = gameState.getCharacter(slot.characterId);
-        if (char) this.updateDetailPanel(char);
-      }
-    } else if (formation.reserveId) {
-      const char = gameState.getCharacter(formation.reserveId);
-      if (char) this.updateDetailPanel(char);
-    }
+    const char = this.getCharacterAtVisualSlot(index);
+    if (char) this.updateDetailPanel(char);
   }
 
-  private assignToSlot(slotIndex: number, characterId: string): void {
+  private assignToSlot(visualSlotIndex: number, characterId: string): void {
     const formation = gameState.formation;
+    const sv = SLOT_VISUALS[visualSlotIndex];
 
-    // 이미 다른 슬롯에 있으면 제거
-    const newSlots = formation.slots.map((s) => (s.characterId === characterId ? { ...s, characterId: '' } : s));
-    let newReserveId = formation.reserveId === characterId ? undefined : formation.reserveId;
-
-    if (slotIndex < 3) {
-      // 기존 슬롯 캐릭터와 swap
-      const currentChar = newSlots[slotIndex]?.characterId;
-      newSlots[slotIndex] = {
-        characterId,
-        position: SLOT_VISUALS[slotIndex].position,
-      };
-      // 빈 슬롯에 기존 캐릭터 넣기 (있었다면)
-      if (currentChar) {
+    if (sv.type === 'reserve') {
+      // reserve 슬롯
+      // 이미 다른 곳에 있으면 제거
+      const newSlots = formation.slots.map((s) => (s.characterId === characterId ? { ...s, characterId: '' } : s));
+      const newReserveId = characterId;
+      // 기존 reserve가 있으면 빈 combat 슬롯에 넣기
+      const oldReserve = formation.reserveId;
+      if (oldReserve && oldReserve !== characterId) {
         const emptyIdx = newSlots.findIndex((s) => !s.characterId);
         if (emptyIdx >= 0) {
-          newSlots[emptyIdx] = {
-            characterId: currentChar,
-            position: SLOT_VISUALS[emptyIdx].position,
-          };
+          newSlots[emptyIdx] = { characterId: oldReserve, position: Position.FRONT };
         }
       }
+      gameState.setFormation({
+        slots: newSlots.filter((s) => s.characterId),
+        reserveId: newReserveId,
+        heroType: formation.heroType,
+      });
     } else {
-      // reserve 슬롯
-      newReserveId = characterId;
+      // combat 슬롯: 시각 슬롯의 position 사용
+      const targetPosition = sv.position;
+
+      // 이미 다른 곳에 있으면 제거
+      const newSlots = formation.slots.map((s) => (s.characterId === characterId ? { ...s, characterId: '' } : s));
+      let newReserveId = formation.reserveId === characterId ? undefined : formation.reserveId;
+
+      // 이 시각 슬롯에 현재 있는 캐릭터 찾기 (교체 대상)
+      const currentChar = this.getCharacterAtVisualSlot(visualSlotIndex);
+      const currentCharId = currentChar?.id;
+
+      // 같은 position의 빈 슬롯 또는 기존 위치에 배치
+      const samePosSlotsIndices = newSlots
+        .map((s, i) => ({ slot: s, idx: i }))
+        .filter((x) => x.slot.position === targetPosition);
+
+      // 시각 슬롯 순서에 따른 formation index 찾기
+      const samePositionVisuals = SLOT_VISUALS.map((v, i) => ({ ...v, index: i })).filter(
+        (v) => v.type === 'combat' && v.position === targetPosition,
+      );
+      const orderInPosition = samePositionVisuals.findIndex((v) => v.index === visualSlotIndex);
+
+      if (samePosSlotsIndices[orderInPosition]) {
+        newSlots[samePosSlotsIndices[orderInPosition].idx] = { characterId, position: targetPosition };
+      } else {
+        // 빈 슬롯에 추가
+        const emptyIdx = newSlots.findIndex((s) => !s.characterId);
+        if (emptyIdx >= 0) {
+          newSlots[emptyIdx] = { characterId, position: targetPosition };
+        } else {
+          newSlots.push({ characterId, position: targetPosition });
+        }
+      }
+
+      // 교체된 캐릭터를 빈 자리에 배치
+      if (currentCharId && currentCharId !== characterId) {
+        const emptyIdx = newSlots.findIndex((s) => !s.characterId);
+        if (emptyIdx >= 0) {
+          newSlots[emptyIdx] = { characterId: currentCharId, position: Position.FRONT };
+        }
+      }
+
+      gameState.setFormation({
+        slots: newSlots.filter((s) => s.characterId),
+        reserveId: newReserveId,
+        heroType: formation.heroType,
+      });
     }
 
-    gameState.setFormation({
-      slots: newSlots.filter((s) => s.characterId), // 빈 슬롯 제거
-      reserveId: newReserveId,
-      heroType: formation.heroType,
-    });
-
-    // 슬롯이 3개 미만이면 채워야 함
+    // 슬롯이 3개 미만이면 빈 슬롯 채움
     while (gameState.formation.slots.length < 3) {
-      gameState.formation.slots.push({
-        characterId: '',
-        position: Position.FRONT,
-      });
+      gameState.formation.slots.push({ characterId: '', position: Position.FRONT });
     }
 
     const charName = gameState.getCharacter(characterId)?.name ?? '';
     this.selectedRosterCharId = null;
     this.selectedSlotIndex = null;
     this.refreshAll();
-    this.toast.show(`${charName} → ${SLOT_VISUALS[slotIndex].label} 배치 완료!`);
+    this.toast.show(`${charName} → ${sv.label} 배치 완료!`);
   }
 
   private refreshSlots(): void {
     const formation = gameState.formation;
 
+    // 시각적 슬롯(combat)에 formation.slots를 position 기준으로 매핑
+    // SLOT_VISUALS: [BACK, FRONT, FRONT, RESERVE]
+    // formation.slots의 position에 맞는 시각적 슬롯을 찾아 배치
+    const combatVisualIndices = SLOT_VISUALS.map((sv, i) => ({ index: i, ...sv })).filter((sv) => sv.type === 'combat');
+    const reserveVisualIndex = SLOT_VISUALS.findIndex((sv) => sv.type === 'reserve');
+
+    // 먼저 모든 슬롯 초기화
     for (let i = 0; i < SLOT_VISUALS.length; i++) {
       const container = this.slotContainers[i];
       const nameText = container.getData('nameText') as Phaser.GameObjects.Text;
       const statText = container.getData('statText') as Phaser.GameObjects.Text;
       const classText = container.getData('classText') as Phaser.GameObjects.Text;
+      nameText.setText('(empty)');
+      classText.setText('');
+      statText.setText('');
+    }
 
-      let char: CharacterDefinition | undefined;
-      if (i < 3) {
-        const slot = formation.slots[i];
-        if (slot?.characterId) {
-          char = gameState.getCharacter(slot.characterId);
-        }
-      } else {
-        if (formation.reserveId) {
-          char = gameState.getCharacter(formation.reserveId);
-        }
-      }
+    // combat 슬롯: position이 일치하는 시각적 슬롯에 순서대로 배치
+    const usedVisualIndices = new Set<number>();
 
+    for (const slot of formation.slots) {
+      if (!slot.characterId) continue;
+      const char = gameState.getCharacter(slot.characterId);
+      if (!char) continue;
+
+      // 같은 position의 빈 시각적 슬롯 찾기
+      const targetVisual = combatVisualIndices.find(
+        (sv) => sv.position === slot.position && !usedVisualIndices.has(sv.index),
+      );
+      if (!targetVisual) continue;
+
+      usedVisualIndices.add(targetVisual.index);
+      const container = this.slotContainers[targetVisual.index];
+      const nameText = container.getData('nameText') as Phaser.GameObjects.Text;
+      const statText = container.getData('statText') as Phaser.GameObjects.Text;
+      const classText = container.getData('classText') as Phaser.GameObjects.Text;
+      nameText.setText(char.name);
+      classText.setText(char.characterClass.substring(0, 3));
+      const s = char.baseStats;
+      statText.setText(`HP${s.hp} A${s.atk} G${s.grd} S${s.agi}`);
+
+      // 슬롯-캐릭터 매핑 저장 (클릭 시 사용)
+      container.setData('slotFormationIndex', formation.slots.indexOf(slot));
+    }
+
+    // reserve 슬롯
+    if (reserveVisualIndex >= 0 && formation.reserveId) {
+      const char = gameState.getCharacter(formation.reserveId);
       if (char) {
+        const container = this.slotContainers[reserveVisualIndex];
+        const nameText = container.getData('nameText') as Phaser.GameObjects.Text;
+        const statText = container.getData('statText') as Phaser.GameObjects.Text;
+        const classText = container.getData('classText') as Phaser.GameObjects.Text;
         nameText.setText(char.name);
         classText.setText(char.characterClass.substring(0, 3));
         const s = char.baseStats;
         statText.setText(`HP${s.hp} A${s.atk} G${s.grd} S${s.agi}`);
-      } else {
-        nameText.setText('(empty)');
-        classText.setText('');
-        statText.setText('');
       }
     }
   }
