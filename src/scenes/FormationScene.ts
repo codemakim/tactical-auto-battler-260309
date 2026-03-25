@@ -138,7 +138,8 @@ export class FormationScene extends Phaser.Scene {
     for (let i = 0; i < characters.length; i++) {
       const char = characters[i];
       const isAssigned = formationIds.has(char.id);
-      const item = this.createRosterItem(char, isAssigned, 8, startY + i * itemH);
+      const isSelected = char.id === this.selectedRosterCharId;
+      const item = this.createRosterItem(char, isAssigned, isSelected, 8, startY + i * itemH);
       this.rosterPanel.add(item);
       this.rosterItems.push(item);
     }
@@ -147,6 +148,7 @@ export class FormationScene extends Phaser.Scene {
   private createRosterItem(
     char: CharacterDefinition,
     isAssigned: boolean,
+    isSelected: boolean,
     x: number,
     y: number,
   ): Phaser.GameObjects.Container {
@@ -156,10 +158,12 @@ export class FormationScene extends Phaser.Scene {
 
     // 배경
     const bg = this.add.graphics();
-    const bgColor = isAssigned ? 0x1a2a3a : 0x1a1a2e;
+    const bgColor = isSelected ? 0x2a3a4a : isAssigned ? 0x1a2a3a : 0x1a1a2e;
+    const borderColor = isSelected ? 0xffcc00 : isAssigned ? 0x3b82f6 : UITheme.colors.border;
+    const borderWidth = isSelected ? 2 : 1;
     bg.fillStyle(bgColor, 0.9);
     bg.fillRoundedRect(0, 0, w, h, 4);
-    bg.lineStyle(1, isAssigned ? 0x3b82f6 : UITheme.colors.border);
+    bg.lineStyle(borderWidth, borderColor);
     bg.strokeRoundedRect(0, 0, w, h, 4);
     container.add(bg);
 
@@ -211,7 +215,7 @@ export class FormationScene extends Phaser.Scene {
       bg.clear();
       bg.fillStyle(bgColor, 0.9);
       bg.fillRoundedRect(0, 0, w, h, 4);
-      bg.lineStyle(1, isAssigned ? 0x3b82f6 : UITheme.colors.border);
+      bg.lineStyle(borderWidth, borderColor);
       bg.strokeRoundedRect(0, 0, w, h, 4);
     });
 
@@ -224,13 +228,13 @@ export class FormationScene extends Phaser.Scene {
 
   private onRosterClick(char: CharacterDefinition): void {
     this.selectedRosterCharId = char.id;
+    this.selectedActionSlot = null;
+    this.refreshRoster();
     this.updateDetailPanel(char);
 
     // 슬롯이 선택되어 있으면 바로 배치
     if (this.selectedSlotIndex !== null) {
       this.assignToSlot(this.selectedSlotIndex, char.id);
-    } else {
-      this.toast.show(`${char.name} 선택됨 — 배치할 슬롯을 클릭하세요`);
     }
   }
 
@@ -503,11 +507,17 @@ export class FormationScene extends Phaser.Scene {
 
       hitArea.on('pointerdown', () => {
         if (gameState.runState) {
-          this.toast.show('런 중에는 영웅을 변경할 수 없습니다');
+          // 런 중: 변경 불가, 선택된 영웅이면 정보 표시
+          if (ht === gameState.formation.heroType) {
+            this.showHeroDetail(ht);
+          } else {
+            this.toast.show('런 중에는 영웅을 변경할 수 없습니다');
+          }
           return;
         }
         gameState.setHeroType(ht);
         this.refreshHeroSelector();
+        this.showHeroDetail(ht);
       });
 
       container.setData('bg', bg);
@@ -547,6 +557,27 @@ export class FormationScene extends Phaser.Scene {
 
       container.setAlpha(isRun && !isSelected ? 0.5 : 1);
     }
+  }
+
+  private showHeroDetail(heroType: string): void {
+    const def = HERO_DEFINITIONS[heroType];
+    if (!def) return;
+
+    // 캐릭터 선택 해제
+    this.selectedRosterCharId = null;
+    this.selectedActionSlot = null;
+    this.clearCardVisuals();
+
+    const lines = [`${def.name} — ${def.description}`];
+    lines.push('');
+    lines.push('능력 목록:');
+    for (const ability of def.abilities) {
+      const typeTag = ability.abilityType === 'EDIT_ACTION' ? '[편집]' : '[효과]';
+      lines.push(`  ${typeTag} ${ability.name}`);
+      lines.push(`    ${ability.description}`);
+    }
+
+    this.detailContent.setText(lines.join('\n'));
   }
 
   // === 우측 하단: 상세 정보 ===
