@@ -16,9 +16,12 @@ import { UIToast } from '../ui/UIToast';
 import { UIButton } from '../ui/UIButton';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
+import { UICardVisual } from '../ui/UICardVisual';
 import { HeroType, Position, RunStatus } from '../types';
-import type { CharacterDefinition } from '../types';
+import type { CharacterDefinition, SlotDisplayData, CardInstance, RunState } from '../types';
 import { HERO_DEFINITIONS } from '../data/HeroDefinitions';
+import { getSlotDisplayData } from '../systems/FormationCardCalculator';
+import { equipCard, unequipCard, getEquippableCards } from '../core/RunManager';
 
 // 편성 슬롯 시각적 위치
 interface SlotVisual {
@@ -52,6 +55,9 @@ export class FormationScene extends Phaser.Scene {
   private heroButtons: Phaser.GameObjects.Container[] = [];
   private detailPanel!: UIPanel;
   private detailContent!: Phaser.GameObjects.Text;
+  private slotCards: UICardVisual[] = [];
+  private inventoryCards: UICardVisual[] = [];
+  private selectedActionSlot: number | null = null;
   private selectedRosterCharId: string | null = null;
   private selectedSlotIndex: number | null = null;
   private toast!: UIToast;
@@ -63,9 +69,12 @@ export class FormationScene extends Phaser.Scene {
   create(): void {
     this.selectedRosterCharId = null;
     this.selectedSlotIndex = null;
+    this.selectedActionSlot = null;
     this.rosterItems = [];
     this.slotContainers = [];
     this.heroButtons = [];
+    this.slotCards = [];
+    this.inventoryCards = [];
 
     this.drawBackground();
     this.drawTopBar();
@@ -493,12 +502,17 @@ export class FormationScene extends Phaser.Scene {
       container.add(hitArea);
 
       hitArea.on('pointerdown', () => {
+        if (gameState.runState) {
+          this.toast.show('런 중에는 영웅을 변경할 수 없습니다');
+          return;
+        }
         gameState.setHeroType(ht);
         this.refreshHeroSelector();
       });
 
       container.setData('bg', bg);
       container.setData('heroType', ht);
+      container.setData('hitArea', hitArea);
       panel.add(container);
       this.heroButtons.push(container);
     }
@@ -508,6 +522,7 @@ export class FormationScene extends Phaser.Scene {
 
   private refreshHeroSelector(): void {
     const currentHero = gameState.formation.heroType;
+    const isRun = !!gameState.runState;
     const btnW = 125;
     const btnH = 44;
 
@@ -517,10 +532,20 @@ export class FormationScene extends Phaser.Scene {
       const isSelected = ht === currentHero;
 
       bg.clear();
-      bg.fillStyle(isSelected ? 0x2a4a3a : 0x1a1a2e, 0.9);
-      bg.fillRoundedRect(0, 0, btnW, btnH, 4);
-      bg.lineStyle(2, isSelected ? 0x10b981 : UITheme.colors.border);
-      bg.strokeRoundedRect(0, 0, btnW, btnH, 4);
+      if (isRun && !isSelected) {
+        // 런 중 비선택 영웅: 어둡게
+        bg.fillStyle(0x111122, 0.6);
+        bg.fillRoundedRect(0, 0, btnW, btnH, 4);
+        bg.lineStyle(1, 0x333344);
+        bg.strokeRoundedRect(0, 0, btnW, btnH, 4);
+      } else {
+        bg.fillStyle(isSelected ? 0x2a4a3a : 0x1a1a2e, 0.9);
+        bg.fillRoundedRect(0, 0, btnW, btnH, 4);
+        bg.lineStyle(2, isSelected ? 0x10b981 : UITheme.colors.border);
+        bg.strokeRoundedRect(0, 0, btnW, btnH, 4);
+      }
+
+      container.setAlpha(isRun && !isSelected ? 0.5 : 1);
     }
   }
 
@@ -531,7 +556,7 @@ export class FormationScene extends Phaser.Scene {
       x: 830,
       y: 210,
       width: 430,
-      height: 260,
+      height: 440,
       title: '상세 정보',
     });
 
@@ -546,26 +571,149 @@ export class FormationScene extends Phaser.Scene {
 
   private updateDetailPanel(char: CharacterDefinition): void {
     const s = char.baseStats;
-    const slots = char.baseActionSlots
-      .map((slot, i) => {
-        const cond = slot.condition.type;
-        const name = slot.action.name;
-        const effects = slot.action.effects.map((e) => e.type).join('+');
-        return `  ${i + 1}. [${cond}] ${name} (${effects})`;
-      })
-      .join('\n');
+    const isRun = !!gameState.runState;
+    const runState = gameState.runState;
 
+    // 기본 텍스트 (이름 + 스탯)
     const text = [
       `${char.name} — ${char.characterClass}`,
-      ``,
       `HP: ${s.hp}  ATK: ${s.atk}  GRD: ${s.grd}  AGI: ${s.agi}`,
-      `Training: ${char.trainingsUsed}/${char.trainingPotential}`,
-      ``,
-      `Action Slots:`,
-      slots,
     ].join('\n');
-
     this.detailContent.setText(text);
+
+    // 기존 카드 비주얼 정리
+    this.clearCardVisuals();
+
+    // 슬롯 카드 표시
+    const slotData = getSlotDisplayData(char, runState);
+    const cardW = 120;
+    const cardH = 150;
+    const cardGap = 10;
+    const slotStartX = UITheme.panel.padding;
+    const slotStartY = this.detailPanel.contentY + 52;
+
+    for (const slot of slotData) {
+      const cx = slotStartX + slot.slotIndex * (cardW + cardGap);
+
+      const card = new UICardVisual(this, {
+        x: cx,
+        y: slotStartY,
+        width: cardW,
+        height: cardH,
+        action: slot.action,
+        rarity: slot.equippedCard?.rarity,
+        classRestriction: slot.equippedCard?.classRestriction,
+        interactive: isRun,
+        selected: this.selectedActionSlot === slot.slotIndex,
+        onClick: isRun
+          ? () => {
+              this.onActionSlotClick(char, slot);
+            }
+          : undefined,
+      });
+      this.detailPanel.add(card.container);
+      this.slotCards.push(card);
+    }
+
+    // 슬롯 라벨
+    for (let i = 0; i < slotData.length; i++) {
+      const lx = slotStartX + i * (cardW + cardGap) + cardW / 2;
+      const label = this.add
+        .text(lx, slotStartY + cardH + 4, `슬롯 ${i + 1}`, {
+          ...UITheme.font.small,
+          color: this.selectedActionSlot === i ? '#ffcc00' : UITheme.colors.textSecondary,
+        })
+        .setOrigin(0.5, 0);
+      this.detailPanel.add(label);
+    }
+
+    // 런 중이면 인벤토리 표시
+    if (isRun && runState) {
+      this.renderInventory(char, runState, slotStartY + cardH + 24);
+    }
+  }
+
+  private onActionSlotClick(char: CharacterDefinition, slot: SlotDisplayData): void {
+    if (this.selectedActionSlot === slot.slotIndex) {
+      // 같은 슬롯 재클릭: 장착된 카드면 해제
+      if (!slot.isBase && gameState.runState) {
+        const newRunState = unequipCard(gameState.runState, char.id, slot.slotIndex);
+        gameState.setRunState(newRunState);
+        this.selectedActionSlot = null;
+        this.toast.show(`슬롯 ${slot.slotIndex + 1} 카드 해제`);
+      } else {
+        this.selectedActionSlot = null;
+      }
+    } else {
+      this.selectedActionSlot = slot.slotIndex;
+      this.toast.show(`슬롯 ${slot.slotIndex + 1} 선택 — 인벤토리에서 카드를 선택하세요`);
+    }
+    this.updateDetailPanel(char);
+  }
+
+  private onInventoryCardClick(char: CharacterDefinition, card: CardInstance): void {
+    if (this.selectedActionSlot === null || !gameState.runState) return;
+
+    const newRunState = equipCard(gameState.runState, char.id, this.selectedActionSlot, card.instanceId);
+    gameState.setRunState(newRunState);
+    this.toast.show(`${card.action.name} → 슬롯 ${this.selectedActionSlot + 1}`);
+    this.selectedActionSlot = null;
+    this.updateDetailPanel(char);
+  }
+
+  private renderInventory(char: CharacterDefinition, runState: RunState, startY: number): void {
+    const equippable = getEquippableCards(runState, char.id);
+
+    if (equippable.length === 0) {
+      const noCards = this.add.text(UITheme.panel.padding, startY, '장착 가능한 카드 없음', {
+        ...UITheme.font.small,
+        color: UITheme.colors.textDisabled,
+      });
+      this.detailPanel.add(noCards);
+      return;
+    }
+
+    // 인벤토리 라벨
+    const invLabel = this.add.text(UITheme.panel.padding, startY, '인벤토리', {
+      ...UITheme.font.label,
+      color: UITheme.colors.textAccent,
+    });
+    this.detailPanel.add(invLabel);
+
+    const cardW = 90;
+    const cardH = 120;
+    const cardGap = 8;
+    const cols = 4;
+    const invStartY = startY + 20;
+
+    for (let i = 0; i < equippable.length; i++) {
+      const invCard = equippable[i];
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = UITheme.panel.padding + col * (cardW + cardGap);
+      const cy = invStartY + row * (cardH + cardGap);
+
+      const visual = new UICardVisual(this, {
+        x: cx,
+        y: cy,
+        width: cardW,
+        height: cardH,
+        action: invCard.action,
+        rarity: invCard.rarity,
+        classRestriction: invCard.classRestriction,
+        interactive: this.selectedActionSlot !== null,
+        onClick: () => this.onInventoryCardClick(char, invCard),
+      });
+      this.detailPanel.add(visual.container);
+      this.inventoryCards.push(visual);
+    }
+  }
+
+  private clearCardVisuals(): void {
+    for (const card of this.slotCards) card.destroy();
+    this.slotCards = [];
+    for (const card of this.inventoryCards) card.destroy();
+    this.inventoryCards = [];
   }
 
   // === 하단 버튼 ===

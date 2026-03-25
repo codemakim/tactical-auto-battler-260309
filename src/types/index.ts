@@ -567,6 +567,16 @@ export interface StageNodeState {
   status: StageNodeStatus;
 }
 
+// === Slot Display (편성 화면 카드 표시용) ===
+
+export interface SlotDisplayData {
+  slotIndex: number;
+  action: Action;
+  condition: ActionCondition;
+  equippedCard: CardInstance | null; // null이면 기본 액션
+  isBase: boolean;
+}
+
 // === Game Config ===
 
 export interface GameConfig {
