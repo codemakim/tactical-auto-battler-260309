@@ -1,5 +1,5 @@
 /**
- * 편성 화면 카드 표시 데이터 계산 (순수 함수)
+ * 편성 화면 카드 표시 데이터 계산 + 슬롯 순서 변경 (순수 함수)
  */
 
 import type { CharacterDefinition, RunState, SlotDisplayData, CardInstance } from '../types';
@@ -57,4 +57,68 @@ export function getSlotDisplayData(charDef: CharacterDefinition, runState: RunSt
       isBase: false,
     };
   });
+}
+
+/**
+ * 마을 모드: CharacterDefinition의 baseActionSlots 순서 교환
+ *
+ * @returns 새 CharacterDefinition (불변)
+ */
+export function swapBaseActionSlots(charDef: CharacterDefinition, indexA: number, indexB: number): CharacterDefinition {
+  if (indexA === indexB) return charDef;
+  if (indexA < 0 || indexA >= charDef.baseActionSlots.length) return charDef;
+  if (indexB < 0 || indexB >= charDef.baseActionSlots.length) return charDef;
+
+  const newSlots = [...charDef.baseActionSlots];
+  const temp = newSlots[indexA];
+  newSlots[indexA] = newSlots[indexB];
+  newSlots[indexB] = temp;
+
+  return { ...charDef, baseActionSlots: newSlots };
+}
+
+/**
+ * 런 모드: party 내 CharDef의 baseActionSlots + equippedCards 매핑 동시 교환
+ *
+ * @returns 새 RunState (불변)
+ */
+export function swapRunActionSlots(runState: RunState, charDefId: string, indexA: number, indexB: number): RunState {
+  if (indexA === indexB) return runState;
+
+  // party에서 캐릭터 찾기
+  const charIdx = runState.party.findIndex((c) => c.id === charDefId);
+  if (charIdx === -1) return runState;
+
+  const charDef = runState.party[charIdx];
+  if (indexA < 0 || indexA >= charDef.baseActionSlots.length) return runState;
+  if (indexB < 0 || indexB >= charDef.baseActionSlots.length) return runState;
+
+  // baseActionSlots 교환
+  const newSlots = [...charDef.baseActionSlots];
+  const temp = newSlots[indexA];
+  newSlots[indexA] = newSlots[indexB];
+  newSlots[indexB] = temp;
+
+  const newParty = [...runState.party];
+  newParty[charIdx] = { ...charDef, baseActionSlots: newSlots };
+
+  // equippedCards 매핑 교환
+  const charEquipped = runState.equippedCards[charDefId];
+  let newEquippedCards = runState.equippedCards;
+
+  if (charEquipped) {
+    const newCharEquipped = { ...charEquipped };
+    const cardA = newCharEquipped[indexA];
+    const cardB = newCharEquipped[indexB];
+
+    // 둘 다 없으면 변경 불필요
+    delete newCharEquipped[indexA];
+    delete newCharEquipped[indexB];
+    if (cardA) newCharEquipped[indexB] = cardA;
+    if (cardB) newCharEquipped[indexA] = cardB;
+
+    newEquippedCards = { ...runState.equippedCards, [charDefId]: newCharEquipped };
+  }
+
+  return { ...runState, party: newParty, equippedCards: newEquippedCards };
 }

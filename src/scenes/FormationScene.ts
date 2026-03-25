@@ -20,7 +20,7 @@ import { UICardVisual } from '../ui/UICardVisual';
 import { HeroType, Position, RunStatus } from '../types';
 import type { CharacterDefinition, SlotDisplayData, CardInstance, RunState } from '../types';
 import { HERO_DEFINITIONS } from '../data/HeroDefinitions';
-import { getSlotDisplayData } from '../systems/FormationCardCalculator';
+import { getSlotDisplayData, swapBaseActionSlots, swapRunActionSlots } from '../systems/FormationCardCalculator';
 import { equipCard, unequipCard, getEquippableCards } from '../core/RunManager';
 
 // 편성 슬롯 시각적 위치
@@ -615,9 +615,21 @@ export class FormationScene extends Phaser.Scene {
       this.slotCards.push(card);
     }
 
-    // 슬롯 라벨
+    // 슬롯 우선순위 번호 + 라벨
     for (let i = 0; i < slotData.length; i++) {
       const lx = slotStartX + i * (cardW + cardGap) + cardW / 2;
+
+      // 우선순위 번호 (카드 위)
+      const priority = this.add
+        .text(lx, slotStartY - 16, `${'\u2460\u2461\u2462'[i]}`, {
+          fontSize: '16px',
+          fontFamily: UITheme.font.family,
+          color: this.selectedActionSlot === i ? '#ffcc00' : '#aabbcc',
+        })
+        .setOrigin(0.5, 0);
+      this.detailPanel.add(priority);
+
+      // 라벨 (카드 아래)
       const label = this.add
         .text(lx, slotStartY + cardH + 4, `슬롯 ${i + 1}`, {
           ...UITheme.font.small,
@@ -627,9 +639,33 @@ export class FormationScene extends Phaser.Scene {
       this.detailPanel.add(label);
     }
 
+    // 스왑 버튼 (슬롯 사이)
+    for (let i = 0; i < slotData.length - 1; i++) {
+      const bx = slotStartX + (i + 1) * (cardW + cardGap) - cardGap / 2;
+      const by = slotStartY + cardH / 2;
+      const swapIdx = i;
+
+      const swapBtn = this.add
+        .text(bx, by, '⇄', {
+          fontSize: '20px',
+          fontFamily: UITheme.font.family,
+          color: '#aabbcc',
+          backgroundColor: '#1a1a2e',
+          padding: { x: 4, y: 2 },
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+      swapBtn.on('pointerover', () => swapBtn.setColor('#ffcc00'));
+      swapBtn.on('pointerout', () => swapBtn.setColor('#aabbcc'));
+      swapBtn.on('pointerdown', () => this.onSwapSlots(char, swapIdx, swapIdx + 1));
+      this.detailPanel.add(swapBtn);
+    }
+
     // 런 중이면 인벤토리 표시
+    const inventoryY = slotStartY + cardH + 24;
     if (isRun && runState) {
-      this.renderInventory(char, runState, slotStartY + cardH + 24);
+      this.renderInventory(char, runState, inventoryY);
     }
   }
 
@@ -651,6 +687,26 @@ export class FormationScene extends Phaser.Scene {
     this.updateDetailPanel(char);
   }
 
+  private onSwapSlots(char: CharacterDefinition, indexA: number, indexB: number): void {
+    const runState = gameState.runState;
+
+    if (runState) {
+      // 런 모드: runState 내 party + equippedCards 교환
+      const newRunState = swapRunActionSlots(runState, char.id, indexA, indexB);
+      gameState.setRunState(newRunState);
+      // 갱신된 party에서 charDef 다시 가져오기
+      const updatedChar = newRunState.party.find((c) => c.id === char.id) ?? char;
+      this.updateDetailPanel(updatedChar);
+    } else {
+      // 마을 모드: CharacterDefinition 직접 교환
+      const newCharDef = swapBaseActionSlots(char, indexA, indexB);
+      gameState.updateCharacter(newCharDef);
+      this.updateDetailPanel(newCharDef);
+    }
+
+    this.toast.show(`슬롯 ${indexA + 1} ⇄ 슬롯 ${indexB + 1}`);
+  }
+
   private onInventoryCardClick(char: CharacterDefinition, card: CardInstance): void {
     if (this.selectedActionSlot === null || !gameState.runState) return;
 
@@ -664,21 +720,21 @@ export class FormationScene extends Phaser.Scene {
   private renderInventory(char: CharacterDefinition, runState: RunState, startY: number): void {
     const equippable = getEquippableCards(runState, char.id);
 
+    // 인벤토리 라벨 (항상 표시)
+    const invLabel = this.add.text(UITheme.panel.padding, startY, '인벤토리', {
+      ...UITheme.font.label,
+      color: UITheme.colors.textAccent,
+    });
+    this.detailPanel.add(invLabel);
+
     if (equippable.length === 0) {
-      const noCards = this.add.text(UITheme.panel.padding, startY, '장착 가능한 카드 없음', {
+      const noCards = this.add.text(UITheme.panel.padding, startY + 22, '장착 가능한 카드 없음', {
         ...UITheme.font.small,
         color: UITheme.colors.textDisabled,
       });
       this.detailPanel.add(noCards);
       return;
     }
-
-    // 인벤토리 라벨
-    const invLabel = this.add.text(UITheme.panel.padding, startY, '인벤토리', {
-      ...UITheme.font.label,
-      color: UITheme.colors.textAccent,
-    });
-    this.detailPanel.add(invLabel);
 
     const cardW = 90;
     const cardH = 120;

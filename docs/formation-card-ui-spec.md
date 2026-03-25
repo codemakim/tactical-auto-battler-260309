@@ -79,12 +79,26 @@
 - 장착된 카드: 레어리티 색상 테두리
 - 기본 액션: 회색 테두리 + "기본" 라벨
 
-### §3.3 슬롯 인터랙션 (런 중만)
+### §3.3 슬롯 인터랙션
+
+#### §3.3.1 카드 장착/해제 (런 중만)
 
 - **슬롯 클릭**: 해당 슬롯 선택 상태 (금색 테두리 하이라이트)
   → 인벤토리에서 카드 클릭하면 해당 슬롯에 장착
-- **장착된 카드 슬롯 우클릭 또는 해제 버튼**: 카드 해제 → 기본 액션 복원
-- 마을(런 없음): 클릭 불가, 시각적 표시만
+- **장착된 카드 슬롯 재클릭**: 카드 해제 → 기본 액션 복원
+- 마을(런 없음): 장착/해제 불가, 시각적 표시만
+
+#### §3.3.2 슬롯 순서 변경 (마을 + 런 공통)
+
+action-card-spec §2에 따라 슬롯은 평가 순서가 중요하다.
+사용자가 슬롯 순서를 변경할 수 있어야 한다.
+
+- 각 슬롯 카드 사이에 **◀▶ 스왑 버튼** 표시
+  - 슬롯 1~2 사이: `[1] ⇄ [2] ⇄ [3]`
+  - 클릭 시 인접 두 슬롯의 내용을 교환
+- 마을(런 없음): baseActionSlots 순서 변경 → CharacterDefinition에 반영
+- 런 중: equippedCards 매핑 + baseActionSlots 순서 동시 변경 → RunState에 반영
+- 순서 라벨: 각 슬롯 위에 `①` `②` `③` 표시하여 우선순위 시각화
 
 ### §3.4 인벤토리 영역 (런 중만)
 
@@ -118,10 +132,28 @@
 - `getEquippableCards(runState, charDefId)` → CardInstance[]
 - `getEffectiveActionSlots(runState, charDefId)` → ActionSlot[]
 
-### §5.2 신규 순수 함수
+### §5.2 슬롯 순서 변경 함수
 
 ```typescript
-// 카드 렌더링 데이터 계산
+// 마을 모드: CharacterDefinition의 baseActionSlots 순서 교환
+function swapBaseActionSlots(
+  charDef: CharacterDefinition,
+  indexA: number,
+  indexB: number,
+): CharacterDefinition
+
+// 런 모드: baseActionSlots + equippedCards 매핑 동시 교환
+function swapRunActionSlots(
+  runState: RunState,
+  charDefId: string,
+  indexA: number,
+  indexB: number,
+): RunState
+```
+
+### §5.3 카드 렌더링 데이터 계산
+
+```typescript
 interface SlotDisplayData {
   slotIndex: number;
   action: Action;

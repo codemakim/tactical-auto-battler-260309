@@ -142,6 +142,14 @@ export class GameStateManager {
     this.state.characters.push(character);
   }
 
+  /** 캐릭터 정보 갱신 (ID 기준 교체) */
+  updateCharacter(charDef: CharacterDefinition): void {
+    const idx = this.state.characters.findIndex((c) => c.id === charDef.id);
+    if (idx >= 0) {
+      this.state.characters[idx] = charDef;
+    }
+  }
+
   setFormation(formation: FormationData): void {
     this.state.formation = formation;
   }
