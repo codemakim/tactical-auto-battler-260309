@@ -22,6 +22,8 @@ import { createStageBattleState } from '../core/RunManager';
 import { Team, Position, BattlePhase, AbilityType, Difficulty, RunStatus, HeroButtonState } from '../types';
 import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
 import { calculateBattleResult } from '../systems/BattleResultCalculator';
+import { extractFloatingTexts } from '../systems/FloatingTextCalculator';
+import { UIFloatingText } from '../ui/UIFloatingText';
 import { processDefeat } from '../core/RunManager';
 
 // 유닛 시각 위치 계산용 상수
@@ -637,56 +639,50 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private processEvents(events: BattleEvent[]): void {
-    // 가장 마지막 의미있는 이벤트를 토스트로 표시
-    let toastMsg = '';
+    // 플로팅 텍스트: 전투 수치 이벤트
+    const floatingTexts = extractFloatingTexts(events);
+    for (const ft of floatingTexts) {
+      const visual = this.unitVisuals.get(ft.targetUnitId);
+      if (visual) {
+        new UIFloatingText(this, visual.container.x, visual.container.y - UNIT_H / 2 - 30, {
+          type: ft.type,
+          value: ft.value,
+          label: ft.label,
+        });
+      }
+    }
 
+    // 사망 유닛 페이드아웃 처리
+    for (const ev of events) {
+      if (ev.type === 'UNIT_DIED' && ev.targetId) {
+        const visual = this.unitVisuals.get(ev.targetId);
+        if (visual) {
+          this.tweens.add({
+            targets: visual.container,
+            alpha: 0.3,
+            duration: 300,
+          });
+        }
+      }
+    }
+
+    // 토스트: 전역 정보만
+    let toastMsg = '';
     for (const ev of events) {
       switch (ev.type) {
         case 'ROUND_START':
           toastMsg = `라운드 ${ev.round} 시작`;
           break;
-        case 'ACTION_EXECUTED': {
-          const actor = this.battleState.units.find((u) => u.id === ev.sourceId);
-          const target = ev.targetId ? this.battleState.units.find((u) => u.id === ev.targetId) : null;
-          if (actor) {
-            const actionName = ev.data?.actionName ?? '행동';
-            toastMsg = target ? `${actor.name} → ${target.name} (${actionName})` : `${actor.name}: ${actionName}`;
-          }
-          break;
-        }
         case 'HERO_INTERVENTION': {
           const abilityName = ev.data?.abilityName ?? '개입';
           toastMsg = `영웅 개입: ${abilityName}`;
-          break;
-        }
-        case 'DAMAGE_DEALT': {
-          const src = this.battleState.units.find((u) => u.id === ev.sourceId);
-          const tgt = this.battleState.units.find((u) => u.id === ev.targetId);
-          if (src && tgt) {
-            toastMsg = `${src.name} → ${tgt.name} ${ev.value ?? 0} 데미지`;
-          }
-          break;
-        }
-        case 'UNIT_DIED': {
-          const unit = this.battleState.units.find((u) => u.id === ev.targetId);
-          if (unit) {
-            toastMsg = `${unit.name} 쓰러졌다!`;
-            const visual = this.unitVisuals.get(unit.id);
-            if (visual) {
-              this.tweens.add({
-                targets: visual.container,
-                alpha: 0.3,
-                duration: 300,
-              });
-            }
-          }
           break;
         }
         case 'OVERSEER_WRATH_WARNING':
           toastMsg = `관리자의 진노! 카운트다운: ${ev.data?.countdown}`;
           break;
         case 'BATTLE_END':
-          break; // onBattleEnd에서 처리
+          break;
       }
     }
 

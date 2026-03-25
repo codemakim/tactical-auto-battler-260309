@@ -11,31 +11,15 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UITheme } from '../ui/UITheme';
 import { UIButton } from '../ui/UIButton';
 import { UIToast } from '../ui/UIToast';
+import { UICardVisual } from '../ui/UICardVisual';
 import { gameState } from '../core/GameState';
 import { calculateRewardPhase, applyRewardSelections } from '../systems/RewardCalculator';
-import { Rarity } from '../types';
 import type { RunState, BattleState, RewardPhaseData, CardInstance, CharacterReward } from '../types';
 
 // 카드 표시 상수
 const CARD_W = 150;
 const CARD_H = 200;
 const CARD_GAP = 16;
-
-// 희귀도별 테두리 색상
-const RARITY_COLOR: Record<string, number> = {
-  [Rarity.COMMON]: 0x888899,
-  [Rarity.RARE]: 0x4a9eff,
-  [Rarity.EPIC]: 0xaa44ff,
-  [Rarity.LEGENDARY]: 0xffcc00,
-};
-
-// 희귀도별 텍스트 색상
-const RARITY_TEXT_COLOR: Record<string, string> = {
-  [Rarity.COMMON]: '#ccccdd',
-  [Rarity.RARE]: '#4a9eff',
-  [Rarity.EPIC]: '#aa44ff',
-  [Rarity.LEGENDARY]: '#ffcc00',
-};
 
 interface SceneData {
   runState: RunState;
@@ -54,7 +38,7 @@ export class RewardScene extends Phaser.Scene {
   private guestDecided: boolean = false;
 
   // UI 참조
-  private cardContainers: Phaser.GameObjects.Container[] = [];
+  private cardVisuals: UICardVisual[] = [];
   private confirmBtn!: UIButton;
   private proceedBtn!: UIButton;
 
@@ -67,7 +51,7 @@ export class RewardScene extends Phaser.Scene {
     this.cardDecided = false;
     this.acceptGuest = true;
     this.guestDecided = false;
-    this.cardContainers = [];
+    this.cardVisuals = [];
 
     // 보상 데이터 계산
     const result = calculateRewardPhase(data.runState, data.battleState);
@@ -155,7 +139,21 @@ export class RewardScene extends Phaser.Scene {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
       const x = startX + i * (CARD_W + CARD_GAP);
-      this.createCardVisual(card, x, cardY, i);
+      const idx = i;
+      const cv = new UICardVisual(this, {
+        x,
+        y: cardY,
+        width: CARD_W,
+        height: CARD_H,
+        action: card.action,
+        rarity: card.rarity,
+        classRestriction: card.classRestriction,
+        interactive: true,
+        onClick: () => {
+          if (!this.cardDecided) this.selectCard(idx);
+        },
+      });
+      this.cardVisuals.push(cv);
     }
 
     // 버튼 영역
@@ -183,99 +181,11 @@ export class RewardScene extends Phaser.Scene {
     });
   }
 
-  private createCardVisual(card: CardInstance, x: number, y: number, index: number): void {
-    const container = this.add.container(x, y);
-    this.cardContainers.push(container);
-
-    const rarityColor = RARITY_COLOR[card.rarity] ?? 0x888899;
-    const rarityTextColor = RARITY_TEXT_COLOR[card.rarity] ?? '#ccccdd';
-
-    // 배경
-    const bg = this.add.graphics();
-    bg.fillStyle(0x1a1a2e, 0.95);
-    bg.fillRoundedRect(0, 0, CARD_W, CARD_H, 6);
-    bg.lineStyle(2, rarityColor);
-    bg.strokeRoundedRect(0, 0, CARD_W, CARD_H, 6);
-    container.add(bg);
-    container.setData('bg', bg);
-
-    let ty = 12;
-
-    // 희귀도
-    this.addCardText(container, CARD_W / 2, ty, card.rarity, {
-      fontSize: '10px',
-      color: rarityTextColor,
-    });
-    ty += 18;
-
-    // 카드 이름
-    this.addCardText(container, CARD_W / 2, ty, card.action.name, {
-      fontSize: '13px',
-      color: '#e0e0e0',
-    });
-    ty += 22;
-
-    // 클래스 제한
-    const classLabel = card.classRestriction ?? '공용';
-    this.addCardText(container, CARD_W / 2, ty, classLabel, {
-      fontSize: '11px',
-      color: card.classRestriction ? '#4a9eff' : '#7788aa',
-    });
-    ty += 24;
-
-    // 효과 요약
-    for (const effect of card.action.effects.slice(0, 3)) {
-      const valueStr = effect.value ? ` x${effect.value}` : '';
-      this.addCardText(container, CARD_W / 2, ty, `${effect.type}${valueStr}`, {
-        fontSize: '11px',
-        color: '#8899aa',
-      });
-      ty += 16;
-    }
-
-    // 클릭 영역
-    const hitArea = this.add.rectangle(CARD_W / 2, CARD_H / 2, CARD_W, CARD_H, 0x000000, 0).setInteractive({
-      useHandCursor: true,
-    });
-    container.add(hitArea);
-
-    hitArea.on('pointerdown', () => {
-      if (this.cardDecided) return;
-      this.selectCard(index);
-    });
-  }
-
-  private addCardText(
-    container: Phaser.GameObjects.Container,
-    x: number,
-    y: number,
-    text: string,
-    style: Partial<Phaser.Types.GameObjects.Text.TextStyle>,
-  ): void {
-    const t = this.add
-      .text(x, y, text, {
-        fontFamily: UITheme.font.family,
-        ...style,
-      })
-      .setOrigin(0.5, 0);
-    container.add(t);
-  }
-
   private selectCard(index: number): void {
     this.selectedCardIndex = index;
 
-    // 모든 카드 테두리 업데이트
-    for (let i = 0; i < this.cardContainers.length; i++) {
-      const container = this.cardContainers[i];
-      const bg = container.getData('bg') as Phaser.GameObjects.Graphics;
-      const card = this.rewardData.cardOptions[i];
-      const rarityColor = RARITY_COLOR[card.rarity] ?? 0x888899;
-
-      bg.clear();
-      bg.fillStyle(i === index ? 0x222244 : 0x1a1a2e, 0.95);
-      bg.fillRoundedRect(0, 0, CARD_W, CARD_H, 6);
-      bg.lineStyle(i === index ? 3 : 2, i === index ? 0xffcc00 : rarityColor);
-      bg.strokeRoundedRect(0, 0, CARD_W, CARD_H, 6);
+    for (let i = 0; i < this.cardVisuals.length; i++) {
+      this.cardVisuals[i].setSelected(i === index);
     }
 
     this.confirmBtn.setDisabled(false);

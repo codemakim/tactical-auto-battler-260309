@@ -408,6 +408,17 @@ export interface BattleEvent {
   data?: Record<string, unknown>;
 }
 
+// === Floating Text (전투 플로팅 숫자) ===
+
+export type FloatingTextType = 'DAMAGE' | 'SHIELD' | 'HEAL' | 'MISS' | 'BUFF' | 'DEBUFF' | 'DEATH';
+
+export interface FloatingTextData {
+  type: FloatingTextType;
+  value?: number;
+  label?: string;
+  targetUnitId: string;
+}
+
 // === Card Instance (런 중 인벤토리 카드) ===
 
 export interface CardInstance {
