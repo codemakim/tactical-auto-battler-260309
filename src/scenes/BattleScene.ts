@@ -25,11 +25,11 @@ import { calculateBattleResult } from '../systems/BattleResultCalculator';
 import { extractFloatingTexts } from '../systems/FloatingTextCalculator';
 import { UIFloatingText } from '../ui/UIFloatingText';
 import { processDefeat } from '../core/RunManager';
+import { calculateBattleLayout } from '../systems/UnitLayoutCalculator';
+import type { LayoutConfig } from '../systems/UnitLayoutCalculator';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
-const BATTLE_Y_START = 200;
-const BATTLE_Y_GAP = 130;
 const UNIT_W = 90;
 const UNIT_H = 90;
 
@@ -39,6 +39,13 @@ const COL_X = {
   PLAYER_FRONT: BATTLE_CENTER_X - 100,
   ENEMY_FRONT: BATTLE_CENTER_X + 100,
   ENEMY_BACK: BATTLE_CENTER_X + 260,
+};
+
+// 균등 배치 레이아웃 설정
+const LAYOUT_CONFIG: LayoutConfig = {
+  columns: COL_X,
+  yMin: 140,
+  yMax: 560,
 };
 
 // 턴 큐 상수
@@ -287,22 +294,12 @@ export class BattleScene extends Phaser.Scene {
   // === 유닛 시각화 ===
 
   private createUnitVisuals(): void {
-    const allUnits = this.battleState.units;
+    const positions = calculateBattleLayout(this.battleState.units, LAYOUT_CONFIG);
 
-    // 각 팀/포지션별로 유닛 그룹화
-    const groups = {
-      PLAYER_FRONT: allUnits.filter((u) => u.team === Team.PLAYER && u.position === Position.FRONT),
-      PLAYER_BACK: allUnits.filter((u) => u.team === Team.PLAYER && u.position === Position.BACK),
-      ENEMY_FRONT: allUnits.filter((u) => u.team === Team.ENEMY && u.position === Position.FRONT),
-      ENEMY_BACK: allUnits.filter((u) => u.team === Team.ENEMY && u.position === Position.BACK),
-    };
-
-    for (const [groupKey, units] of Object.entries(groups)) {
-      const colX = COL_X[groupKey as keyof typeof COL_X];
-      for (let i = 0; i < units.length; i++) {
-        const unit = units[i];
-        const y = BATTLE_Y_START + i * BATTLE_Y_GAP;
-        this.createUnitVisual(unit, colX, y);
+    for (const pos of positions) {
+      const unit = this.battleState.units.find((u) => u.id === pos.unitId);
+      if (unit) {
+        this.createUnitVisual(unit, pos.x, pos.y);
       }
     }
   }
@@ -419,20 +416,25 @@ export class BattleScene extends Phaser.Scene {
   private updateAllUnitVisuals(): void {
     for (const unit of this.battleState.units) {
       this.updateUnitVisual(unit);
+    }
 
-      // 포지션 변경 시 위치 업데이트
-      const visual = this.unitVisuals.get(unit.id);
-      if (visual && unit.isAlive) {
-        const groupKey = `${unit.team}_${unit.position}` as keyof typeof COL_X;
-        const colX = COL_X[groupKey];
-        if (colX && visual.container.x !== colX) {
-          this.tweens.add({
-            targets: visual.container,
-            x: colX,
-            duration: 300,
-            ease: 'Power2',
-          });
-        }
+    // 균등 배치 재계산 + tween 이동
+    const positions = calculateBattleLayout(this.battleState.units, LAYOUT_CONFIG);
+    for (const pos of positions) {
+      const visual = this.unitVisuals.get(pos.unitId);
+      if (!visual) continue;
+
+      const dx = Math.abs(visual.container.x - pos.x);
+      const dy = Math.abs(visual.container.y - pos.y);
+
+      if (dx > 1 || dy > 1) {
+        this.tweens.add({
+          targets: visual.container,
+          x: pos.x,
+          y: pos.y,
+          duration: 300,
+          ease: 'Power2',
+        });
       }
     }
 
