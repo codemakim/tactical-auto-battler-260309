@@ -40,7 +40,6 @@ export class RewardScene extends Phaser.Scene {
   // UI 참조
   private cardVisuals: UICardVisual[] = [];
   private confirmBtn!: UIButton;
-  private proceedBtn!: UIButton;
 
   constructor() {
     super({ key: 'RewardScene' });
@@ -70,8 +69,7 @@ export class RewardScene extends Phaser.Scene {
       this.guestDecided = true;
     }
 
-    this.drawProceedButton();
-    this.updateProceedButton();
+    this.checkAutoTransition();
   }
 
   // ── 배경 ──
@@ -197,7 +195,7 @@ export class RewardScene extends Phaser.Scene {
     this.cardDecided = true;
     this.confirmBtn.setDisabled(true);
     this.toast.show(`카드 획득: ${this.rewardData.cardOptions[this.selectedCardIndex].action.name}`);
-    this.updateProceedButton();
+    this.checkAutoTransition();
   }
 
   private onSkipCard(): void {
@@ -205,7 +203,7 @@ export class RewardScene extends Phaser.Scene {
     this.cardDecided = true;
     this.confirmBtn.setDisabled(true);
     this.toast.show('카드 건너뛰기');
-    this.updateProceedButton();
+    this.checkAutoTransition();
   }
 
   // ── 게스트 멤버 ──
@@ -275,37 +273,23 @@ export class RewardScene extends Phaser.Scene {
     this.acceptGuest = true;
     this.guestDecided = true;
     this.toast.show(`${this.rewardData.guestReward!.character.name} 영입!`);
-    this.updateProceedButton();
+    this.checkAutoTransition();
   }
 
   private onRejectGuest(): void {
     this.acceptGuest = false;
     this.guestDecided = true;
     this.toast.show('객원 멤버를 거절했습니다');
-    this.updateProceedButton();
+    this.checkAutoTransition();
   }
 
-  // ── 진행 버튼 ──
+  // ── 자동 전환 ──
 
-  private drawProceedButton(): void {
-    const label = this.rewardData.isLastStage ? '런 완료!' : '다음 스테이지 →';
-    const btnY = GAME_HEIGHT - 70;
+  private checkAutoTransition(): void {
+    if (!this.cardDecided || !this.guestDecided) return;
 
-    this.proceedBtn = new UIButton(this, {
-      x: GAME_WIDTH / 2 - 100,
-      y: btnY,
-      width: 200,
-      height: 48,
-      label,
-      style: 'primary',
-      disabled: true,
-      onClick: () => this.onProceed(),
-    });
-  }
-
-  private updateProceedButton(): void {
-    const ready = this.cardDecided && this.guestDecided;
-    this.proceedBtn.setDisabled(!ready);
+    // 모든 선택 완료 → 짧은 딜레이 후 자동 전환
+    this.time.delayedCall(800, () => this.onProceed());
   }
 
   private onProceed(): void {

@@ -57,6 +57,7 @@ export class FormationScene extends Phaser.Scene {
   private detailContent!: Phaser.GameObjects.Text;
   private slotCards: UICardVisual[] = [];
   private inventoryCards: UICardVisual[] = [];
+  private detailDynamic: Phaser.GameObjects.GameObject[] = [];
   private selectedActionSlot: number | null = null;
   private selectedRosterCharId: string | null = null;
   private selectedSlotIndex: number | null = null;
@@ -566,7 +567,7 @@ export class FormationScene extends Phaser.Scene {
     // 캐릭터 선택 해제
     this.selectedRosterCharId = null;
     this.selectedActionSlot = null;
-    this.clearCardVisuals();
+    this.clearDetailDynamic();
 
     const lines = [`${def.name} — ${def.description}`];
     lines.push('');
@@ -613,7 +614,7 @@ export class FormationScene extends Phaser.Scene {
     this.detailContent.setText(text);
 
     // 기존 카드 비주얼 정리
-    this.clearCardVisuals();
+    this.clearDetailDynamic();
 
     // 슬롯 카드 표시
     const slotData = getSlotDisplayData(char, runState);
@@ -659,6 +660,7 @@ export class FormationScene extends Phaser.Scene {
         })
         .setOrigin(0.5, 0);
       this.detailPanel.add(priority);
+      this.detailDynamic.push(priority);
 
       // 라벨 (카드 아래)
       const label = this.add
@@ -668,6 +670,7 @@ export class FormationScene extends Phaser.Scene {
         })
         .setOrigin(0.5, 0);
       this.detailPanel.add(label);
+      this.detailDynamic.push(label);
     }
 
     // 스왑 버튼 (슬롯 사이)
@@ -691,6 +694,7 @@ export class FormationScene extends Phaser.Scene {
       swapBtn.on('pointerout', () => swapBtn.setColor('#aabbcc'));
       swapBtn.on('pointerdown', () => this.onSwapSlots(char, swapIdx, swapIdx + 1));
       this.detailPanel.add(swapBtn);
+      this.detailDynamic.push(swapBtn);
     }
 
     // 런 중이면 인벤토리 표시
@@ -757,6 +761,7 @@ export class FormationScene extends Phaser.Scene {
       color: UITheme.colors.textAccent,
     });
     this.detailPanel.add(invLabel);
+    this.detailDynamic.push(invLabel);
 
     if (equippable.length === 0) {
       const noCards = this.add.text(UITheme.panel.padding, startY + 22, '장착 가능한 카드 없음', {
@@ -764,6 +769,7 @@ export class FormationScene extends Phaser.Scene {
         color: UITheme.colors.textDisabled,
       });
       this.detailPanel.add(noCards);
+      this.detailDynamic.push(noCards);
       return;
     }
 
@@ -796,11 +802,13 @@ export class FormationScene extends Phaser.Scene {
     }
   }
 
-  private clearCardVisuals(): void {
+  private clearDetailDynamic(): void {
     for (const card of this.slotCards) card.destroy();
     this.slotCards = [];
     for (const card of this.inventoryCards) card.destroy();
     this.inventoryCards = [];
+    for (const obj of this.detailDynamic) obj.destroy();
+    this.detailDynamic = [];
   }
 
   // === 하단 버튼 ===
