@@ -405,10 +405,8 @@ export class BattleScene extends Phaser.Scene {
       visual.shieldBar.fillRect(-barW / 2, UNIT_H / 2 + 1, barW * shieldRatio, 3);
     }
 
-    // 사망 처리
+    // 사망 유닛: tween에서 처리하므로 여기선 배지만 숨김
     if (!unit.isAlive) {
-      visual.container.setAlpha(0.3);
-      visual.nameText.setColor('#666666');
       visual.turnBadge.setVisible(false);
     }
   }
@@ -654,15 +652,20 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
-    // 사망 유닛 페이드아웃 처리
+    // 사망 유닛: 페이드아웃 → 축소 → 숨김
     for (const ev of events) {
       if (ev.type === 'UNIT_DIED' && ev.targetId) {
         const visual = this.unitVisuals.get(ev.targetId);
         if (visual) {
           this.tweens.add({
             targets: visual.container,
-            alpha: 0.3,
-            duration: 300,
+            alpha: 0,
+            scale: 0.3,
+            duration: 500,
+            ease: 'Power2',
+            onComplete: () => {
+              visual.container.setVisible(false);
+            },
           });
         }
       }
