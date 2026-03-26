@@ -1000,6 +1000,15 @@ export class BattleScene extends Phaser.Scene {
   private onBattleEnd(): void {
     this.stopAutoPlay();
 
+    // 리플레이 데이터를 런 기록에 저장
+    const replayForStorage: ReplaySessionData = {
+      snapshots: this.tickSnapshots,
+      totalRounds: this.battleState.round,
+      winner: this.battleState.winner,
+    };
+    const stageForReplay = gameState.runState?.currentStage ?? 1;
+    gameState.addBattleReplay(stageForReplay, replayForStorage);
+
     const runState = this.getRunState();
     const result = calculateBattleResult(this.battleState, runState);
 

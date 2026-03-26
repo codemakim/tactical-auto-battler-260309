@@ -75,13 +75,15 @@ export class ReplayScene extends Phaser.Scene {
   private roundBtnContainer!: Phaser.GameObjects.Container;
   private autoTimer?: Phaser.Time.TimerEvent;
   private replayData!: ReplaySessionData;
+  private returnScene: string = 'TownScene';
 
   constructor() {
     super({ key: 'ReplayScene' });
   }
 
-  create(data: { replayData: ReplaySessionData }): void {
+  create(data: { replayData: ReplaySessionData; returnScene?: string }): void {
     this.replayData = data.replayData;
+    this.returnScene = data.returnScene ?? 'TownScene';
     this.unitVisuals = new Map();
     this.replayState = createReplayState(this.replayData.snapshots);
 
@@ -154,7 +156,7 @@ export class ReplayScene extends Phaser.Scene {
       style: 'secondary',
       onClick: () => {
         this.stopAutoPlay();
-        this.scene.start('TownScene');
+        this.scene.start(this.returnScene);
       },
     });
   }

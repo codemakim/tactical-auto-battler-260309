@@ -3,7 +3,7 @@
  * Town 중심의 영속 데이터를 메모리에 유지.
  * 향후 LocalStorage/IndexedDB 저장으로 확장.
  */
-import type { CharacterDefinition, HeroType, Position, RunState } from '../types';
+import type { CharacterDefinition, HeroType, Position, RunState, BattleReplayEntry, ReplaySessionData } from '../types';
 import { CharacterClass, HeroType as HT } from '../types';
 import { createCharacterDef } from '../entities/UnitFactory';
 
@@ -35,6 +35,8 @@ export interface GameStateData {
   presets: FormationPreset[];
   /** 진행 중인 런 상태 (런 밖이면 undefined) */
   runState?: RunState;
+  /** 런 중 전투 리플레이 기록 */
+  battleReplays: BattleReplayEntry[];
 }
 
 /** 초기 스타터 캐릭터 생성 — 고정 testActionSlots 사용 (일관된 초기 경험 보장) */
@@ -75,6 +77,7 @@ export class GameStateManager {
       maxCharacterSlots: 8,
       formation: createDefaultFormation(characters),
       presets: [],
+      battleReplays: [],
     };
   }
 
@@ -102,6 +105,10 @@ export class GameStateManager {
 
   get runState(): RunState | undefined {
     return this.state.runState;
+  }
+
+  get battleReplays(): BattleReplayEntry[] {
+    return this.state.battleReplays;
   }
 
   /** ID로 캐릭터 찾기 */
@@ -136,6 +143,14 @@ export class GameStateManager {
 
   setRunState(runState: RunState | undefined): void {
     this.state.runState = runState;
+    // 런 종료 시 리플레이 기록 클리어
+    if (!runState) {
+      this.state.battleReplays = [];
+    }
+  }
+
+  addBattleReplay(stage: number, replayData: ReplaySessionData): void {
+    this.state.battleReplays.push({ stage, replayData });
   }
 
   addCharacter(character: CharacterDefinition): void {
@@ -202,6 +217,7 @@ export class GameStateManager {
       maxCharacterSlots: 8,
       formation: createDefaultFormation(characters),
       presets: [],
+      battleReplays: [],
     };
   }
 }

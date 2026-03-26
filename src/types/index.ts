@@ -610,6 +610,12 @@ export interface ReplaySessionData {
   winner: Team | null;
 }
 
+/** 런 중 전투 리플레이 기록 항목 */
+export interface BattleReplayEntry {
+  stage: number;
+  replayData: ReplaySessionData;
+}
+
 // === Game Config ===
 
 export interface GameConfig {

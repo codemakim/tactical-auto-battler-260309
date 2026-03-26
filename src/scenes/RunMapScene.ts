@@ -10,7 +10,7 @@ import { UIButton } from '../ui/UIButton';
 import { gameState } from '../core/GameState';
 import { calculateStageNodes } from '../systems/RunMapCalculator';
 import { StageNodeStatus, RunStatus } from '../types';
-import type { StageNodeState } from '../types';
+import type { StageNodeState, BattleReplayEntry } from '../types';
 
 // 노드 시각 상수
 const NODE_RADIUS = 28;
@@ -202,6 +202,22 @@ export class RunMapScene extends Phaser.Scene {
         this.showForfeitConfirm();
       },
     });
+
+    // 리플레이 (전투 기록이 있을 때만 활성)
+    const replays = gameState.battleReplays;
+    if (replays.length > 0) {
+      new UIButton(this, {
+        x: GAME_WIDTH / 2 - 70,
+        y: btnY + btnH + 16,
+        width: 140,
+        height: 40,
+        label: `리플레이 (${replays.length})`,
+        style: 'secondary',
+        onClick: () => {
+          this.showReplayList();
+        },
+      });
+    }
   }
 
   private showForfeitConfirm(): void {
@@ -281,5 +297,84 @@ export class RunMapScene extends Phaser.Scene {
       },
     });
     cancelBtn.container.setDepth(102);
+  }
+
+  private showReplayList(): void {
+    const replays = gameState.battleReplays;
+    if (replays.length === 0) return;
+
+    // 딤 배경
+    const dim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
+      .setInteractive()
+      .setDepth(100);
+
+    // 패널
+    const panelW = 400;
+    const panelH = 80 + replays.length * 56 + 60;
+    const px = (GAME_WIDTH - panelW) / 2;
+    const py = (GAME_HEIGHT - panelH) / 2;
+
+    const bg = this.add.graphics().setDepth(101);
+    bg.fillStyle(UITheme.colors.bgPanel, 0.95);
+    bg.fillRoundedRect(px, py, panelW, panelH, 8);
+    bg.lineStyle(2, UITheme.colors.border);
+    bg.strokeRoundedRect(px, py, panelW, panelH, 8);
+
+    const title = this.add
+      .text(GAME_WIDTH / 2, py + 24, '전투 리플레이', {
+        ...UITheme.font.heading,
+      })
+      .setOrigin(0.5)
+      .setDepth(102);
+
+    // 스테이지 버튼 목록
+    const stageButtons: UIButton[] = [];
+    for (let i = 0; i < replays.length; i++) {
+      const entry = replays[i];
+      const winLabel = entry.replayData.winner === 'PLAYER' ? '승리' : '패배';
+      const roundLabel = `${entry.replayData.totalRounds}R`;
+      const btn = new UIButton(this, {
+        x: px + 40,
+        y: py + 64 + i * 56,
+        width: panelW - 80,
+        height: 44,
+        label: `Stage ${entry.stage}  —  ${winLabel} (${roundLabel})`,
+        style: 'secondary',
+        onClick: () => {
+          cleanup();
+          this.scene.start('ReplayScene', {
+            replayData: entry.replayData,
+            returnScene: 'RunMapScene',
+          });
+        },
+      });
+      btn.container.setDepth(102);
+      stageButtons.push(btn);
+    }
+
+    // 닫기 버튼
+    const closeBtn = new UIButton(this, {
+      x: GAME_WIDTH / 2 - 60,
+      y: py + panelH - 50,
+      width: 120,
+      height: 40,
+      label: '닫기',
+      style: 'secondary',
+      onClick: () => {
+        cleanup();
+      },
+    });
+    closeBtn.container.setDepth(102);
+
+    const cleanup = () => {
+      dim.destroy();
+      bg.destroy();
+      title.destroy();
+      closeBtn.container.destroy();
+      for (const btn of stageButtons) {
+        btn.container.destroy();
+      }
+    };
   }
 }
