@@ -27,6 +27,8 @@ import { UIFloatingText } from '../ui/UIFloatingText';
 import { processDefeat } from '../core/RunManager';
 import { calculateBattleLayout } from '../systems/UnitLayoutCalculator';
 import type { LayoutConfig } from '../systems/UnitLayoutCalculator';
+import { captureTickSnapshot } from '../systems/ReplaySnapshotCollector';
+import type { TickSnapshot, ReplaySessionData } from '../types';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -81,6 +83,7 @@ export class BattleScene extends Phaser.Scene {
   private pendingAbility?: HeroAbility;
   private interventionPaused: boolean = false;
   private wasAutoPlaying: boolean = false;
+  private tickSnapshots: TickSnapshot[] = [];
 
   constructor() {
     super({ key: 'BattleScene' });
@@ -105,7 +108,10 @@ export class BattleScene extends Phaser.Scene {
     this.toast = new UIToast(this, { y: GAME_HEIGHT - 140, duration: 1500 });
 
     // 첫 라운드 시작 (ROUND_START → TURN_START까지 진행)
+    this.tickSnapshots = [];
     this.advanceToFirstTurn();
+    // 틱 0: 첫 유닛 행동 전 초기 상태
+    this.tickSnapshots.push(captureTickSnapshot(this.battleState, 0, []));
     this.roundText.setText(`Round ${this.battleState.round}`);
     this.updateAllUnitVisuals();
     this.refreshTurnQueue();
@@ -621,8 +627,11 @@ export class BattleScene extends Phaser.Scene {
       if (this.battleState.phase === BattlePhase.BATTLE_END) break;
     }
 
-    // 새 이벤트 처리
+    // 새 이벤트 처리 + 스냅샷 캡처
     const newEvents = this.battleState.events.slice(prevEventCount);
+    if (newEvents.length > 0) {
+      this.tickSnapshots.push(captureTickSnapshot(this.battleState, this.tickSnapshots.length, newEvents));
+    }
     this.processEvents(newEvents);
 
     // UI 갱신
@@ -1198,5 +1207,24 @@ export class BattleScene extends Phaser.Scene {
         },
       }).container.setDepth(103);
     }
+
+    // ── 리플레이 버튼 (공통) ──
+    const replayBtnW = 120;
+    new UIButton(this, {
+      x: panelX + panelW - replayBtnW - 16,
+      y: btnY,
+      width: replayBtnW,
+      height: btnH,
+      label: '리플레이',
+      style: 'secondary',
+      onClick: () => {
+        const replayData: ReplaySessionData = {
+          snapshots: this.tickSnapshots,
+          totalRounds: this.battleState.round,
+          winner: this.battleState.winner,
+        };
+        this.scene.start('ReplayScene', { replayData });
+      },
+    }).container.setDepth(103);
   }
 }

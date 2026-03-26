@@ -9,6 +9,7 @@ import { BattleScene } from './scenes/BattleScene';
 import { RewardScene } from './scenes/RewardScene';
 import { RunMapScene } from './scenes/RunMapScene';
 import { RunResultScene } from './scenes/RunResultScene';
+import { ReplayScene } from './scenes/ReplayScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   ...phaserConfig,
@@ -22,6 +23,7 @@ const config: Phaser.Types.Core.GameConfig = {
     BattleScene,
     RewardScene,
     RunResultScene,
+    ReplayScene,
   ],
 };
 

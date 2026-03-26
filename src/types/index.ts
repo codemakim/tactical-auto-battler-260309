@@ -588,6 +588,28 @@ export interface SlotDisplayData {
   isBase: boolean;
 }
 
+// === Replay (리플레이) ===
+
+/** 매 틱(유닛 1행동)마다 캡처되는 전투 상태 스냅샷 */
+export interface TickSnapshot {
+  tickIndex: number;
+  round: number;
+  turn: number;
+  phase: BattlePhase;
+  units: BattleUnit[];
+  turnOrder: string[];
+  events: BattleEvent[]; // 이 틱에서 발생한 새 이벤트만
+  hero: HeroState;
+  delayedEffects: DelayedEffect[];
+}
+
+/** BattleScene → ReplayScene 전달 데이터 */
+export interface ReplaySessionData {
+  snapshots: TickSnapshot[];
+  totalRounds: number;
+  winner: Team | null;
+}
+
 // === Game Config ===
 
 export interface GameConfig {

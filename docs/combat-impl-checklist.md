@@ -123,8 +123,8 @@
 - [x] 이벤트 시퀀스 기록
 - [x] 스냅샷 기록 함수
 - [x] 이벤트 조회 (인덱스, 라운드)
-- [ ] play / pause / step forward / step backward
-- [ ] jump to round
+- [x] play / pause / step forward / step backward (ReplayScene + ReplayController)
+- [x] jump to round (ReplayScene 라운드 버튼)
 
 ## 승리 조건 (§22)
 
