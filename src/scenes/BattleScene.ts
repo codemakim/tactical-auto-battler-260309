@@ -649,6 +649,7 @@ export class BattleScene extends Phaser.Scene {
 
     if (actorSprite && this.anims.exists('warrior-attack-anim')) {
       this.animating = true;
+      let hitApplied = false;
 
       // 라운드/턴 큐는 즉시 갱신 (누가 행동 중인지 보여주기)
       this.roundText.setText(`Round ${this.battleState.round}`);
@@ -656,13 +657,27 @@ export class BattleScene extends Phaser.Scene {
       this.refreshTurnQueue();
       this.updateHeroBtn();
 
+      // 타격 프레임(프레임 12 ≈ 모션 중간)에서 데미지/효과 표시
+      const HIT_FRAME = 12;
+      const onAnimUpdate = (_anim: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
+        if (!hitApplied && frame.index >= HIT_FRAME) {
+          hitApplied = true;
+          this.processEvents(newEvents);
+          this.updateAllUnitVisuals();
+        }
+      };
+      actorSprite.on('animationupdate', onAnimUpdate);
+
       // 공격 애니메이션 재생
       actorSprite.play('warrior-attack-anim');
       actorSprite.once('animationcomplete', () => {
+        actorSprite.off('animationupdate', onAnimUpdate);
         actorSprite.setFrame(0);
-        // 애니메이션 완료 후 결과 표시
-        this.processEvents(newEvents);
-        this.updateAllUnitVisuals();
+        // 타격이 아직 적용 안 됐으면 (안전장치)
+        if (!hitApplied) {
+          this.processEvents(newEvents);
+          this.updateAllUnitVisuals();
+        }
         this.animating = false;
         this.onStepComplete();
       });
@@ -692,7 +707,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 다음 doStep을 딜레이 후 예약 */
   private scheduleNextStep(): void {
-    this.time.delayedCall(600, () => {
+    this.time.delayedCall(300, () => {
       if (this.autoPlaying && !this.battleState.isFinished && !this.animating) {
         this.doStep();
       }
