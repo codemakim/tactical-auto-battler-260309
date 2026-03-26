@@ -28,9 +28,23 @@ export class BootScene extends Phaser.Scene {
 
     // 배경 이미지
     this.load.image('town-bg', 'src/assets/backgrounds/town-bg.png');
+
+    // 스프라이트시트
+    this.load.spritesheet('warrior-attack', 'src/assets/sprites/warrior-attack.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
   }
 
   create(): void {
+    // 워리어 공격 애니메이션 (프레임 0 = idle, 1~25 = attack)
+    this.anims.create({
+      key: 'warrior-attack-anim',
+      frames: this.anims.generateFrameNumbers('warrior-attack', { start: 1, end: 25 }),
+      frameRate: 18,
+      repeat: 0,
+    });
+
     this.scene.start('MainMenuScene');
   }
 }

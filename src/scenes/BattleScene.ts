@@ -73,7 +73,6 @@ export class BattleScene extends Phaser.Scene {
   private roundText!: Phaser.GameObjects.Text;
   private phaseText!: Phaser.GameObjects.Text;
   private autoPlaying: boolean = false;
-  private autoTimer?: Phaser.Time.TimerEvent;
   private battleLog: string[] = [];
   private heroBtn!: UIButton;
   private heroBtnPulse?: Phaser.Tweens.Tween;
@@ -84,6 +83,7 @@ export class BattleScene extends Phaser.Scene {
   private interventionPaused: boolean = false;
   private wasAutoPlaying: boolean = false;
   private tickSnapshots: TickSnapshot[] = [];
+  private animating: boolean = false;
 
   constructor() {
     super({ key: 'BattleScene' });
@@ -316,20 +316,37 @@ export class BattleScene extends Phaser.Scene {
     const baseColor = isPlayer ? 0x1a2a4a : 0x3a1a1a;
     const borderColor = isPlayer ? 0x3b82f6 : 0xef4444;
 
-    // 유닛 박스
-    const body = this.add.graphics();
-    body.fillStyle(baseColor, 0.9);
-    body.fillRoundedRect(-UNIT_W / 2, -UNIT_H / 2, UNIT_W, UNIT_H, 6);
-    body.lineStyle(2, borderColor, 0.8);
-    body.strokeRoundedRect(-UNIT_W / 2, -UNIT_H / 2, UNIT_W, UNIT_H, 6);
-    container.add(body);
+    // 워리어: 스프라이트 사용, 나머지: 기존 박스
+    const hasSprite = unit.characterClass === 'WARRIOR' && this.textures.exists('warrior-attack');
 
-    // 클래스 약자
-    const classShort = unit.characterClass.substring(0, 3);
-    const classText = this.add
-      .text(0, -18, classShort, { fontSize: '12px', fontFamily: UITheme.font.family, color: '#6688aa' })
-      .setOrigin(0.5);
-    container.add(classText);
+    if (hasSprite) {
+      const sprite = this.add.sprite(0, -8, 'warrior-attack', 0);
+      // 768x448 → 유닛 영역보다 크게 표시 (캐릭터 여백 포함)
+      const scale = (UNIT_W / 768) * 3.6;
+      sprite.setScale(scale);
+      // 적군은 좌우 반전
+      if (!isPlayer) sprite.setFlipX(true);
+      container.add(sprite);
+      // sprite 참조 저장 (애니메이션용)
+      (container as any).__sprite = sprite;
+    } else {
+      // 기존 유닛 박스
+      const body = this.add.graphics();
+      body.fillStyle(baseColor, 0.9);
+      body.fillRoundedRect(-UNIT_W / 2, -UNIT_H / 2, UNIT_W, UNIT_H, 6);
+      body.lineStyle(2, borderColor, 0.8);
+      body.strokeRoundedRect(-UNIT_W / 2, -UNIT_H / 2, UNIT_W, UNIT_H, 6);
+      container.add(body);
+    }
+
+    // 클래스 약자 (스프라이트 없는 유닛만)
+    if (!hasSprite) {
+      const classShort = unit.characterClass.substring(0, 3);
+      const classText = this.add
+        .text(0, -18, classShort, { fontSize: '12px', fontFamily: UITheme.font.family, color: '#6688aa' })
+        .setOrigin(0.5);
+      container.add(classText);
+    }
 
     // 이름
     const nameText = this.add
@@ -602,16 +619,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private doStep(): void {
-    if (this.battleState.isFinished) return;
+    if (this.battleState.isFinished || this.animating) return;
 
     const prevEventCount = this.battleState.events.length;
 
-    // 한 유닛이 행동할 때까지 진행:
-    // ROUND_START/ROUND_END → startRound (→ TURN_START)
-    // TURN_START/TURN_END → executeTurn (→ TURN_END, 한 유닛 행동 완료)
-    // executeTurn은 실행 후 TURN_END를 반환하므로, TURN_START/TURN_END에서
-    // stepBattle 한 번 호출 = 한 유닛 행동.
-    // 단, ROUND_START/ROUND_END에서는 startRound만 하므로 한 번 더 호출 필요.
+    // 한 유닛이 행동할 때까지 엔진 진행
     let safety = 0;
     while (!this.battleState.isFinished && safety < 10) {
       const phaseBefore = this.battleState.phase;
@@ -619,32 +631,82 @@ export class BattleScene extends Phaser.Scene {
       this.battleState = result.state;
       safety++;
 
-      // TURN_START 또는 TURN_END에서 stepBattle 호출 → executeTurn 실행됨 (한 유닛 행동 완료)
       if (phaseBefore === BattlePhase.TURN_START || phaseBefore === BattlePhase.TURN_END) {
         break;
       }
-      // BATTLE_END면 멈춤
       if (this.battleState.phase === BattlePhase.BATTLE_END) break;
     }
 
-    // 새 이벤트 처리 + 스냅샷 캡처
+    // 새 이벤트 + 스냅샷 캡처
     const newEvents = this.battleState.events.slice(prevEventCount);
     if (newEvents.length > 0) {
       this.tickSnapshots.push(captureTickSnapshot(this.battleState, this.tickSnapshots.length, newEvents));
     }
-    this.processEvents(newEvents);
 
-    // UI 갱신
-    this.roundText.setText(`Round ${this.battleState.round}`);
-    this.phaseText.setText(this.battleState.phase);
-    this.updateAllUnitVisuals();
-    this.refreshTurnQueue();
-    this.updateHeroBtn();
+    // 행동 유닛의 공격 애니메이션이 있으면: 애니메이션 → 결과 표시
+    const actionEvent = newEvents.find((e) => e.type === 'ACTION_EXECUTED');
+    const actorSprite = this.getUnitSprite(actionEvent?.sourceId);
 
-    // 전투 종료 체크
+    if (actorSprite && this.anims.exists('warrior-attack-anim')) {
+      this.animating = true;
+
+      // 라운드/턴 큐는 즉시 갱신 (누가 행동 중인지 보여주기)
+      this.roundText.setText(`Round ${this.battleState.round}`);
+      this.phaseText.setText(this.battleState.phase);
+      this.refreshTurnQueue();
+      this.updateHeroBtn();
+
+      // 공격 애니메이션 재생
+      actorSprite.play('warrior-attack-anim');
+      actorSprite.once('animationcomplete', () => {
+        actorSprite.setFrame(0);
+        // 애니메이션 완료 후 결과 표시
+        this.processEvents(newEvents);
+        this.updateAllUnitVisuals();
+        this.animating = false;
+        this.onStepComplete();
+      });
+    } else {
+      // 애니메이션 없음 — 즉시 처리
+      this.processEvents(newEvents);
+      this.roundText.setText(`Round ${this.battleState.round}`);
+      this.phaseText.setText(this.battleState.phase);
+      this.updateAllUnitVisuals();
+      this.refreshTurnQueue();
+      this.updateHeroBtn();
+      this.onStepComplete();
+    }
+  }
+
+  /** 한 스텝(애니메이션 포함) 완료 후 호출 */
+  private onStepComplete(): void {
     if (this.battleState.isFinished) {
       this.onBattleEnd();
+      return;
     }
+    // 자동 재생 중이면 다음 스텝 예약
+    if (this.autoPlaying) {
+      this.scheduleNextStep();
+    }
+  }
+
+  /** 다음 doStep을 딜레이 후 예약 */
+  private scheduleNextStep(): void {
+    this.time.delayedCall(600, () => {
+      if (this.autoPlaying && !this.battleState.isFinished && !this.animating) {
+        this.doStep();
+      }
+    });
+  }
+
+  /** 유닛 ID로 스프라이트 참조 반환 (없으면 undefined) */
+  private getUnitSprite(unitId?: string): Phaser.GameObjects.Sprite | undefined {
+    if (!unitId) return undefined;
+    const unit = this.battleState.units.find((u) => u.id === unitId);
+    if (unit?.characterClass !== 'WARRIOR') return undefined;
+    const visual = this.unitVisuals.get(unitId);
+    if (!visual) return undefined;
+    return (visual.container as any).__sprite as Phaser.GameObjects.Sprite | undefined;
   }
 
   private processEvents(events: BattleEvent[]): void {
@@ -957,25 +1019,12 @@ export class BattleScene extends Phaser.Scene {
   private startAutoPlay(): void {
     if (this.autoPlaying) return;
     this.autoPlaying = true;
-    this.autoTimer = this.time.addEvent({
-      delay: 1200,
-      callback: () => {
-        if (this.battleState.isFinished) {
-          this.stopAutoPlay();
-          return;
-        }
-        this.doStep();
-      },
-      loop: true,
-    });
+    // 첫 스텝 시작 → onStepComplete → scheduleNextStep 체인으로 자동 진행
+    this.doStep();
   }
 
   private stopAutoPlay(): void {
     this.autoPlaying = false;
-    if (this.autoTimer) {
-      this.autoTimer.destroy();
-      this.autoTimer = undefined;
-    }
   }
 
   /** 런 상태 가져오기 (없으면 독립전투용 기본값 생성) */
@@ -1232,7 +1281,20 @@ export class BattleScene extends Phaser.Scene {
           totalRounds: this.battleState.round,
           winner: this.battleState.winner,
         };
-        this.scene.start('ReplayScene', { replayData });
+        // 리플레이 닫기 시 원래 결과 흐름의 다음 씬으로 복귀
+        let returnScene: string;
+        let returnData: Record<string, unknown> | undefined;
+        if (result.victory) {
+          returnScene = 'RewardScene';
+          returnData = { runState: gameState.runState ?? this.getRunState(), battleState: this.battleState };
+        } else if (gameState.runState) {
+          const defeatState = { ...gameState.runState, status: RunStatus.DEFEAT };
+          returnScene = 'RunResultScene';
+          returnData = { runState: defeatState };
+        } else {
+          returnScene = 'TownScene';
+        }
+        this.scene.start('ReplayScene', { replayData, returnScene, returnData });
       },
     }).container.setDepth(103);
   }
