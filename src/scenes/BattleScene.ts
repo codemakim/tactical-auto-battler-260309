@@ -50,6 +50,42 @@ const LAYOUT_CONFIG: LayoutConfig = {
   yMax: 560,
 };
 
+// 클래스별 스프라이트 설정
+interface ClassSpriteConfig {
+  attack: string;
+  attackAnim: string;
+  idleFrame: number;
+  hitFrame: number;
+  scale: number; // UNIT_W 기준 배율
+  idleAfterHit?: boolean; // 피격 후 idle 포즈로 자동 복귀
+}
+const CLASS_SPRITE_MAP: Record<string, ClassSpriteConfig> = {
+  WARRIOR: {
+    attack: 'warrior-attack',
+    attackAnim: 'warrior-attack-anim',
+    idleFrame: 0,
+    hitFrame: 12,
+    scale: 3.6,
+    idleAfterHit: true,
+  },
+  ASSASSIN: { attack: 'assassin-attack', attackAnim: 'assassin-attack-anim', idleFrame: 0, hitFrame: 12, scale: 3.6 },
+  ARCHER: { attack: 'archer-attack', attackAnim: 'archer-attack-anim', idleFrame: 27, hitFrame: 20, scale: 3.8 },
+  GUARDIAN: {
+    attack: 'guardian-attack',
+    attackAnim: 'guardian-attack-anim',
+    idleFrame: 0,
+    hitFrame: 10,
+    scale: 4.6,
+  },
+  CONTROLLER: {
+    attack: 'controller-attack',
+    attackAnim: 'controller-attack-anim',
+    idleFrame: 0,
+    hitFrame: 12,
+    scale: 3.6,
+  },
+};
+
 // 턴 큐 상수
 const QUEUE_Y = 70;
 const QUEUE_ITEM_W = 80;
@@ -316,13 +352,14 @@ export class BattleScene extends Phaser.Scene {
     const baseColor = isPlayer ? 0x1a2a4a : 0x3a1a1a;
     const borderColor = isPlayer ? 0x3b82f6 : 0xef4444;
 
-    // 워리어: 스프라이트 사용, 나머지: 기존 박스
-    const hasSprite = unit.characterClass === 'WARRIOR' && this.textures.exists('warrior-attack');
+    // 스프라이트가 있는 클래스: 스프라이트 사용, 나머지: 기존 박스
+    const spriteInfo = CLASS_SPRITE_MAP[unit.characterClass];
+    const hasSprite = !!spriteInfo && this.textures.exists(spriteInfo.attack);
 
-    if (hasSprite) {
-      const sprite = this.add.sprite(0, -8, 'warrior-attack', 0);
+    if (hasSprite && spriteInfo) {
+      const sprite = this.add.sprite(0, -8, spriteInfo.attack, spriteInfo.idleFrame);
       // 768x448 → 유닛 영역보다 크게 표시 (캐릭터 여백 포함)
-      const scale = (UNIT_W / 768) * 3.6;
+      const scale = (UNIT_W / 768) * spriteInfo.scale;
       sprite.setScale(scale);
       // 적군은 좌우 반전
       if (!isPlayer) sprite.setFlipX(true);
@@ -645,11 +682,17 @@ export class BattleScene extends Phaser.Scene {
 
     // 행동 유닛의 공격 애니메이션이 있으면: 애니메이션 → 결과 표시
     const actionEvent = newEvents.find((e) => e.type === 'ACTION_EXECUTED');
-    const actorSprite = this.getUnitSprite(actionEvent?.sourceId);
+    const actorId = actionEvent?.sourceId;
+    const actorUnit = actorId ? this.battleState.units.find((u) => u.id === actorId) : undefined;
+    const actorSprite = this.getUnitSprite(actorId);
+    const actorSpriteInfo = actorUnit ? CLASS_SPRITE_MAP[actorUnit.characterClass] : undefined;
 
-    if (actorSprite && this.anims.exists('warrior-attack-anim')) {
+    if (actorSprite && actorSpriteInfo && this.anims.exists(actorSpriteInfo.attackAnim)) {
       this.animating = true;
       let hitApplied = false;
+
+      // 기존 애니메이션 정리 후 시작
+      this.resetSpriteToIdle(actorSprite, actorId);
 
       // 라운드/턴 큐는 즉시 갱신 (누가 행동 중인지 보여주기)
       this.roundText.setText(`Round ${this.battleState.round}`);
@@ -657,8 +700,8 @@ export class BattleScene extends Phaser.Scene {
       this.refreshTurnQueue();
       this.updateHeroBtn();
 
-      // 타격 프레임(프레임 12 ≈ 모션 중간)에서 데미지/효과 표시
-      const HIT_FRAME = 12;
+      // 타격 프레임 — 클래스별 타이밍 (전사: 칼 내리치기, 아처: 화살 발사 등)
+      const HIT_FRAME = actorSpriteInfo.hitFrame;
       const onAnimUpdate = (_anim: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
         if (!hitApplied && frame.index >= HIT_FRAME) {
           hitApplied = true;
@@ -669,10 +712,9 @@ export class BattleScene extends Phaser.Scene {
       actorSprite.on('animationupdate', onAnimUpdate);
 
       // 공격 애니메이션 재생
-      actorSprite.play('warrior-attack-anim');
+      actorSprite.play(actorSpriteInfo.attackAnim);
       actorSprite.once('animationcomplete', () => {
-        actorSprite.off('animationupdate', onAnimUpdate);
-        actorSprite.setFrame(0);
+        this.resetSpriteToIdle(actorSprite, actorId);
         // 타격이 아직 적용 안 됐으면 (안전장치)
         if (!hitApplied) {
           this.processEvents(newEvents);
@@ -718,10 +760,21 @@ export class BattleScene extends Phaser.Scene {
   private getUnitSprite(unitId?: string): Phaser.GameObjects.Sprite | undefined {
     if (!unitId) return undefined;
     const unit = this.battleState.units.find((u) => u.id === unitId);
-    if (unit?.characterClass !== 'WARRIOR') return undefined;
+    if (!unit || !CLASS_SPRITE_MAP[unit.characterClass]) return undefined;
     const visual = this.unitVisuals.get(unitId);
     if (!visual) return undefined;
     return (visual.container as any).__sprite as Phaser.GameObjects.Sprite | undefined;
+  }
+
+  /** 스프라이트를 idle 상태(해당 클래스 attack 텍스처 idle 프레임)로 즉시 복귀 */
+  private resetSpriteToIdle(sprite: Phaser.GameObjects.Sprite, unitId?: string): void {
+    sprite.anims.stop();
+    sprite.removeAllListeners('animationcomplete');
+    sprite.removeAllListeners('animationupdate');
+    // 유닛 클래스에 맞는 idle 텍스처로 복귀
+    const unit = unitId ? this.battleState.units.find((u) => u.id === unitId) : undefined;
+    const info = unit ? CLASS_SPRITE_MAP[unit.characterClass] : undefined;
+    sprite.setTexture(info?.attack || 'warrior-attack', info?.idleFrame ?? 0);
   }
 
   private processEvents(events: BattleEvent[]): void {
@@ -735,6 +788,28 @@ export class BattleScene extends Phaser.Scene {
           value: ft.value,
           label: ft.label,
         });
+      }
+    }
+
+    // 피격 유닛: 피격 애니메이션 재생
+    const diedIds = new Set(events.filter((e) => e.type === 'UNIT_DIED').map((e) => e.targetId));
+    for (const ev of events) {
+      if (ev.type === 'DAMAGE_DEALT' && ev.targetId && !diedIds.has(ev.targetId)) {
+        const targetSprite = this.getUnitSprite(ev.targetId);
+        if (targetSprite && this.anims.exists('warrior-hit-anim')) {
+          const targetUnit = this.battleState.units.find((u) => u.id === ev.targetId);
+          const targetConfig = targetUnit ? CLASS_SPRITE_MAP[targetUnit.characterClass] : undefined;
+          // 기존 애니 정리 후 피격 재생
+          this.resetSpriteToIdle(targetSprite, ev.targetId);
+          targetSprite.play('warrior-hit-anim');
+          // 피격 후 idle 복귀가 필요한 클래스
+          if (targetConfig?.idleAfterHit) {
+            const tid = ev.targetId;
+            targetSprite.once('animationcomplete', () => {
+              this.resetSpriteToIdle(targetSprite, tid);
+            });
+          }
+        }
       }
     }
 

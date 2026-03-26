@@ -34,14 +34,74 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 768,
       frameHeight: 448,
     });
+    this.load.spritesheet('warrior-hit', 'src/assets/sprites/warrior-hit.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
+    this.load.spritesheet('assassin-attack', 'src/assets/sprites/assassin-attack.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
+    this.load.spritesheet('archer-attack', 'src/assets/sprites/archer-attack.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
+    this.load.spritesheet('guardian-attack', 'src/assets/sprites/guardian-attack.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
+    this.load.spritesheet('controller-attack', 'src/assets/sprites/controller-attack.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
   }
 
   create(): void {
-    // 워리어 공격 애니메이션 (프레임 0 = idle, 1~25 = attack)
+    // 워리어 공격 애니메이션 (프레임 0 = idle, 1~28 = attack, 29~31은 빈 프레임)
     this.anims.create({
       key: 'warrior-attack-anim',
-      frames: this.anims.generateFrameNumbers('warrior-attack', { start: 1, end: 25 }),
-      frameRate: 18,
+      frames: this.anims.generateFrameNumbers('warrior-attack', { start: 1, end: 28 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 어쌔신 공격 애니메이션 (프레임 0 = idle, 1~28 = attack)
+    this.anims.create({
+      key: 'assassin-attack-anim',
+      frames: this.anims.generateFrameNumbers('assassin-attack', { start: 1, end: 28 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 아처 공격 애니메이션 (프레임 1~27, 0과 28은 미사용, idle=27)
+    this.anims.create({
+      key: 'archer-attack-anim',
+      frames: this.anims.generateFrameNumbers('archer-attack', { start: 1, end: 27 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 컨트롤러 공격 애니메이션 (프레임 0 = idle, 1~28 = attack)
+    this.anims.create({
+      key: 'controller-attack-anim',
+      frames: this.anims.generateFrameNumbers('controller-attack', { start: 1, end: 28 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 가디언 행동 애니메이션 (프레임 0 = idle, 1~20 = casting)
+    this.anims.create({
+      key: 'guardian-attack-anim',
+      frames: this.anims.generateFrameNumbers('guardian-attack', { start: 1, end: 20 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 워리어 피격 애니메이션 (처음 9프레임 스킵, 프레임 9~28)
+    this.anims.create({
+      key: 'warrior-hit-anim',
+      frames: this.anims.generateFrameNumbers('warrior-hit', { start: 9, end: 28 }),
+      frameRate: 20,
       repeat: 0,
     });
 
