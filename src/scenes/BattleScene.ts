@@ -82,7 +82,7 @@ const CLASS_SPRITE_MAP: Record<string, ClassSpriteConfig> = {
     attackAnim: 'controller-attack-anim',
     idleFrame: 0,
     hitFrame: 12,
-    scale: 3.6,
+    scale: 3.8,
   },
 };
 
