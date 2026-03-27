@@ -58,6 +58,8 @@ interface ClassSpriteConfig {
   hitFrame: number;
   scale: number; // UNIT_W 기준 배율
   idleAfterHit?: boolean; // 피격 후 idle 포즈로 자동 복귀
+  hit?: string; // 피격 스프라이트시트 키 (없으면 공용 warrior-hit 사용)
+  hitAnim?: string; // 피격 애니메이션 키
 }
 const CLASS_SPRITE_MAP: Record<string, ClassSpriteConfig> = {
   WARRIOR: {
@@ -68,14 +70,26 @@ const CLASS_SPRITE_MAP: Record<string, ClassSpriteConfig> = {
     scale: 3.6,
     idleAfterHit: true,
   },
-  ASSASSIN: { attack: 'assassin-attack', attackAnim: 'assassin-attack-anim', idleFrame: 0, hitFrame: 12, scale: 3.6 },
-  ARCHER: { attack: 'archer-attack', attackAnim: 'archer-attack-anim', idleFrame: 27, hitFrame: 20, scale: 3.8 },
+  ASSASSIN: { attack: 'assassin-attack', attackAnim: 'assassin-attack-anim', idleFrame: 0, hitFrame: 10, scale: 3.6 },
+  ARCHER: {
+    attack: 'archer-attack',
+    attackAnim: 'archer-attack-anim',
+    idleFrame: 27,
+    hitFrame: 20,
+    scale: 3.8,
+    hit: 'archer-hit',
+    hitAnim: 'archer-hit-anim',
+    idleAfterHit: true,
+  },
   GUARDIAN: {
     attack: 'guardian-attack',
     attackAnim: 'guardian-attack-anim',
     idleFrame: 0,
     hitFrame: 10,
     scale: 4.6,
+    hit: 'guardian-hit',
+    hitAnim: 'guardian-hit-anim',
+    idleAfterHit: true,
   },
   CONTROLLER: {
     attack: 'controller-attack',
@@ -796,18 +810,25 @@ export class BattleScene extends Phaser.Scene {
     for (const ev of events) {
       if (ev.type === 'DAMAGE_DEALT' && ev.targetId && !diedIds.has(ev.targetId)) {
         const targetSprite = this.getUnitSprite(ev.targetId);
-        if (targetSprite && this.anims.exists('warrior-hit-anim')) {
+        if (targetSprite) {
           const targetUnit = this.battleState.units.find((u) => u.id === ev.targetId);
           const targetConfig = targetUnit ? CLASS_SPRITE_MAP[targetUnit.characterClass] : undefined;
-          // 기존 애니 정리 후 피격 재생
-          this.resetSpriteToIdle(targetSprite, ev.targetId);
-          targetSprite.play('warrior-hit-anim');
-          // 피격 후 idle 복귀가 필요한 클래스
-          if (targetConfig?.idleAfterHit) {
-            const tid = ev.targetId;
-            targetSprite.once('animationcomplete', () => {
-              this.resetSpriteToIdle(targetSprite, tid);
-            });
+          // 클래스 전용 피격 애니메이션 또는 공용 warrior-hit
+          const hitAnimKey = targetConfig?.hitAnim || 'warrior-hit-anim';
+          if (this.anims.exists(hitAnimKey)) {
+            // 피격 전용 텍스처 설정 후 재생
+            this.resetSpriteToIdle(targetSprite, ev.targetId);
+            if (targetConfig?.hit) {
+              targetSprite.setTexture(targetConfig.hit, 0);
+            }
+            targetSprite.play(hitAnimKey);
+            // 피격 후 idle(공격 스프라이트 첫 프레임)로 복귀
+            if (targetConfig?.idleAfterHit) {
+              const tid = ev.targetId;
+              targetSprite.once('animationcomplete', () => {
+                this.resetSpriteToIdle(targetSprite, tid);
+              });
+            }
           }
         }
       }

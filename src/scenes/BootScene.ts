@@ -54,6 +54,14 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 768,
       frameHeight: 448,
     });
+    this.load.spritesheet('guardian-hit', 'src/assets/sprites/guardian-hit.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
+    this.load.spritesheet('archer-hit', 'src/assets/sprites/archer-hit.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
   }
 
   create(): void {
@@ -65,10 +73,10 @@ export class BootScene extends Phaser.Scene {
       repeat: 0,
     });
 
-    // 어쌔신 공격 애니메이션 (프레임 0 = idle, 1~28 = attack)
+    // 어쌔신 공격 애니메이션 (프레임 0 = idle, 1~31 = attack)
     this.anims.create({
       key: 'assassin-attack-anim',
-      frames: this.anims.generateFrameNumbers('assassin-attack', { start: 1, end: 28 }),
+      frames: this.anims.generateFrameNumbers('assassin-attack', { start: 1, end: 31 }),
       frameRate: 20,
       repeat: 0,
     });
@@ -101,6 +109,22 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'warrior-hit-anim',
       frames: this.anims.generateFrameNumbers('warrior-hit', { start: 9, end: 28 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 아처 피격 애니메이션 (프레임 0~24, 마지막 줄 3칸 빈 프레임)
+    this.anims.create({
+      key: 'archer-hit-anim',
+      frames: this.anims.generateFrameNumbers('archer-hit', { start: 0, end: 24 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 가디언 피격 애니메이션 (프레임 0~28, 마지막 줄 3칸 빈 프레임)
+    this.anims.create({
+      key: 'guardian-hit-anim',
+      frames: this.anims.generateFrameNumbers('guardian-hit', { start: 0, end: 28 }),
       frameRate: 20,
       repeat: 0,
     });
