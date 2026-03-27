@@ -114,7 +114,6 @@ describe('라운드 종료 - 실드 제거 (§7)', () => {
 
     const state: BattleState = {
       units: [p1, e1],
-      reserve: [],
       hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 6,
@@ -140,7 +139,6 @@ describe('라운드 종료 - 실드 제거 (§7)', () => {
 
     const state: BattleState = {
       units: [p1, e1],
-      reserve: [],
       hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 6,
@@ -165,7 +163,6 @@ describe('라운드 종료 - 실드 제거 (§7)', () => {
 
     const state: BattleState = {
       units: [p1, e1],
-      reserve: [],
       hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
       round: 1,
       turn: 6,

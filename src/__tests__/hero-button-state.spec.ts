@@ -83,7 +83,6 @@ describe('cancelQueuedIntervention', () => {
   function createMinimalBattleState(heroOverrides: Partial<HeroState> = {}): BattleState {
     return {
       units: [],
-      reserve: [],
       hero: createHeroState(heroOverrides),
       round: 1,
       turn: 1,

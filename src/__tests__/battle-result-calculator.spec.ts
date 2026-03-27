@@ -68,7 +68,6 @@ function makeFinishedState(opts: {
 
   return {
     units: [...opts.playerUnits, ...enemyUnits],
-    reserve: [],
     hero: {
       heroType: 'COMMANDER' as any,
       maxInterventionsPerRound: 1,

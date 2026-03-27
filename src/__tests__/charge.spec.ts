@@ -7,7 +7,6 @@ import type { BattleState, ActionSlot } from '../types';
 function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
   return {
     units: [],
-    reserve: [],
     hero: { heroType: 'COMMANDER', interventionsRemaining: 1, maxInterventionsPerRound: 1, abilities: [] },
     round: 1,
     turn: 1,

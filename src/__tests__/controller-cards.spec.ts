@@ -32,7 +32,6 @@ function makeUnit(overrides: Partial<BattleUnit> & { id: string }): BattleUnit {
 function makeState(units: BattleUnit[]): BattleState {
   return {
     units,
-    reserve: [],
     hero: {
       heroType: 'COMMANDER',
       interventionsRemaining: 1,
