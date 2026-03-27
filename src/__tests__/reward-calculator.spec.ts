@@ -39,7 +39,7 @@ function makeVictoryBattle(party: CharacterDefinition[], seed: number): BattleSt
   // 적 HP를 1로 설정
   const weakEnemy = { ...enemy, stats: { ...enemy.stats, hp: 1, maxHp: 1 } };
 
-  const state = createBattleState(players, [weakEnemy], [], [], seed);
+  const state = createBattleState(players, [weakEnemy], seed);
   return runFullBattle(state);
 }
 

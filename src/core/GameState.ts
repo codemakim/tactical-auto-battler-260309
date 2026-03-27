@@ -15,8 +15,7 @@ export interface FormationSlot {
 }
 
 export interface FormationData {
-  slots: FormationSlot[]; // 출전 멤버 (최대 3)
-  reserveId?: string; // 교체 멤버 (최대 1)
+  slots: FormationSlot[]; // 출전 멤버 (최대 4)
   heroType: HeroType;
 }
 
@@ -49,15 +48,15 @@ function createStarterCharacters(): CharacterDefinition[] {
   ];
 }
 
-/** 초기 편성 (스타터 캐릭터 3 + 교체 1) */
+/** 초기 편성 (스타터 캐릭터 4명) */
 function createDefaultFormation(characters: CharacterDefinition[]): FormationData {
   return {
     slots: [
       { characterId: characters[0].id, position: 'FRONT' as Position },
       { characterId: characters[2].id, position: 'FRONT' as Position },
       { characterId: characters[1].id, position: 'BACK' as Position },
+      { characterId: characters[3].id, position: 'BACK' as Position },
     ],
-    reserveId: characters[3].id,
     heroType: HT.COMMANDER,
   };
 }
@@ -118,11 +117,7 @@ export class GameStateManager {
 
   /** 현재 편성에 포함된 캐릭터 ID 목록 */
   getFormationCharacterIds(): string[] {
-    const ids = this.state.formation.slots.map((s) => s.characterId);
-    if (this.state.formation.reserveId) {
-      ids.push(this.state.formation.reserveId);
-    }
-    return ids;
+    return this.state.formation.slots.map((s) => s.characterId);
   }
 
   /** 편성에 포함되지 않은 캐릭터 목록 */
@@ -174,11 +169,6 @@ export class GameStateManager {
     const slots = [...this.state.formation.slots];
     slots[index] = { characterId, position };
     this.state.formation = { ...this.state.formation, slots };
-  }
-
-  /** 교체 멤버 설정 */
-  setReserve(characterId: string | undefined): void {
-    this.state.formation = { ...this.state.formation, reserveId: characterId };
   }
 
   /** 영웅 유형 변경 */

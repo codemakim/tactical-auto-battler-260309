@@ -56,7 +56,7 @@ describe('Phase 전이 규칙', () => {
     resetUnitCounter();
     const p1 = makeStarter('A', CharacterClass.WARRIOR, Team.PLAYER, Position.FRONT);
     const e1 = makeStarter('E', CharacterClass.WARRIOR, Team.ENEMY, Position.FRONT);
-    state = createBattleState([p1], [e1], [], [], 42);
+    state = createBattleState([p1], [e1], 42);
   });
 
   it('초기 phase는 ROUND_START', () => {
@@ -110,7 +110,7 @@ describe('턴 실행 정합성', () => {
     const p1 = makeStarter('Fast', CharacterClass.ARCHER, Team.PLAYER, Position.BACK); // AGI 10
     const p2 = makeStarter('Slow', CharacterClass.WARRIOR, Team.PLAYER, Position.FRONT); // AGI 6
     const e1 = makeStarter('Enemy', CharacterClass.WARRIOR, Team.ENEMY, Position.FRONT);
-    state = createBattleState([p1, p2], [e1], [], [], 42);
+    state = createBattleState([p1, p2], [e1], 42);
     state = startRound(state);
   });
 
@@ -158,7 +158,7 @@ describe('이벤트 데이터 구조', () => {
     resetUnitCounter();
     const p1 = makeStarter('A', CharacterClass.WARRIOR, Team.PLAYER, Position.FRONT);
     const e1 = makeStarter('E', CharacterClass.WARRIOR, Team.ENEMY, Position.FRONT);
-    let state = createBattleState([p1], [e1], [], [], 42);
+    let state = createBattleState([p1], [e1], 42);
 
     // 라운드 시작 + 첫 유닛 행동까지 진행
     state = advanceTo(state, BattlePhase.TURN_START);
@@ -190,7 +190,7 @@ describe('이벤트 데이터 구조', () => {
     resetUnitCounter();
     const p1 = makeStarter('A', CharacterClass.WARRIOR, Team.PLAYER, Position.FRONT);
     const e1 = makeStarter('E', CharacterClass.WARRIOR, Team.ENEMY, Position.FRONT);
-    let state = createBattleState([p1], [e1], [], [], 42);
+    let state = createBattleState([p1], [e1], 42);
     state = stepBattle(state).state; // ROUND_START → startRound
 
     const roundStart = state.events.find((e) => e.type === 'ROUND_START');
@@ -244,7 +244,7 @@ describe('스타터 캐릭터 편성 검증', () => {
     const encounter = generateEncounter(1, 42);
     const enemies = encounter.map((e) => createUnit(e.definition, Team.ENEMY, e.position));
 
-    let state = createBattleState([aldric, theron, lyra], enemies, [], [], 42);
+    let state = createBattleState([aldric, theron, lyra], enemies, 42);
 
     // 3라운드 진행 시도
     let rounds = 0;

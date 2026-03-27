@@ -193,33 +193,33 @@ export const ENEMY_ARCHETYPE_DEFINITIONS: Record<EnemyArchetype, EnemyArchetypeD
 export const STAGE_ENCOUNTERS: StageEncounter[] = [
   {
     stage: 1,
-    slots: [{ archetype: EnemyArchetype.BRUTE, count: 2 }],
+    slots: [{ archetype: EnemyArchetype.BRUTE, count: 3 }],
   },
   {
     stage: 2,
     slots: [
       { archetype: EnemyArchetype.BRUTE, count: 1 },
-      { archetype: EnemyArchetype.RANGER, count: 2 },
+      { archetype: EnemyArchetype.RANGER, count: 3 },
     ],
   },
   {
     stage: 3,
     slots: [
       { archetype: EnemyArchetype.GUARD, count: 1 },
-      { archetype: EnemyArchetype.RANGER, count: 2 },
+      { archetype: EnemyArchetype.RANGER, count: 3 },
     ],
   },
   {
     stage: 4,
     slots: [
       { archetype: EnemyArchetype.DISRUPTOR, count: 1 },
-      { archetype: EnemyArchetype.BRUTE, count: 2 },
+      { archetype: EnemyArchetype.BRUTE, count: 3 },
     ],
     variants: [
       // 변형 B: 디스럽터 + 레인저
       [
         { archetype: EnemyArchetype.DISRUPTOR, count: 1 },
-        { archetype: EnemyArchetype.RANGER, count: 2 },
+        { archetype: EnemyArchetype.RANGER, count: 3 },
       ],
     ],
   },
@@ -228,7 +228,7 @@ export const STAGE_ENCOUNTERS: StageEncounter[] = [
     slots: [
       { archetype: EnemyArchetype.BRUTE, count: 1 }, // 보스 (스탯 배율 별도)
       { archetype: EnemyArchetype.GUARD, count: 1 },
-      { archetype: EnemyArchetype.RANGER, count: 1 },
+      { archetype: EnemyArchetype.RANGER, count: 2 },
     ],
   },
 ];

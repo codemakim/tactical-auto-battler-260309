@@ -44,7 +44,7 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
     const assassin = createUnit(createCharacterDef('Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
 
     // Guardian: Shield Wall (defensivePriority), Assassin: Dive (no priority)
-    const state = createBattleState([guardian], [assassin], [], []);
+    const state = createBattleState([guardian], [assassin]);
 
     const order = calculateFullTurnOrder([guardian, assassin], state);
 
@@ -59,7 +59,7 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
 
     // 둘 다 Shield Wall (defensivePriority) — AGI 동일하면 HP 비율로 결정
     // AGI 같으니 HP 비율 tiebreaker
-    const state = createBattleState([g1], [g2], [], []);
+    const state = createBattleState([g1], [g2]);
     const order = calculateFullTurnOrder([g1, g2], state);
 
     // 둘 다 defensive → AGI 동일 → HP 비율 tiebreaker
@@ -70,7 +70,7 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
     const assassin = createUnit(createCharacterDef('Assassin', CharacterClass.ASSASSIN), Team.PLAYER, Position.BACK);
     const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([assassin], [warrior], [], []);
+    const state = createBattleState([assassin], [warrior]);
     const order = calculateFullTurnOrder([assassin, warrior], state);
 
     // Assassin AGI 11 > Warrior AGI 6 → 기존 순서 유지
@@ -88,7 +88,7 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
       actionSlots: [makeAttackSlot()],
     };
 
-    const state = createBattleState([guardianNoDefense], [warrior], [], []);
+    const state = createBattleState([guardianNoDefense], [warrior]);
     const order = calculateFullTurnOrder([guardianNoDefense, warrior], state);
 
     // 둘 다 비방어 → AGI 순서 (Warrior AGI 6 > Guardian AGI 4)
@@ -106,7 +106,7 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
       actionSlots: [makeDefensiveSlot()],
     };
 
-    const state = createBattleState([slowDefender], [fast], [], []);
+    const state = createBattleState([slowDefender], [fast]);
     const order = calculateFullTurnOrder([slowDefender, fast], state);
 
     // 방어 우선 → slowDefender 먼저
@@ -148,13 +148,13 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
     };
 
     // FRONT → 방어 우선
-    const state1 = createBattleState([switcher], [enemy], [], []);
+    const state1 = createBattleState([switcher], [enemy]);
     const order1 = calculateFullTurnOrder([switcher, enemy], state1);
     expect(order1[0]).toBe(switcher.id);
 
     // BACK → 공격 → AGI 순 (Warrior 6 < Assassin 11)
     const switcherBack: BattleUnit = { ...switcher, position: Position.BACK };
-    const state2 = createBattleState([switcherBack], [enemy], [], []);
+    const state2 = createBattleState([switcherBack], [enemy]);
     const order2 = calculateFullTurnOrder([switcherBack, enemy], state2);
     expect(order2[0]).toBe(enemy.id); // Assassin AGI 더 높으니 먼저
   });
@@ -163,7 +163,7 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
     const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
     const assassin = createUnit(createCharacterDef('Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
 
-    const state = createBattleState([guardian], [assassin], [], []);
+    const state = createBattleState([guardian], [assassin]);
     const order = calculateTurnOrder([guardian, assassin], state);
 
     expect(order[0]).toBe(guardian.id);
@@ -180,7 +180,7 @@ describe('방어 행동 우선권 (Defensive Action Priority)', () => {
     const guardian = createUnit(createCharacterDef('Bron', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
     const assassin = createUnit(createCharacterDef('Kael', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
 
-    let state = createBattleState([guardian], [assassin], [], []);
+    let state = createBattleState([guardian], [assassin]);
 
     // 라운드 시작
     state = stepBattle(state).state;

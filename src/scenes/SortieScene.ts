@@ -336,13 +336,9 @@ export class SortieScene extends Phaser.Scene {
           const def = gameState.getCharacter(slot.characterId);
           if (def) party.push(def);
         }
-        if (formation.reserveId) {
-          const reserve = gameState.getCharacter(formation.reserveId);
-          if (reserve) party.push(reserve);
-        }
 
-        if (party.length < 3) {
-          this.toast.show('편성이 부족합니다 (최소 3명)');
+        if (party.length < 4) {
+          this.toast.show('편성이 부족합니다 (4명 필요)');
           return;
         }
 

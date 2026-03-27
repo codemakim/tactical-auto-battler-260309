@@ -3,7 +3,7 @@
  *
  * 레이아웃:
  * - 좌측: 보유 캐릭터 목록 (roster)
- * - 중앙: BACK 영역 / FRONT 영역 / RESERVE 영역 (자유 배치)
+ * - 중앙: BACK 영역 / FRONT 영역 (자유 배치, 4명)
  * - 우측: 영웅 선택 + 상세 정보
  * - 하단: 출격/뒤로 버튼
  *
@@ -28,7 +28,7 @@ import { validateFormation, canAddToZone } from '../systems/FormationValidator';
 
 // 영역 정의
 interface ZoneDef {
-  key: 'BACK' | 'FRONT' | 'RESERVE';
+  key: 'BACK' | 'FRONT';
   x: number;
   y: number;
   width: number;
@@ -45,10 +45,6 @@ const ZONE_WIDTH = 160;
 const ZONE_GAP = 24;
 const BACK_ZONE_X = 380;
 const FRONT_ZONE_X = BACK_ZONE_X + ZONE_WIDTH + ZONE_GAP;
-const RESERVE_HEIGHT = 110;
-const RESERVE_ZONE_X = BACK_ZONE_X;
-const RESERVE_ZONE_Y = ZONE_Y + ZONE_HEIGHT + 16;
-
 const ZONES: ZoneDef[] = [
   {
     key: 'BACK',
@@ -58,7 +54,7 @@ const ZONES: ZoneDef[] = [
     height: ZONE_HEIGHT,
     label: '← BACK (후열)',
     position: Position.BACK,
-    maxUnits: 3,
+    maxUnits: 4,
   },
   {
     key: 'FRONT',
@@ -68,17 +64,7 @@ const ZONES: ZoneDef[] = [
     height: ZONE_HEIGHT,
     label: 'FRONT (전열) →',
     position: Position.FRONT,
-    maxUnits: 3,
-  },
-  {
-    key: 'RESERVE',
-    x: RESERVE_ZONE_X,
-    y: RESERVE_ZONE_Y,
-    width: ZONE_WIDTH * 2 + ZONE_GAP,
-    height: RESERVE_HEIGHT,
-    label: 'RESERVE (교체)',
-    position: Position.BACK,
-    maxUnits: 1,
+    maxUnits: 4,
   },
 ];
 
@@ -295,10 +281,9 @@ export class FormationScene extends Phaser.Scene {
 
     // 영역 배경: 반투명 사각형 + 점선 테두리
     const bg = this.add.graphics();
-    const isReserve = zone.key === 'RESERVE';
-    bg.fillStyle(isReserve ? 0x1a1a22 : 0x16213e, 0.4);
+    bg.fillStyle(0x16213e, 0.4);
     bg.fillRoundedRect(0, 0, zone.width, zone.height, 8);
-    bg.lineStyle(2, isReserve ? 0x444455 : UITheme.colors.border);
+    bg.lineStyle(2, UITheme.colors.border);
     bg.strokeRoundedRect(0, 0, zone.width, zone.height, 8);
     container.add(bg);
 
@@ -330,7 +315,7 @@ export class FormationScene extends Phaser.Scene {
 
     hitArea.on('pointerover', () => {
       bg.clear();
-      bg.fillStyle(isReserve ? 0x222233 : 0x1e2d4e, 0.5);
+      bg.fillStyle(0x1e2d4e, 0.5);
       bg.fillRoundedRect(0, 0, zone.width, zone.height, 8);
       bg.lineStyle(2, UITheme.colors.borderHighlight);
       bg.strokeRoundedRect(0, 0, zone.width, zone.height, 8);
@@ -338,9 +323,9 @@ export class FormationScene extends Phaser.Scene {
 
     hitArea.on('pointerout', () => {
       bg.clear();
-      bg.fillStyle(isReserve ? 0x1a1a22 : 0x16213e, 0.4);
+      bg.fillStyle(0x16213e, 0.4);
       bg.fillRoundedRect(0, 0, zone.width, zone.height, 8);
-      bg.lineStyle(2, isReserve ? 0x444455 : UITheme.colors.border);
+      bg.lineStyle(2, UITheme.colors.border);
       bg.strokeRoundedRect(0, 0, zone.width, zone.height, 8);
     });
 
@@ -365,23 +350,11 @@ export class FormationScene extends Phaser.Scene {
 
     const charId = this.selectedRosterCharId;
 
-    if (zone.key === 'RESERVE') {
-      this.assignToReserve(charId);
-    } else {
-      this.assignToZone(zone.key, charId);
-    }
+    this.assignToZone(zone.key, charId);
   }
 
   private getCharactersInZone(zoneKey: string): CharacterDefinition[] {
     const formation = gameState.formation;
-
-    if (zoneKey === 'RESERVE') {
-      if (formation.reserveId) {
-        const char = gameState.getCharacter(formation.reserveId);
-        return char ? [char] : [];
-      }
-      return [];
-    }
 
     const position = zoneKey === 'FRONT' ? Position.FRONT : Position.BACK;
     return formation.slots
@@ -403,14 +376,12 @@ export class FormationScene extends Phaser.Scene {
 
     // 기존 위치에서 제거
     let newSlots = formation.slots.filter((s) => s.characterId !== characterId);
-    let newReserveId = formation.reserveId === characterId ? undefined : formation.reserveId;
 
     // 새 위치에 추가
     newSlots.push({ characterId, position: targetPosition });
 
     gameState.setFormation({
       slots: newSlots,
-      reserveId: newReserveId,
       heroType: formation.heroType,
     });
 
@@ -418,32 +389,6 @@ export class FormationScene extends Phaser.Scene {
     this.selectedRosterCharId = null;
     this.refreshAll();
     this.toast.show(`${charName} → ${zoneKey} 배치 완료!`);
-  }
-
-  private assignToReserve(characterId: string): void {
-    const formation = gameState.formation;
-
-    // 기존 위치에서 제거
-    const newSlots = formation.slots.filter((s) => s.characterId !== characterId);
-    const oldReserveId = formation.reserveId;
-
-    // 기존 reserve가 있고 다른 캐릭터면 → 편성 해제 (로스터로 돌아감)
-    gameState.setFormation({
-      slots: newSlots,
-      reserveId: characterId,
-      heroType: formation.heroType,
-    });
-
-    const charName = gameState.getCharacter(characterId)?.name ?? '';
-    this.selectedRosterCharId = null;
-    this.refreshAll();
-
-    if (oldReserveId && oldReserveId !== characterId) {
-      const oldName = gameState.getCharacter(oldReserveId)?.name ?? '';
-      this.toast.show(`${charName} → RESERVE (${oldName} 해제)`);
-    } else {
-      this.toast.show(`${charName} → RESERVE 배치 완료!`);
-    }
   }
 
   private refreshZones(): void {
@@ -489,7 +434,7 @@ export class FormationScene extends Phaser.Scene {
   ): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
     const w = zone.width - 16;
-    const h = zone.key === 'RESERVE' ? 70 : 80;
+    const h = 80;
 
     // 유닛 박스 배경
     const bg = this.add.graphics();
@@ -577,23 +522,13 @@ export class FormationScene extends Phaser.Scene {
     return container;
   }
 
-  private removeFromFormation(characterId: string, zoneKey: string): void {
+  private removeFromFormation(characterId: string, _zoneKey: string): void {
     const formation = gameState.formation;
-
-    if (zoneKey === 'RESERVE') {
-      gameState.setFormation({
-        slots: formation.slots,
-        reserveId: undefined,
-        heroType: formation.heroType,
-      });
-    } else {
-      const newSlots = formation.slots.filter((s) => s.characterId !== characterId);
-      gameState.setFormation({
-        slots: newSlots,
-        reserveId: formation.reserveId,
-        heroType: formation.heroType,
-      });
-    }
+    const newSlots = formation.slots.filter((s) => s.characterId !== characterId);
+    gameState.setFormation({
+      slots: newSlots,
+      heroType: formation.heroType,
+    });
 
     const charName = gameState.getCharacter(characterId)?.name ?? '';
     this.toast.show(`${charName} 편성 해제`);

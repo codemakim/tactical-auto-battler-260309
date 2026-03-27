@@ -13,60 +13,60 @@ describe('적 인카운터 생성 (EnemyGenerator)', () => {
   // ═══════════════════════════════════════════
 
   describe('스테이지별 편성', () => {
-    it('Stage 1: 브루트 x2', () => {
+    it('Stage 1: 브루트 x3', () => {
       const enemies = generateEncounter(1, 42);
 
-      expect(enemies).toHaveLength(2);
+      expect(enemies).toHaveLength(3);
       expect(enemies.every((e) => e.definition.characterClass === 'ENEMY_BRUTE')).toBe(true);
       expect(enemies.every((e) => e.position === Position.FRONT)).toBe(true);
     });
 
-    it('Stage 2: 브루트 x1 + 레인저 x2', () => {
+    it('Stage 2: 브루트 x1 + 레인저 x3', () => {
       const enemies = generateEncounter(2, 42);
 
-      expect(enemies).toHaveLength(3);
+      expect(enemies).toHaveLength(4);
       const brutes = enemies.filter((e) => e.definition.characterClass === 'ENEMY_BRUTE');
       const rangers = enemies.filter((e) => e.definition.characterClass === 'ENEMY_RANGER');
       expect(brutes).toHaveLength(1);
-      expect(rangers).toHaveLength(2);
+      expect(rangers).toHaveLength(3);
       expect(brutes[0].position).toBe(Position.FRONT);
       expect(rangers.every((e) => e.position === Position.BACK)).toBe(true);
     });
 
-    it('Stage 3: 가드 x1 + 레인저 x2', () => {
+    it('Stage 3: 가드 x1 + 레인저 x3', () => {
       const enemies = generateEncounter(3, 42);
 
-      expect(enemies).toHaveLength(3);
+      expect(enemies).toHaveLength(4);
       const guards = enemies.filter((e) => e.definition.characterClass === 'ENEMY_GUARD');
       const rangers = enemies.filter((e) => e.definition.characterClass === 'ENEMY_RANGER');
       expect(guards).toHaveLength(1);
-      expect(rangers).toHaveLength(2);
+      expect(rangers).toHaveLength(3);
       expect(guards[0].position).toBe(Position.FRONT);
     });
 
-    it('Stage 4: 디스럽터 x1 + (브루트 x2 또는 레인저 x2)', () => {
+    it('Stage 4: 디스럽터 x1 + (브루트 x3 또는 레인저 x3)', () => {
       const enemies = generateEncounter(4, 42);
 
-      expect(enemies).toHaveLength(3);
+      expect(enemies).toHaveLength(4);
       const disruptors = enemies.filter((e) => e.definition.characterClass === 'ENEMY_DISRUPTOR');
       expect(disruptors).toHaveLength(1);
 
       const brutes = enemies.filter((e) => e.definition.characterClass === 'ENEMY_BRUTE');
       const rangers = enemies.filter((e) => e.definition.characterClass === 'ENEMY_RANGER');
       // 둘 중 하나 변형
-      expect(brutes.length === 2 || rangers.length === 2).toBe(true);
+      expect(brutes.length === 3 || rangers.length === 3).toBe(true);
     });
 
-    it('Stage 5: 보스 브루트 x1 + 가드 x1 + 레인저 x1', () => {
+    it('Stage 5: 보스 브루트 x1 + 가드 x1 + 레인저 x2', () => {
       const enemies = generateEncounter(5, 42);
 
-      expect(enemies).toHaveLength(3);
+      expect(enemies).toHaveLength(4);
       const brutes = enemies.filter((e) => e.definition.characterClass === 'ENEMY_BRUTE');
       const guards = enemies.filter((e) => e.definition.characterClass === 'ENEMY_GUARD');
       const rangers = enemies.filter((e) => e.definition.characterClass === 'ENEMY_RANGER');
       expect(brutes).toHaveLength(1);
       expect(guards).toHaveLength(1);
-      expect(rangers).toHaveLength(1);
+      expect(rangers).toHaveLength(2);
     });
   });
 
@@ -236,8 +236,8 @@ describe('적 인카운터 생성 (EnemyGenerator)', () => {
         const brutes = enemies.filter((e) => e.definition.characterClass === 'ENEMY_BRUTE');
         const rangers = enemies.filter((e) => e.definition.characterClass === 'ENEMY_RANGER');
 
-        if (brutes.length === 2) hasBruteVariant = true;
-        if (rangers.length === 2) hasRangerVariant = true;
+        if (brutes.length === 3) hasBruteVariant = true;
+        if (rangers.length === 3) hasRangerVariant = true;
       }
 
       expect(hasBruteVariant).toBe(true);

@@ -28,11 +28,11 @@ import { DEFAULT_GAME_CONFIG } from '../types';
 
 /**
  * 새 런 생성
- * 파티 4명(3 전투 + 1 교체)을 선택하여 런을 시작
+ * 파티 4명을 선택하여 런을 시작
  */
 export function createRunState(party: CharacterDefinition[], seed: number): RunState {
-  if (party.length < 3 || party.length > 4) {
-    throw new Error(`파티는 3~4명이어야 합니다. 현재: ${party.length}명`);
+  if (party.length !== 4) {
+    throw new Error(`파티는 4명이어야 합니다. 현재: ${party.length}명`);
   }
 
   return {
@@ -73,25 +73,17 @@ export function createStageBattleState(runState: RunState, heroType?: HeroType):
 
   const battleSeed = runState.seed + runState.currentStage * 1000;
 
-  // 파티 → BattleUnit (풀피)
-  // 처음 3명 = 전투, 4번째 = 예비
-  const combatDefs = runState.party.slice(0, 3);
-  const reserveDef = runState.party[3];
-
-  const playerUnits = combatDefs.map((def, i) => {
+  // 파티 → BattleUnit (풀피, 4명 전원 출전)
+  const playerUnits = runState.party.map((def, i) => {
     const unit = createUnit(def, Team.PLAYER, i < 2 ? Position.FRONT : Position.BACK);
     return applyEquippedCards(unit, def.id, runState);
   });
-
-  const playerReserve = reserveDef
-    ? [applyEquippedCards(createUnit(reserveDef, Team.PLAYER, Position.BACK), reserveDef.id, runState)]
-    : [];
 
   // 적 생성
   const enemyEncounter = generateEncounter(runState.currentStage, battleSeed);
   const enemyUnits = enemyEncounter.map((eu) => createUnit(eu.definition, Team.ENEMY, eu.position));
 
-  return createBattleState(playerUnits, enemyUnits, playerReserve, [], battleSeed, heroType);
+  return createBattleState(playerUnits, enemyUnits, battleSeed, heroType);
 }
 
 /**

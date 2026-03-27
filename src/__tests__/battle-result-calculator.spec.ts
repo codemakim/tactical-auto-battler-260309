@@ -335,7 +335,7 @@ describe('엔진 통합', () => {
     const p2 = createUnit(createCharacterDef('Archer', 'ARCHER'), Team.PLAYER, Position.BACK);
     const e1 = createUnit(createCharacterDef('Foe', 'WARRIOR'), Team.ENEMY, Position.FRONT);
 
-    const battleState = runFullBattle(createBattleState([p1, p2], [e1], [], [], 999));
+    const battleState = runFullBattle(createBattleState([p1, p2], [e1], 999));
     const run = makeRunState({ currentStage: 2 });
 
     const result = calculateBattleResult(battleState, run);

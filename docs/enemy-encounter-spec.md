@@ -122,10 +122,10 @@ Player learns: position is not static, need movement cards or flexible builds.
 ## Stage 1: Introduction
 
 ```
-Brute x2
+Brute x3
 
-Total enemies: 2
-Positions: FRONT x2
+Total enemies: 3
+Positions: FRONT x3
 ```
 
 Purpose: Teach basic combat. Player's base actions should be enough to win.
@@ -135,9 +135,9 @@ Difficulty: Very low. Players learn the UI and flow.
 ## Stage 2: Back-line Threat
 
 ```
-Brute x1 (FRONT) + Ranger x2 (BACK)
+Brute x1 (FRONT) + Ranger x3 (BACK)
 
-Total enemies: 3
+Total enemies: 4
 ```
 
 Purpose: Rangers in back pick off player units. Player must decide whether to rush Rangers or deal with Brute first.
@@ -147,9 +147,9 @@ Difficulty: Low-medium. First card reward from Stage 1 helps.
 ## Stage 3: Protection Wall
 
 ```
-Guard x1 (FRONT) + Ranger x2 (BACK)
+Guard x1 (FRONT) + Ranger x3 (BACK)
 
-Total enemies: 3
+Total enemies: 4
 ```
 
 Purpose: Guard's COVER protects Rangers. Player must either burst through Guard's shield or find ways to bypass COVER (e.g., ENEMY_BACK targeting, PUSH).
@@ -159,9 +159,9 @@ Difficulty: Medium. Tests whether card acquisitions are building toward a cohere
 ## Stage 4: Position Chaos
 
 ```
-Disruptor x1 (FRONT) + Brute x2 (FRONT)
+Disruptor x1 (FRONT) + Brute x3 (FRONT)
   OR
-Disruptor x1 (FRONT) + Ranger x2 (BACK)
+Disruptor x1 (FRONT) + Ranger x3 (BACK)
 ```
 
 Variant selection: seed-based random (one of two compositions).
@@ -173,9 +173,9 @@ Difficulty: Medium-hard. Player should have 3 card rewards by now.
 ## Stage 5: Boss
 
 ```
-Boss Brute x1 (FRONT) + Guard x1 (FRONT) + Ranger x1 (BACK)
+Boss Brute x1 (FRONT) + Guard x1 (FRONT) + Ranger x2 (BACK)
 
-Total enemies: 3
+Total enemies: 4
 ```
 
 Boss Brute = Brute archetype with enhanced stats (see §4 scaling).

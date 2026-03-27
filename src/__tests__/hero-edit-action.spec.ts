@@ -25,7 +25,7 @@ describe('영웅 액션 카드 편집 (공통 능력)', () => {
     const archer = createUnit(createCharacterDef('Sylva', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
     const enemy = createUnit(createCharacterDef('Shade', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
 
-    state = createBattleState([warrior, archer], [enemy], [], []);
+    state = createBattleState([warrior, archer], [enemy]);
     // 개입 가능하도록 라운드 설정
     state = { ...state, round: 1, turn: 1 };
   });
@@ -96,7 +96,7 @@ describe('전투 시작 시 actionSlots 스냅샷', () => {
     const warrior = createUnit(createCharacterDef('Aldric', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const enemy = createUnit(createCharacterDef('Shade', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([warrior], [enemy], [], []);
+    const state = createBattleState([warrior], [enemy]);
     const unit = state.units.find((u) => u.name === 'Aldric')!;
 
     expect(unit.preBattleActionSlots).toBeDefined();
@@ -108,7 +108,7 @@ describe('전투 시작 시 actionSlots 스냅샷', () => {
     const warrior = createUnit(createCharacterDef('Aldric', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const enemy = createUnit(createCharacterDef('Shade', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([warrior], [enemy], [], [], undefined, HeroType.MAGE);
+    const state = createBattleState([warrior], [enemy], undefined, HeroType.MAGE);
     expect(state.hero.heroType).toBe(HeroType.MAGE);
   });
 
@@ -116,7 +116,7 @@ describe('전투 시작 시 actionSlots 스냅샷', () => {
     const warrior = createUnit(createCharacterDef('Aldric', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const enemy = createUnit(createCharacterDef('Shade', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([warrior], [enemy], [], []);
+    const state = createBattleState([warrior], [enemy]);
     expect(state.hero.heroType).toBe(HeroType.COMMANDER);
   });
 });
@@ -128,7 +128,7 @@ describe('전투 종료 후 actionSlots 원복', () => {
     const warrior = createUnit(createCharacterDef('Aldric', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const enemy = createUnit(createCharacterDef('Shade', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
 
-    let state = createBattleState([warrior], [enemy], [], []);
+    let state = createBattleState([warrior], [enemy]);
     state = { ...state, round: 1, turn: 1 };
 
     const originalActionId = state.units[0].actionSlots[2].action.id;
@@ -149,7 +149,7 @@ describe('전투 종료 후 actionSlots 원복', () => {
     const warrior = createUnit(createCharacterDef('Aldric', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const enemy = createUnit(createCharacterDef('Shade', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([warrior], [enemy], [], []);
+    const state = createBattleState([warrior], [enemy]);
     const restored = restorePreBattleActions(state);
 
     for (const unit of restored.units) {
@@ -162,19 +162,5 @@ describe('전투 종료 후 actionSlots 원복', () => {
 
     const result = resetBattleActions(warrior);
     expect(result).toBe(warrior);
-  });
-
-  it('예비 유닛도 전투 종료 후 원복된다', () => {
-    const warrior = createUnit(createCharacterDef('Aldric', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    const reserve = createUnit(createCharacterDef('Kael', CharacterClass.LANCER), Team.PLAYER, Position.BACK);
-    const enemy = createUnit(createCharacterDef('Shade', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
-
-    const state = createBattleState([warrior], [enemy], [reserve], []);
-
-    // 예비 유닛에도 preBattleActionSlots가 있어야 함
-    expect(state.reserve[0].preBattleActionSlots).toBeDefined();
-
-    const restored = restorePreBattleActions(state);
-    expect(restored.reserve[0].preBattleActionSlots).toBeUndefined();
   });
 });

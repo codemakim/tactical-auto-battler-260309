@@ -57,7 +57,7 @@ function createTestBattle(heroType: HeroType = HeroType.COMMANDER): BattleState 
   const p2 = makeStarter('Lyra', CharacterClass.ARCHER, Team.PLAYER, Position.BACK);
   const e1 = makeStarter('EnemyA', CharacterClass.WARRIOR, Team.ENEMY, Position.FRONT);
   const e2 = makeStarter('EnemyB', CharacterClass.WARRIOR, Team.ENEMY, Position.FRONT);
-  let state = createBattleState([p1, p2], [e1, e2], [], [], 42, heroType);
+  let state = createBattleState([p1, p2], [e1, e2], 42, heroType);
   return advanceToFirstTurn(state);
 }
 

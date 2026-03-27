@@ -69,16 +69,12 @@ describe('RunManager', () => {
       expect(run.status).toBe(RunStatus.IN_PROGRESS);
     });
 
-    it('3명 파티도 허용된다', () => {
-      const party = makeParty().slice(0, 3);
-      const run = createRunState(party, 42);
+    it('4명이 아니면 에러를 던진다', () => {
+      const party3 = makeParty().slice(0, 3);
+      expect(() => createRunState(party3, 42)).toThrow();
 
-      expect(run.party).toHaveLength(3);
-    });
-
-    it('2명 이하면 에러를 던진다', () => {
-      const party = makeParty().slice(0, 2);
-      expect(() => createRunState(party, 42)).toThrow();
+      const party2 = makeParty().slice(0, 2);
+      expect(() => createRunState(party2, 42)).toThrow();
     });
 
     it('5명 이상이면 에러를 던진다', () => {

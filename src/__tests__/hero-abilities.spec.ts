@@ -46,7 +46,7 @@ describe('createBattleState abilities 채우기', () => {
   function makeState(heroType?: (typeof HeroType)[keyof typeof HeroType]) {
     const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    return createBattleState([p1], [e1], [], [], undefined, heroType);
+    return createBattleState([p1], [e1], undefined, heroType);
   }
 
   it('COMMANDER로 생성 시 abilities가 채워진다', () => {
@@ -75,7 +75,7 @@ describe('executeQueuedAbility 분기', () => {
     const p1 = createUnit(createCharacterDef('P-Warrior', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const p2 = createUnit(createCharacterDef('P-Archer', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
     const e1 = createUnit(createCharacterDef('E-Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    return createBattleState([p1, p2], [e1], [], []);
+    return createBattleState([p1, p2], [e1]);
   }
 
   it('queuedAbility가 없으면 no-op', () => {
@@ -154,7 +154,7 @@ describe('새 효과 핸들러 (BUFF, DEBUFF, HEAL, DELAY_TURN, ADVANCE_TURN)', 
   function setup() {
     const p1 = createUnit(createCharacterDef('P-Warrior', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
     const e1 = createUnit(createCharacterDef('E-Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    let state = createBattleState([p1], [e1], [], []);
+    let state = createBattleState([p1], [e1]);
     return { ...state, round: 1, turn: 1 };
   }
 
@@ -297,7 +297,7 @@ describe('큐잉→발동 end-to-end', () => {
     const p2 = createUnit(createCharacterDef('P-Archer', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
     const e1 = createUnit(createCharacterDef('E-Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
     const e2 = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
-    return createBattleState([p1, p2], [e1, e2], [], []);
+    return createBattleState([p1, p2], [e1, e2]);
   }
 
   it('BUFF 능력을 큐잉 후 stepBattle에서 정상 발동된다', () => {

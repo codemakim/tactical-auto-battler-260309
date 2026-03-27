@@ -19,7 +19,7 @@ import { canIntervene, getHeroButtonState, cancelQueuedIntervention } from '../s
 import { createUnit } from '../entities/UnitFactory';
 import { generateEncounter } from '../systems/EnemyGenerator';
 import { createStageBattleState } from '../core/RunManager';
-import { Team, Position, BattlePhase, AbilityType, Difficulty, RunStatus, HeroButtonState } from '../types';
+import { Team, BattlePhase, AbilityType, Difficulty, RunStatus, HeroButtonState } from '../types';
 import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
 import { calculateBattleResult } from '../systems/BattleResultCalculator';
 import { extractFloatingTexts } from '../systems/FloatingTextCalculator';
@@ -289,20 +289,12 @@ export class BattleScene extends Phaser.Scene {
         }
       }
 
-      const playerReserve: BattleUnit[] = [];
-      if (formation.reserveId) {
-        const def = gameState.getCharacter(formation.reserveId);
-        if (def) {
-          playerReserve.push(createUnit(def, Team.PLAYER, Position.BACK));
-        }
-      }
-
       const stage = 1;
       const seed = Date.now();
       const encounter = generateEncounter(stage, seed);
       const enemyUnits = encounter.map((e) => createUnit(e.definition, Team.ENEMY, e.position));
 
-      this.battleState = createBattleState(playerUnits, enemyUnits, playerReserve, [], seed, formation.heroType);
+      this.battleState = createBattleState(playerUnits, enemyUnits, seed, formation.heroType);
     }
   }
 

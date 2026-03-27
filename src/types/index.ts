@@ -281,7 +281,6 @@ export interface BattleUnit {
 
 export interface BattleState {
   units: BattleUnit[];
-  reserve: BattleUnit[]; // 대기 유닛
   hero: HeroState;
   round: number;
   turn: number;
@@ -378,7 +377,6 @@ export type BattleEventType =
   | 'UNIT_MOVED'
   | 'UNIT_PUSHED'
   | 'UNIT_DIED'
-  | 'RESERVE_ENTERED'
   | 'HERO_INTERVENTION'
   | 'BUFF_APPLIED'
   | 'DEBUFF_APPLIED'
@@ -483,7 +481,7 @@ export interface RunState {
   maxStages: number; // 5 (4 normal + 1 boss)
   seed: number;
 
-  /** 출전 멤버 정의 (3 combat + 1 reserve) */
+  /** 출전 멤버 정의 (4 combat) */
   party: CharacterDefinition[];
   /** 벤치 (객원 등, 출전하지 않는 캐릭터) */
   bench: CharacterDefinition[];
@@ -622,7 +620,6 @@ export interface GameConfig {
   initialRosterSlots: number; // 초기 로스터 슬롯 수
   maxRosterSize: number;
   teamSize: number;
-  reserveSize: number;
   actionSlotsPerCharacter: number;
   heroInterventionsPerRound: number;
   maxRoundsPerBattle: number;
@@ -632,8 +629,7 @@ export interface GameConfig {
 export const DEFAULT_GAME_CONFIG: GameConfig = {
   initialRosterSlots: 6,
   maxRosterSize: 10,
-  teamSize: 3,
-  reserveSize: 1,
+  teamSize: 4,
   actionSlotsPerCharacter: 3,
   heroInterventionsPerRound: 1,
   maxRoundsPerBattle: 20,

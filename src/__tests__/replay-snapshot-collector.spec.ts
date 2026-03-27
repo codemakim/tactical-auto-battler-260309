@@ -12,7 +12,7 @@ function makeTestState(): BattleState {
   const p2 = createUnit(createCharacterDef('Archer', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
   const e1 = createUnit(createCharacterDef('Brute', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
   const e2 = createUnit(createCharacterDef('Ranger', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);
-  return createBattleState([p1, p2], [e1, e2], [], []);
+  return createBattleState([p1, p2], [e1, e2]);
 }
 
 const sampleEvents: BattleEvent[] = [

@@ -56,16 +56,8 @@ Example:
 Combat format:
 
 ```
-3 vs 3
+4 vs 4
 ```
-
-Each team also has:
-
-```
-1 reserve unit
-```
-
-Reserve unit enters if an active unit dies.
 
 ---
 
@@ -156,8 +148,7 @@ At round end:
 2. resolve delayed effects
 3. **clear all shield** (shield → 0 for all living units, unless preserved by special effect)
 4. process death resolution
-5. insert reserve units if needed
-6. begin next round
+5. begin next round
 
 ---
 
@@ -444,19 +435,7 @@ Rules:
 
 ---
 
-# 16. Reserve Unit Deployment
-
-If an active unit dies:
-
-```
-reserve unit enters battle
-```
-
-Rules:
-
-- reserve enters at BACK
-- reserve cannot act in the current round
-- reserve participates starting next round
+# 16. (삭제됨)
 
 ---
 
@@ -660,12 +639,11 @@ Rules:
 Initial implementation includes:
 
 ```
-3 vs 3 combat
+4 vs 4 combat
 front/back positions
 dynamic turn order
 3 action slots
 hero intervention
-reserve unit deployment
 combat replay
 ```
 

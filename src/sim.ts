@@ -2183,8 +2183,6 @@ function printActionCatalog(): void {
 
 function buildManualTeam(manualUnits: ManualUnit[], team: Team, nameOffset: number, seedBase: number) {
   const units: BattleUnit[] = [];
-  const reserves: BattleUnit[] = [];
-  const activeCount = Math.min(manualUnits.length, 3);
 
   for (let i = 0; i < manualUnits.length; i++) {
     const mu = manualUnits[i];
@@ -2195,15 +2193,10 @@ function buildManualTeam(manualUnits: ManualUnit[], team: Team, nameOffset: numb
     def.baseActionSlots = mu.actionSlots.map((slot) => ({ ...slot }));
 
     const pos = (mu.position ?? preferredPosition(cls)) as any;
-
-    if (i < activeCount) {
-      units.push(createUnit(def, team, pos));
-    } else {
-      reserves.push(createUnit(def, team, Position.BACK));
-    }
+    units.push(createUnit(def, team, pos));
   }
 
-  return { units, reserves };
+  return { units };
 }
 
 // ── 시드 기반 난수 ─────────────────────────────────
@@ -2258,33 +2251,19 @@ const NAMES_POOL = [
 
 // ── 랜덤 팀 생성 ──────────────────────────────────────
 
-function buildRandomTeam(
-  rand: () => number,
-  team: Team,
-  activeCount: number,
-  reserveCount: number,
-  nameOffset: number,
-  seedBase: number,
-) {
+function buildRandomTeam(rand: () => number, team: Team, activeCount: number, nameOffset: number, seedBase: number) {
   const classes = getAvailableClasses();
   const units: BattleUnit[] = [];
-  const reserves: BattleUnit[] = [];
-  const total = activeCount + reserveCount;
 
-  for (let i = 0; i < total; i++) {
+  for (let i = 0; i < activeCount; i++) {
     const cls = classes[Math.floor(rand() * classes.length)];
     const name = NAMES_POOL[(nameOffset + i) % NAMES_POOL.length];
     const def = generateCharacterDef(name, cls, seedBase + i);
     const pos = preferredPosition(cls);
-
-    if (i < activeCount) {
-      units.push(createUnit(def, team, pos as any));
-    } else {
-      reserves.push(createUnit(def, team, Position.BACK));
-    }
+    units.push(createUnit(def, team, pos as any));
   }
 
-  return { units, reserves };
+  return { units };
 }
 
 // ── 커스텀 팀 생성 ─────────────────────────────────
@@ -2301,8 +2280,6 @@ function parseClassList(env: string): string[] {
 function buildCustomTeam(classList: string[], team: Team, nameOffset: number, seedBase: number) {
   const available = getAvailableClasses();
   const units: BattleUnit[] = [];
-  const reserves: BattleUnit[] = [];
-  const activeCount = Math.min(classList.length, 3);
 
   for (let i = 0; i < classList.length; i++) {
     const cls = classList[i];
@@ -2314,15 +2291,10 @@ function buildCustomTeam(classList: string[], team: Team, nameOffset: number, se
     const name = NAMES_POOL[(nameOffset + i) % NAMES_POOL.length];
     const def = generateCharacterDef(name, cls, seedBase + i);
     const pos = preferredPosition(cls);
-
-    if (i < activeCount) {
-      units.push(createUnit(def, team, pos as any));
-    } else {
-      reserves.push(createUnit(def, team, Position.BACK));
-    }
+    units.push(createUnit(def, team, pos as any));
   }
 
-  return { units, reserves };
+  return { units };
 }
 
 // ── 팀 구성 ──────────────────────────────────────
@@ -2342,34 +2314,31 @@ const player = MANUAL_TEAMS
   ? buildManualTeam(MANUAL_TEAMS.player, Team.PLAYER, 0, masterSeed + 100)
   : envPlayer
     ? buildCustomTeam(parseClassList(envPlayer), Team.PLAYER, 0, masterSeed + 100)
-    : buildRandomTeam(rand, Team.PLAYER, 3, 1, 0, masterSeed + 100);
+    : buildRandomTeam(rand, Team.PLAYER, 4, 0, masterSeed + 100);
 
 const enemy = MANUAL_TEAMS
   ? buildManualTeam(MANUAL_TEAMS.enemy, Team.ENEMY, 8, masterSeed + 200)
   : envEnemy
     ? buildCustomTeam(parseClassList(envEnemy), Team.ENEMY, 8, masterSeed + 200)
-    : buildRandomTeam(rand, Team.ENEMY, 3, 1, 8, masterSeed + 200);
+    : buildRandomTeam(rand, Team.ENEMY, 4, 8, masterSeed + 200);
 
 // ── 전투 실행 ────────────────────────────────────
 
-const initial = createBattleState(player.units, enemy.units, player.reserves, enemy.reserves, masterSeed);
+const initial = createBattleState(player.units, enemy.units, masterSeed);
 
 // ── 유틸 함수 ──────────────────────────────────────
 
-const allInitialUnits = [...initial.units, ...initial.reserve];
+const allInitialUnits = [...initial.units];
 
 function findUnitName(state: BattleState, id?: string): string {
   if (!id) return '???';
-  const u =
-    state.units.find((u) => u.id === id) ??
-    state.reserve.find((u) => u.id === id) ??
-    allInitialUnits.find((u) => u.id === id);
+  const u = state.units.find((u) => u.id === id) ?? allInitialUnits.find((u) => u.id === id);
   return u ? `${u.name}(${u.team === Team.PLAYER ? 'P' : 'E'})` : id;
 }
 
 function findUnitObj(state: BattleState, id?: string): BattleUnit | undefined {
   if (!id) return undefined;
-  return state.units.find((u) => u.id === id) ?? state.reserve.find((u) => u.id === id);
+  return state.units.find((u) => u.id === id);
 }
 
 function posTag(pos: string): string {
@@ -2415,20 +2384,12 @@ player.units.forEach((u) => {
   );
   console.log(`    행동: ${showActionSlots(u.actionSlots)}`);
 });
-player.reserves.forEach((u) => {
-  console.log(`  [예비] ${u.name} (${u.characterClass})`);
-  console.log(`    행동: ${showActionSlots(u.actionSlots)}`);
-});
 
 console.log('ENEMY:');
 enemy.units.forEach((u) => {
   console.log(
     `  ${u.name} (${u.characterClass}) [${posTag(u.position)}] HP:${u.stats.hp} ATK:${u.stats.atk} GRD:${u.stats.grd} AGI:${u.stats.agi}`,
   );
-  console.log(`    행동: ${showActionSlots(u.actionSlots)}`);
-});
-enemy.reserves.forEach((u) => {
-  console.log(`  [예비] ${u.name} (${u.characterClass})`);
   console.log(`    행동: ${showActionSlots(u.actionSlots)}`);
 });
 console.log('');
@@ -2536,13 +2497,6 @@ function logEvent(ev: BattleEvent, state: BattleState, preStepUnits?: BattleUnit
 
   if (ev.type === 'UNIT_DIED') {
     console.log(`    💀 ${findUnitName(state, ev.targetId)} 사망!`);
-    return;
-  }
-
-  if (ev.type === 'RESERVE_ENTERED') {
-    const tgt = findUnitObj(state, ev.targetId);
-    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
-    console.log(`    📥 ${findUnitName(state, ev.targetId)} 예비에서 투입!${tgtInfo}`);
     return;
   }
 

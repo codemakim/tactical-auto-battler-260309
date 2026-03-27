@@ -16,7 +16,7 @@ describe('히어로 개입 큐잉 (§18)', () => {
     const e2 = createUnit(createCharacterDef('E-Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
     const e3 = createUnit(createCharacterDef('E-Lancer', CharacterClass.LANCER), Team.ENEMY, Position.FRONT);
 
-    return createBattleState([p1, p2, p3], [e1, e2, e3], [], []);
+    return createBattleState([p1, p2, p3], [e1, e2, e3]);
   }
 
   const shieldAbility: HeroAbility = {

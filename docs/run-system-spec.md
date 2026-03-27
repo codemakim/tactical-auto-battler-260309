@@ -38,10 +38,10 @@ Expandable with gold (post-run)
 Before starting a run, the player selects a party from their roster:
 
 ```
-Party size: 4 (3 combat + 1 reserve)
+Party size: 4
 ```
 
-The 3 combat members and 1 reserve member are assigned before the run begins.
+All 4 members participate in combat.
 
 These 4 characters and their current action slot configurations are **snapshotted** at run start.
 
@@ -59,7 +59,7 @@ RunState {
   maxStages: number             // 5 (4 normal + 1 boss)
   seed: number                  // 결정론적 시드
 
-  party: CharacterDefinition[]  // 출전 멤버 (3 combat + 1 reserve)
+  party: CharacterDefinition[]  // 출전 멤버 (4 combat)
   bench: CharacterDefinition[]  // 벤치 (객원 등, 출전하지 않는 캐릭터)
   cardInventory: CardInstance[] // 런 중 획득한 카드 인벤토리
 

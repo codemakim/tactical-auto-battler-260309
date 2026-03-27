@@ -46,7 +46,7 @@ beforeEach(() => {
 // ═══════════════════════════════════════════
 
 describe('createStageBattleState', () => {
-  it('아군 3명 + 적 유닛 생성', () => {
+  it('아군 4명 + 적 유닛 생성', () => {
     const party = makeParty();
     const runState = createRunState(party, 42);
 
@@ -54,19 +54,8 @@ describe('createStageBattleState', () => {
 
     const playerUnits = battleState.units.filter((u) => u.team === Team.PLAYER);
     const enemyUnits = battleState.units.filter((u) => u.team === Team.ENEMY);
-    expect(playerUnits.length).toBe(3);
+    expect(playerUnits.length).toBe(4);
     expect(enemyUnits.length).toBeGreaterThan(0);
-  });
-
-  it('예비 유닛이 reserve에 포함', () => {
-    const party = makeParty(); // 4명 = 3전투 + 1예비
-    const runState = createRunState(party, 42);
-
-    const battleState = createStageBattleState(runState);
-
-    // reserve는 배열
-    const playerReserve = battleState.reserve.filter((u) => u.team === Team.PLAYER);
-    expect(playerReserve.length).toBe(1);
   });
 
   it('풀 HP로 생성 (hp === maxHp)', () => {

@@ -17,7 +17,7 @@ describe('전투 흐름', () => {
     const e2 = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const e3 = createUnit(createCharacterDef('E-Controller', CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 
-    return createBattleState([p1, p2, p3], [e1, e2, e3], [], []);
+    return createBattleState([p1, p2, p3], [e1, e2, e3]);
   }
 
   it('전투는 3v3 형식이다', () => {
@@ -95,194 +95,6 @@ describe('전투 흐름', () => {
 
     expect(result.round).toBeLessThanOrEqual(20);
     expect(result.isFinished).toBe(true);
-  });
-});
-
-describe('예비 유닛 투입', () => {
-  beforeEach(() => resetUnitCounter());
-
-  it('아군이 죽으면 예비 유닛이 투입된다', () => {
-    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
-    const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
-    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
-
-    // 약한 적 (빨리 끝나도록)
-    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
-    e1.stats.atk = 200; // 한 방에 죽이는 공격력
-    const e2 = createUnit(createCharacterDef('E2', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    const e3 = createUnit(createCharacterDef('E3', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [reserve], []);
-    const result = runFullBattle(state);
-
-    // 예비 유닛 투입 이벤트가 있어야 함 (아군이 죽었다면)
-    const reserveEvents = result.events.filter((e) => e.type === 'RESERVE_ENTERED');
-    const deathEvents = result.events.filter((e) => e.type === 'UNIT_DIED');
-
-    // 아군이 1명이라도 죽었으면 예비 투입이 발생해야 함
-    const playerDeaths = deathEvents.filter((e) => {
-      const deadUnit = [...state.units, ...state.reserve].find((u) => u.id === e.targetId);
-      return deadUnit?.team === Team.PLAYER;
-    });
-
-    if (playerDeaths.length > 0) {
-      expect(reserveEvents.length).toBeGreaterThan(0);
-    }
-  });
-
-  it('예비 유닛은 투입된 라운드에는 행동하지 않는다', () => {
-    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
-    const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
-    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
-
-    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
-    e1.stats.atk = 200; // 한 방에 죽이는 공격력
-    const e2 = createUnit(createCharacterDef('E2', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    const e3 = createUnit(createCharacterDef('E3', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [reserve], []);
-    const result = runFullBattle(state);
-
-    // 예비 유닛 투입 이벤트 확인
-    const reserveEvents = result.events.filter((e) => e.type === 'RESERVE_ENTERED');
-
-    if (reserveEvents.length > 0) {
-      const enteredUnit = result.units.find((u) => u.id === reserve.id);
-      // 예비 유닛이 전장에 있음
-      expect(enteredUnit).toBeDefined();
-
-      // §16: 투입 시 hasActedThisRound: true로 설정되어 해당 라운드에는 행동 불가
-      // RESERVE_ENTERED 이벤트가 기록된 라운드에서 투입 유닛의 TURN_START 이벤트가 없어야 함
-      const reserveEntry = reserveEvents[0];
-      const entryRound = reserveEntry.round;
-
-      // 같은 라운드에 예비 유닛의 TURN_START 이벤트가 없어야 함
-      const reserveTurnsInSameRound = result.events.filter(
-        (e) => e.type === 'TURN_START' && e.round === entryRound && e.sourceId === reserve.id,
-      );
-      expect(reserveTurnsInSameRound.length).toBe(0);
-    }
-  });
-
-  it('예비 유닛은 다음 라운드부터 행동에 참여한다 (§16)', () => {
-    // p1은 매우 약해서 round 1에 사망 → reserve 투입
-    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    p1.stats.hp = 1;
-    p1.stats.maxHp = 1;
-    // p2, p3은 오래 생존 (적들이 낮은 공격력)
-    const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
-    p2.stats.hp = 9999;
-    p2.stats.maxHp = 9999;
-    const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
-    p3.stats.hp = 9999;
-    p3.stats.maxHp = 9999;
-    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
-    reserve.stats.hp = 9999;
-    reserve.stats.maxHp = 9999;
-
-    // e1은 강해서 p1을 1격에 사망, e2/e3은 hp가 높아 전투가 여러 라운드 지속
-    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
-    e1.stats.atk = 200;
-    const e2 = createUnit(createCharacterDef('E2', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    e2.stats.hp = 9999;
-    e2.stats.maxHp = 9999;
-    const e3 = createUnit(createCharacterDef('E3', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    e3.stats.hp = 9999;
-    e3.stats.maxHp = 9999;
-
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [reserve], []);
-    const result = runFullBattle(state);
-
-    const reserveEvents = result.events.filter((e) => e.type === 'RESERVE_ENTERED');
-    expect(reserveEvents.length).toBeGreaterThan(0); // 반드시 투입돼야 함
-
-    if (reserveEvents.length > 0) {
-      const entryRound = reserveEvents[0].round;
-
-      // §16: 다음 라운드 이후 예비 유닛의 TURN_START 이벤트가 있어야 함
-      const reserveTurnsAfterEntry = result.events.filter(
-        (e) => e.type === 'TURN_START' && e.round > entryRound && e.sourceId === reserve.id,
-      );
-
-      // 전투가 다음 라운드까지 지속된 경우에만 검증
-      const nextRoundExists = result.events.some((e) => e.round === entryRound + 1);
-      if (nextRoundExists) {
-        expect(reserveTurnsAfterEntry.length).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  it('예비 유닛은 투입 후 다음 라운드 turnOrder에 포함된다 (§16)', () => {
-    // p1이 1HP라서 라운드 1에 사망 → reserve 투입 → 라운드 2 turnOrder에 reserve가 있어야 함
-    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    p1.stats.hp = 1;
-    p1.stats.maxHp = 1;
-    const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
-    p2.stats.hp = 9999;
-    p2.stats.maxHp = 9999;
-    const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
-    p3.stats.hp = 9999;
-    p3.stats.maxHp = 9999;
-    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.LANCER), Team.PLAYER, Position.FRONT);
-    reserve.stats.hp = 9999;
-    reserve.stats.maxHp = 9999;
-
-    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
-    e1.stats.atk = 200;
-    const e2 = createUnit(createCharacterDef('E2', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    e2.stats.hp = 9999;
-    e2.stats.maxHp = 9999;
-    const e3 = createUnit(createCharacterDef('E3', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    e3.stats.hp = 9999;
-    e3.stats.maxHp = 9999;
-
-    let state = createBattleState([p1, p2, p3], [e1, e2, e3], [reserve], []);
-
-    // 라운드 1 끝까지 진행 (reserve 투입 대기)
-    state = stepBattle(state).state;
-    while (state.phase !== BattlePhase.ROUND_END && !state.isFinished) {
-      state = stepBattle(state).state;
-    }
-
-    if (state.isFinished) return;
-
-    const reserveInBattle = state.units.find((u) => u.id === reserve.id);
-    if (!reserveInBattle) return; // p1이 살아남아 reserve 미투입 시 skip
-
-    // 라운드 2 시작
-    state = stepBattle(state).state;
-
-    // §16: 투입된 예비 유닛이 다음 라운드 turnOrder에 포함되어야 함
-    expect(state.turnOrder).toContain(reserve.id);
-  });
-
-  it('예비 유닛은 원래 포지션과 관계없이 항상 BACK으로 진입한다', () => {
-    const p1 = createUnit(createCharacterDef('P1', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
-    const p2 = createUnit(createCharacterDef('P2', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
-    const p3 = createUnit(createCharacterDef('P3', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
-    // 예비 유닛을 FRONT 포지션으로 생성
-    const reserve = createUnit(createCharacterDef('P-Reserve', CharacterClass.ARCHER), Team.PLAYER, Position.FRONT);
-    expect(reserve.position).toBe(Position.FRONT); // 원래 FRONT
-
-    const e1 = createUnit(createCharacterDef('E1', CharacterClass.ASSASSIN), Team.ENEMY, Position.FRONT);
-    e1.stats.atk = 200; // 한 방에 죽이는 공격력
-    const e2 = createUnit(createCharacterDef('E2', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-    const e3 = createUnit(createCharacterDef('E3', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
-
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [reserve], []);
-    const result = runFullBattle(state);
-
-    // 예비 유닛 투입 이벤트 확인
-    const reserveEvents = result.events.filter((e) => e.type === 'RESERVE_ENTERED');
-
-    if (reserveEvents.length > 0) {
-      // 투입된 예비 유닛이 실제 units에서 BACK 포지션인지 확인
-      const enteredUnit = result.units.find((u) => u.id === reserve.id);
-      expect(enteredUnit).toBeDefined();
-      expect(enteredUnit!.position).toBe(Position.BACK);
-    }
   });
 });
 
@@ -385,7 +197,7 @@ describe('stepBattle 통합 - 라운드 간 실드 제거 (§7)', () => {
     const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
     const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
 
-    let state = createBattleState([guardian], [warrior], [], []);
+    let state = createBattleState([guardian], [warrior]);
 
     // stepBattle로 라운드 1 완주 + 라운드 2 시작까지 진행
     const maxSteps = 50;
@@ -420,7 +232,7 @@ describe('stepBattle 통합 - 라운드 간 실드 제거 (§7)', () => {
     const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
     const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
 
-    let state = createBattleState([guardian], [warrior], [], []);
+    let state = createBattleState([guardian], [warrior]);
 
     // 3라운드까지 진행
     const maxSteps = 100;
@@ -442,7 +254,7 @@ describe('stepBattle 통합 - 라운드 간 실드 제거 (§7)', () => {
     const guardian = createUnit(createCharacterDef('Guardian', CharacterClass.GUARDIAN), Team.PLAYER, Position.FRONT);
     const warrior = createUnit(createCharacterDef('Warrior', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
 
-    const initial = createBattleState([guardian], [warrior], [], []);
+    const initial = createBattleState([guardian], [warrior]);
     const final = runFullBattle(initial);
 
     // 전투가 여러 라운드 진행됐을 것
@@ -468,7 +280,7 @@ describe('stepBattle 통합 - 라운드 간 실드 제거 (§7)', () => {
     // duration 1 버프 수동 부여
     guardian.buffs = [{ id: 'test_buff', type: 'ATK_UP' as any, value: 5, duration: 1, sourceId: guardian.id }];
 
-    let state = createBattleState([guardian], [warrior], [], []);
+    let state = createBattleState([guardian], [warrior]);
 
     // 라운드 2까지 진행
     const maxSteps = 50;
@@ -500,7 +312,7 @@ describe('라운드 종료 이벤트 순서', () => {
     const e2 = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const e3 = createUnit(createCharacterDef('E-Controller', CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [], []);
+    const state = createBattleState([p1, p2, p3], [e1, e2, e3]);
     const result = runFullBattle(state);
 
     const events = result.events;
@@ -528,7 +340,7 @@ describe('라운드 종료 이벤트 순서', () => {
     const e2 = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const e3 = createUnit(createCharacterDef('E-Controller', CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [], []);
+    const state = createBattleState([p1, p2, p3], [e1, e2, e3]);
     const result = runFullBattle(state);
 
     const events = result.events;
@@ -556,7 +368,7 @@ describe('라운드 종료 이벤트 순서', () => {
     const e2 = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const e3 = createUnit(createCharacterDef('E-Controller', CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [], []);
+    const state = createBattleState([p1, p2, p3], [e1, e2, e3]);
     const result = runFullBattle(state);
     const events = result.events;
 
@@ -597,7 +409,7 @@ describe('이벤트 ID 고유성', () => {
     const e2 = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const e3 = createUnit(createCharacterDef('E-Controller', CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([p1, p2, p3], [e1, e2, e3], [], []);
+    const state = createBattleState([p1, p2, p3], [e1, e2, e3]);
     const result = runFullBattle(state);
 
     const ids = result.events.map((e) => e.id);
@@ -629,7 +441,7 @@ describe('이벤트 ID 고유성', () => {
       buffs: [{ id: 'poison-1', type: BuffType.POISON, value: 5, duration: 3, sourceId: p1.id }],
     };
 
-    let state = createBattleState([p1], [e1], [], []);
+    let state = createBattleState([p1], [e1]);
 
     // 라운드 1 시작 → 독 데미지 → e1 사망 → 전투 종료여야 함
     state = stepBattle(state).state;
@@ -660,7 +472,7 @@ describe('이벤트 ID 고유성', () => {
       buffs: [{ id: 'poison-e', type: BuffType.POISON, value: 5, duration: 3, sourceId: p1.id }],
     };
 
-    let state = createBattleState([p1], [e1], [], []);
+    let state = createBattleState([p1], [e1]);
     state = stepBattle(state).state;
 
     expect(state.isFinished).toBe(true);
@@ -675,7 +487,7 @@ describe('이벤트 ID 고유성', () => {
     const p1 = createUnit(pDef, Team.PLAYER, Position.FRONT);
     const e1 = createUnit(eDef, Team.ENEMY, Position.FRONT);
 
-    let state = createBattleState([p1], [e1], [], []);
+    let state = createBattleState([p1], [e1]);
 
     // 라운드 1 시작
     state = stepBattle(state).state;
@@ -726,7 +538,7 @@ describe('이벤트 ID 고유성', () => {
     const p1 = createUnit(pDef, Team.PLAYER, Position.FRONT);
     const e1 = createUnit(eDef, Team.ENEMY, Position.FRONT);
 
-    let state = createBattleState([p1], [e1], [], []);
+    let state = createBattleState([p1], [e1]);
 
     // 강제로 ACTION_RESOLVE 상태 설정
     state = { ...state, phase: BattlePhase.ACTION_RESOLVE, round: 1, turn: 1 };

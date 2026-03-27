@@ -114,8 +114,7 @@ Town(마을)이 게임의 중심이다. 모든 메타 진행이 여기서 이루
 ### 화면 구성
 
 #### 4-1. 파티 편성
-- **출전 슬롯 3개** (FRONT/BACK 포지션 지정)
-- **교체 멤버 슬롯 1개** (reserve)
+- **출전 슬롯 4개** (FRONT/BACK 포지션 자유 배치)
 - 보유 캐릭터 목록에서 드래그 또는 클릭으로 배치
 - 같은 캐릭터 중복 편성 불가
 
@@ -296,7 +295,6 @@ interface FormationPreset {
     characterId: string;
     position: Position;
   }[];
-  reserveCharacterId?: string;
   heroType: HeroType;
 }
 ```

@@ -64,7 +64,7 @@ describe('hasAnyDamageCapability', () => {
 
 describe('checkStalemate', () => {
   function makeBaseState(playerUnits: BattleUnit[], enemyUnits: BattleUnit[]): BattleState {
-    return createBattleState(playerUnits, enemyUnits, [], []);
+    return createBattleState(playerUnits, enemyUnits);
   }
 
   it('DAMAGE 수단이 있으면 교착 아님 — 변화 없음', () => {
@@ -134,7 +134,7 @@ describe('startRound 통합', () => {
   it('교착 감지 시 startRound에서 카운트다운 설정됨', () => {
     const defender = makeDefenseOnlyUnit(CharacterClass.GUARDIAN, Team.PLAYER, Position.FRONT);
     const enemy = makeAttackerUnit('Enemy', Team.ENEMY, Position.FRONT);
-    const state = createBattleState([defender], [enemy], [], []);
+    const state = createBattleState([defender], [enemy]);
 
     const afterRound = startRound(state);
     expect(afterRound.stalemateCountdown).toBe(3);
@@ -146,7 +146,7 @@ describe('startRound 통합', () => {
     const defender = makeDefenseOnlyUnit(CharacterClass.GUARDIAN, Team.PLAYER, Position.FRONT);
     const enemy = makeAttackerUnit('Enemy', Team.ENEMY, Position.FRONT);
     let state: BattleState = {
-      ...createBattleState([defender], [enemy], [], []),
+      ...createBattleState([defender], [enemy]),
       stalemateCountdown: 1,
     };
 
@@ -164,7 +164,7 @@ describe('runFullBattle 통합', () => {
   it('순수 방어 유닛만 남으면 교착 시스템으로 패배', () => {
     const defender = makeDefenseOnlyUnit(CharacterClass.GUARDIAN, Team.PLAYER, Position.FRONT);
     const enemy = makeAttackerUnit('Enemy', Team.ENEMY, Position.FRONT);
-    const state = createBattleState([defender], [enemy], [], []);
+    const state = createBattleState([defender], [enemy]);
 
     const result = runFullBattle(state);
     expect(result.isFinished).toBe(true);

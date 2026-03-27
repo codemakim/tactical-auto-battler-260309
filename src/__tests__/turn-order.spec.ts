@@ -15,7 +15,7 @@ describe('턴 순서 시스템', () => {
     const archer = createUnit(createCharacterDef('Archer', CharacterClass.ARCHER), Team.ENEMY, Position.BACK);
     const lancer = createUnit(createCharacterDef('Lancer', CharacterClass.LANCER), Team.ENEMY, Position.FRONT);
 
-    const state = createBattleState([assassin, warrior], [archer, lancer], [], []);
+    const state = createBattleState([assassin, warrior], [archer, lancer]);
     const order = calculateFullTurnOrder([warrior, assassin, archer, lancer], state);
 
     // 비방어끼리 AGI 순
@@ -30,7 +30,7 @@ describe('턴 순서 시스템', () => {
     const eAssassin = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const pArcher = createUnit(createCharacterDef('P-Archer', CharacterClass.ARCHER), Team.PLAYER, Position.BACK);
 
-    const state = createBattleState([pWarrior, pArcher], [eAssassin], [], []);
+    const state = createBattleState([pWarrior, pArcher], [eAssassin]);
     const order = calculateFullTurnOrder([pWarrior, eAssassin, pArcher], state);
 
     // E-Assassin(11) → P-Archer(9) → P-Warrior(6) : 피아 섞임
@@ -44,7 +44,7 @@ describe('턴 순서 시스템', () => {
     const dead = createUnit(createCharacterDef('Dead', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     dead.isAlive = false;
 
-    const state = createBattleState([alive], [dead], [], []);
+    const state = createBattleState([alive], [dead]);
     const order = calculateFullTurnOrder([alive, dead], state);
 
     expect(order).toHaveLength(1);

@@ -33,7 +33,7 @@ describe('턴 순서 정합성', () => {
     const slow = makeUnit('Slow', Team.PLAYER, Position.FRONT, 5);
     const enemy = makeUnit('Enemy', Team.ENEMY, Position.FRONT, 3);
 
-    state = createBattleState([fast, mid, slow], [enemy], [], [], 42);
+    state = createBattleState([fast, mid, slow], [enemy], 42);
     // 라운드 시작까지 진행
     state = startRound(state);
   });
@@ -111,7 +111,7 @@ describe('HP 변화로 tiebreak가 뒤바뀌는 시나리오', () => {
     const unitA = makeUnit('UnitA', Team.PLAYER, Position.FRONT, 8);
     const unitB = makeUnit('UnitB', Team.ENEMY, Position.FRONT, 8);
 
-    let state = createBattleState([unitA], [unitB], [], [], 42);
+    let state = createBattleState([unitA], [unitB], 42);
     state = startRound(state);
 
     const originalOrder = [...state.turnOrder];
@@ -141,7 +141,7 @@ describe('doStep 시뮬레이션: 한 스텝 = 한 유닛 행동', () => {
     const slow = makeUnit('Slow', Team.PLAYER, Position.FRONT, 5);
     const enemy = makeUnit('Enemy', Team.ENEMY, Position.FRONT, 3);
 
-    let state = createBattleState([fast, slow], [enemy], [], [], 42);
+    let state = createBattleState([fast, slow], [enemy], 42);
 
     // ROUND_START → startRound (TURN_START로 전환)
     let result = stepBattle(state);

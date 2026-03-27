@@ -20,7 +20,7 @@ describe('결정론적 전투 (Determinism)', () => {
     const e2a = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const e3a = createUnit(createCharacterDef('E-Controller', CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 
-    const stateA = createBattleState([p1a, p2a, p3a], [e1a, e2a, e3a], [], [], seed);
+    const stateA = createBattleState([p1a, p2a, p3a], [e1a, e2a, e3a], seed);
     const resultA = runFullBattle(stateA);
 
     // 두 번째 실행
@@ -33,7 +33,7 @@ describe('결정론적 전투 (Determinism)', () => {
     const e2b = createUnit(createCharacterDef('E-Assassin', CharacterClass.ASSASSIN), Team.ENEMY, Position.BACK);
     const e3b = createUnit(createCharacterDef('E-Controller', CharacterClass.CONTROLLER), Team.ENEMY, Position.FRONT);
 
-    const stateB = createBattleState([p1b, p2b, p3b], [e1b, e2b, e3b], [], [], seed);
+    const stateB = createBattleState([p1b, p2b, p3b], [e1b, e2b, e3b], seed);
     const resultB = runFullBattle(stateB);
 
     // 동일한 승자

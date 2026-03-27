@@ -18,14 +18,14 @@ function makeFormation(overrides: Partial<FormationData> = {}): FormationData {
 }
 
 describe('validateFormation', () => {
-  it('유효한 편성: 3명 출전 + 교체 1명', () => {
+  it('유효한 편성: 4명 출전', () => {
     const f = makeFormation({
       slots: [
         { characterId: 'c1', position: Position.FRONT },
         { characterId: 'c2', position: Position.FRONT },
         { characterId: 'c3', position: Position.BACK },
+        { characterId: 'c4', position: Position.BACK },
       ],
-      reserveId: 'c4',
     });
     const result = validateFormation(f);
     expect(result.valid).toBe(true);
@@ -40,7 +40,7 @@ describe('validateFormation', () => {
     expect(result.valid).toBe(true);
   });
 
-  it('유효한 편성: 2명 출전, 교체 없음', () => {
+  it('유효한 편성: 2명 출전', () => {
     const f = makeFormation({
       slots: [
         { characterId: 'c1', position: Position.FRONT },
@@ -67,18 +67,19 @@ describe('validateFormation', () => {
     expect(result.errors).toContainEqual(expect.stringContaining('최소 1명'));
   });
 
-  it('4명 초과 출전: 오류', () => {
+  it('5명 초과 출전: 오류', () => {
     const f = makeFormation({
       slots: [
         { characterId: 'c1', position: Position.FRONT },
         { characterId: 'c2', position: Position.FRONT },
         { characterId: 'c3', position: Position.BACK },
         { characterId: 'c4', position: Position.BACK },
+        { characterId: 'c5', position: Position.FRONT },
       ],
     });
     const result = validateFormation(f);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContainEqual(expect.stringContaining('최대 3명'));
+    expect(result.errors).toContainEqual(expect.stringContaining('최대 4명'));
   });
 
   it('중복 캐릭터: 출전 슬롯 내 중복', () => {
@@ -91,26 +92,6 @@ describe('validateFormation', () => {
     const result = validateFormation(f);
     expect(result.valid).toBe(false);
     expect(result.errors).toContainEqual(expect.stringContaining('중복'));
-  });
-
-  it('중복 캐릭터: 출전과 교체 간 중복', () => {
-    const f = makeFormation({
-      slots: [{ characterId: 'c1', position: Position.FRONT }],
-      reserveId: 'c1',
-    });
-    const result = validateFormation(f);
-    expect(result.valid).toBe(false);
-    expect(result.errors).toContainEqual(expect.stringContaining('중복'));
-  });
-
-  it('교체만 있고 출전 없음: 오류', () => {
-    const f = makeFormation({
-      slots: [],
-      reserveId: 'c1',
-    });
-    const result = validateFormation(f);
-    expect(result.valid).toBe(false);
-    expect(result.errors).toContainEqual(expect.stringContaining('최소 1명'));
   });
 });
 
@@ -127,17 +108,18 @@ describe('canAddToZone', () => {
     expect(result.allowed).toBe(true);
   });
 
-  it('3명 차면 추가 불가', () => {
+  it('4명 차면 추가 불가', () => {
     const f = makeFormation({
       slots: [
         { characterId: 'c1', position: Position.FRONT },
         { characterId: 'c2', position: Position.FRONT },
         { characterId: 'c3', position: Position.BACK },
+        { characterId: 'c4', position: Position.BACK },
       ],
     });
-    const result = canAddToZone(f, 'FRONT', 'c4');
+    const result = canAddToZone(f, 'FRONT', 'c5');
     expect(result.allowed).toBe(false);
-    expect(result.reason).toContain('3명');
+    expect(result.reason).toContain('4명');
   });
 
   it('이미 출전 중인 캐릭터는 이동으로 간주 (차단 안함)', () => {
@@ -146,23 +128,11 @@ describe('canAddToZone', () => {
         { characterId: 'c1', position: Position.FRONT },
         { characterId: 'c2', position: Position.FRONT },
         { characterId: 'c3', position: Position.BACK },
+        { characterId: 'c4', position: Position.BACK },
       ],
     });
     // c1은 이미 FRONT에 있으므로 BACK으로 이동 = 허용
     const result = canAddToZone(f, 'BACK', 'c1');
-    expect(result.allowed).toBe(true);
-  });
-
-  it('RESERVE 추가는 항상 허용', () => {
-    const f = makeFormation({
-      slots: [
-        { characterId: 'c1', position: Position.FRONT },
-        { characterId: 'c2', position: Position.FRONT },
-        { characterId: 'c3', position: Position.BACK },
-      ],
-      reserveId: 'c4',
-    });
-    const result = canAddToZone(f, 'RESERVE', 'c5');
     expect(result.allowed).toBe(true);
   });
 });

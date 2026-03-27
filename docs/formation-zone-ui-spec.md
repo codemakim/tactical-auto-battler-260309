@@ -8,21 +8,20 @@
 ## §1. 영역 구조
 
 ```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│             │  │             │  │             │
-│  BACK 영역  │  │ FRONT 영역  │  │  RESERVE    │
-│  (후열)     │  │  (전열)     │  │  (교체)     │
-│  max 3      │  │  max 3      │  │  max 1      │
-│             │  │             │  │             │
-└─────────────┘  └─────────────┘  └─────────────┘
+┌─────────────┐  ┌─────────────┐
+│             │  │             │
+│  BACK 영역  │  │ FRONT 영역  │
+│  (후열)     │  │  (전열)     │
+│  max 4      │  │  max 4      │
+│             │  │             │
+└─────────────┘  └─────────────┘
 
-총 출전 인원: 최대 3명 (FRONT + BACK 합산)
+총 출전 인원: 최대 4명 (FRONT + BACK 합산, 자유 배치)
 ```
 
 ### §1.1 제약
 
-- FRONT + BACK 합계 최대 3명
-- RESERVE 최대 1명
+- FRONT + BACK 합계 최대 4명
 - 같은 캐릭터 중복 배치 불가
 - 최소 1명은 배치해야 출격 가능
 
@@ -32,8 +31,7 @@
 
 1. 좌측 로스터에서 캐릭터 클릭 → 선택됨
 2. FRONT 또는 BACK 영역 클릭 → 해당 영역에 배치
-3. RESERVE 영역 클릭 → 교체 멤버로 배치
-4. 이미 총 3명이면 영역 클릭 시 토스트 안내
+3. 이미 총 4명이면 영역 클릭 시 토스트 안내
 
 ### §2.2 제거/이동
 
@@ -68,13 +66,11 @@ interface FormationValidation {
 function validateFormation(formation: FormationData): FormationValidation
 ```
 
-## §4. 데이터 구조 (변경 없음)
+## §4. 데이터 구조
 
-기존 `FormationData` 구조 유지:
 ```typescript
 interface FormationData {
   slots: FormationSlot[];  // {characterId, position}[]
-  reserveId?: string;
   heroType: HeroType;
 }
 ```

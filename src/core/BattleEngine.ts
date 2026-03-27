@@ -23,18 +23,14 @@ function snapshotActionSlots(unit: BattleUnit): BattleUnit {
 export function createBattleState(
   playerUnits: BattleUnit[],
   enemyUnits: BattleUnit[],
-  playerReserve: BattleUnit[],
-  enemyReserve: BattleUnit[],
   seed?: number,
   heroType?: HeroType,
 ): BattleState {
   // 전투 시작 시 모든 유닛의 actionSlots 스냅샷 (전투 후 원복용)
   const allUnits = [...playerUnits, ...enemyUnits].map(snapshotActionSlots);
-  const allReserve = [...playerReserve, ...enemyReserve].map(snapshotActionSlots);
 
   return {
     units: allUnits,
-    reserve: allReserve,
     hero: {
       heroType: heroType ?? HeroTypeConst.COMMANDER,
       interventionsRemaining: DEFAULT_GAME_CONFIG.heroInterventionsPerRound,
@@ -61,7 +57,6 @@ export function restorePreBattleActions(state: BattleState): BattleState {
   return {
     ...state,
     units: state.units.map(resetBattleActions),
-    reserve: state.reserve.map(resetBattleActions),
   };
 }
 

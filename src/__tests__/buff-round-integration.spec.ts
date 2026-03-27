@@ -19,7 +19,7 @@ describe('라운드 시작 - 상태이상 처리 (§6.5)', () => {
     p1.buffs = [{ id: '1', type: BuffType.POISON, value: 5, duration: 2, sourceId: e1.id }];
     const hpBefore = p1.stats.hp;
 
-    const state = createBattleState([p1], [e1], [], []);
+    const state = createBattleState([p1], [e1]);
     const afterRound = startRound(state);
 
     const poisonedUnit = afterRound.units.find((u) => u.id === p1.id);
@@ -33,7 +33,7 @@ describe('라운드 시작 - 상태이상 처리 (§6.5)', () => {
     const hpBefore = p1.stats.hp;
     p1.buffs = [{ id: '1', type: BuffType.REGEN, value: 5, duration: 2, sourceId: p1.id }];
 
-    const state = createBattleState([p1], [e1], [], []);
+    const state = createBattleState([p1], [e1]);
     const afterRound = startRound(state);
 
     const regenUnit = afterRound.units.find((u) => u.id === p1.id);
@@ -46,7 +46,7 @@ describe('라운드 시작 - 상태이상 처리 (§6.5)', () => {
     p1.stats.hp = 3;
     p1.buffs = [{ id: '1', type: BuffType.POISON, value: 10, duration: 2, sourceId: e1.id }];
 
-    const state = createBattleState([p1], [e1], [], []);
+    const state = createBattleState([p1], [e1]);
     const afterRound = startRound(state);
 
     const deadUnit = afterRound.units.find((u) => u.id === p1.id);
@@ -59,7 +59,7 @@ describe('라운드 시작 - 상태이상 처리 (§6.5)', () => {
     const e1 = createUnit(createCharacterDef('E1', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
     p1.buffs = [{ id: '1', type: BuffType.POISON, value: 5, duration: 2, sourceId: e1.id }];
 
-    const state = createBattleState([p1], [e1], [], []);
+    const state = createBattleState([p1], [e1]);
     const afterRound = startRound(state);
 
     const roundStartIdx = afterRound.events.findIndex((e) => e.type === 'ROUND_START');
@@ -263,7 +263,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
     e1.stats.maxHp = 9999;
     e1.buffs = [{ id: 'stun-1', type: BuffType.STUN, value: 0, duration: 1, sourceId: p1.id }];
 
-    let state = createBattleState([p1], [e1], [], []);
+    let state = createBattleState([p1], [e1]);
     state = stepBattle(state).state;
 
     while (state.phase !== BattlePhase.ROUND_END && !state.isFinished) {
@@ -299,7 +299,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
       },
     ];
 
-    let state = createBattleState([p1], [e1], [], []);
+    let state = createBattleState([p1], [e1]);
     state = stepBattle(state).state;
 
     while (state.phase !== BattlePhase.ROUND_END && !state.isFinished) {
@@ -340,7 +340,7 @@ describe('ApplyBuff 액션 효과 - 전투 통합', () => {
       },
     ];
 
-    const state = createBattleState([p1], [e1], [], []);
+    const state = createBattleState([p1], [e1]);
     // 라운드 시작
     let current = stepBattle(state).state;
 

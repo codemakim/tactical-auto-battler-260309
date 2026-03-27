@@ -122,14 +122,13 @@ function logCardOptions(options: CardInstance[]) {
 /** 유닛 이름 찾기 (P/E 태그 포함) */
 function findUnitName(state: BattleState, allUnits: BattleUnit[], id?: string): string {
   if (!id) return '???';
-  const u =
-    state.units.find((u) => u.id === id) ?? state.reserve.find((u) => u.id === id) ?? allUnits.find((u) => u.id === id);
+  const u = state.units.find((u) => u.id === id) ?? allUnits.find((u) => u.id === id);
   return u ? `${u.name}(${u.team === Team.PLAYER ? 'P' : 'E'})` : id;
 }
 
 function findUnitObj(state: BattleState, id?: string): BattleUnit | undefined {
   if (!id) return undefined;
-  return state.units.find((u) => u.id === id) ?? state.reserve.find((u) => u.id === id);
+  return state.units.find((u) => u.id === id);
 }
 
 function logBattleEvent(
@@ -214,13 +213,6 @@ function logBattleEvent(
 
   if (ev.type === 'UNIT_DIED') {
     log(`        💀 ${name(ev.targetId)} 사망!`);
-    return;
-  }
-
-  if (ev.type === 'RESERVE_ENTERED') {
-    const tgt = findUnitObj(state, ev.targetId);
-    const tgtInfo = tgt ? ` → ${briefStatus(tgt)}` : '';
-    log(`        📥 ${name(ev.targetId)} 예비에서 투입!${tgtInfo}`);
     return;
   }
 
@@ -315,26 +307,19 @@ function executeStageBattleWithLog(runState: RunState, heroType?: HeroType): Bat
 
   const battleSeed = runState.seed + runState.currentStage * 1000;
 
-  // 파티 → BattleUnit
-  const combatDefs = runState.party.slice(0, 3);
-  const reserveDef = runState.party[3];
-
-  const playerUnits = combatDefs.map((def, i) => {
+  // 파티 → BattleUnit (4명 전원 출전)
+  const playerUnits = runState.party.map((def, i) => {
     const unit = createUnit(def, Team.PLAYER, i < 2 ? Position.FRONT : Position.BACK);
     return applyEquippedCards(unit, def.id, runState);
   });
-
-  const playerReserve = reserveDef
-    ? [applyEquippedCards(createUnit(reserveDef, Team.PLAYER, Position.BACK), reserveDef.id, runState)]
-    : [];
 
   // 적 생성
   const enemyEncounter = generateEncounter(runState.currentStage, battleSeed);
   const enemyUnits = enemyEncounter.map((eu) => createUnit(eu.definition, Team.ENEMY, eu.position));
 
   // 전투 초기화
-  let current = createBattleState(playerUnits, enemyUnits, playerReserve, [], battleSeed, heroType);
-  const allInitialUnits = [...current.units, ...current.reserve].map((u) => ({ ...u }));
+  let current = createBattleState(playerUnits, enemyUnits, battleSeed, heroType);
+  const allInitialUnits = [...current.units].map((u) => ({ ...u }));
 
   // 적 정보 출력
   const enemyNames = current.units
