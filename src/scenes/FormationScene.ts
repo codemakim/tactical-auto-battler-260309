@@ -699,6 +699,7 @@ export class FormationScene extends Phaser.Scene {
         width: cardW,
         height: cardH,
         action: slot.action,
+        condition: slot.condition,
         rarity: slot.equippedCard?.rarity,
         classRestriction: slot.equippedCard?.classRestriction,
         interactive: isRun,

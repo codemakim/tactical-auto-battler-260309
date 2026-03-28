@@ -13,6 +13,7 @@ import { createCharacterDef, createUnit, resetUnitCounter } from './entities/Uni
 import { createBattleState, stepBattle, restorePreBattleActions } from './core/BattleEngine';
 import { CharacterClass, RunStatus, Team, Position } from './types';
 import type { RunState, CardInstance, BattleState, BattleEvent, BattleUnit, HeroType } from './types';
+import { formatEffects } from './utils/actionText';
 import {
   createRunState,
   processVictory,
@@ -99,18 +100,7 @@ function logInventory(run: RunState) {
 function logCardOptions(options: CardInstance[]) {
   options.forEach((card, i) => {
     const cls = card.classRestriction ? `[${card.classRestriction}]` : '[공용]';
-    const effects = card.action.effects
-      .map((e) => {
-        if (e.type === 'DAMAGE') return `DMG x${e.value}`;
-        if (e.type === 'SHIELD') return `SHD x${e.value}`;
-        if (e.type === 'HEAL') return `HEAL ${e.value}`;
-        if (e.type === 'MOVE') return `MOVE→${e.position}`;
-        if (e.type === 'PUSH') return 'PUSH';
-        if (e.type === 'BUFF') return `BUFF:${e.buffType}`;
-        if (e.type === 'DEBUFF') return `DEBUFF:${e.buffType}`;
-        return e.type;
-      })
-      .join(', ');
+    const effects = formatEffects(card.action.effects);
     log(`    ${i + 1}. ${cls} ${card.action.name} (${card.rarity}) — ${effects}`);
   });
 }

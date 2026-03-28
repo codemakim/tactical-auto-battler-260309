@@ -1,0 +1,80 @@
+{
+  "condition": {
+    "ALWAYS": "항상",
+    "POSITION_FRONT": "전열에 있을 때",
+    "POSITION_BACK": "후열에 있을 때",
+    "HP_BELOW": "HP {value}% 이하일 때",
+    "HP_ABOVE": "HP {value}% 이상일 때",
+    "ENEMY_FRONT_EXISTS": "적 전열에 유닛이 있을 때",
+    "ENEMY_BACK_EXISTS": "적 후열에 유닛이 있을 때",
+    "ALLY_HP_BELOW": "아군 중 HP {value}% 이하가 있을 때",
+    "LOWEST_HP_ENEMY": "항상",
+    "FIRST_ACTION_THIS_ROUND": "라운드 첫 행동일 때",
+    "HAS_HERO_BUFF": "영웅 버프가 있을 때",
+    "ENEMY_HP_BELOW": "적 중 HP {value}% 이하가 있을 때"
+  },
+  "effectType": {
+    "DAMAGE": "{target}에게 {stat}x{value} 피해",
+    "DAMAGE_FLAT": "{target}에게 {value} 피해",
+    "HEAL": "{target} {stat}x{value} 회복",
+    "HEAL_FLAT": "{target} {value} 회복",
+    "SHIELD": "{target}에게 {stat}x{value} 실드",
+    "SHIELD_FLAT": "{target}에게 {value} 실드",
+    "MOVE": "{position}(으)로 이동",
+    "PUSH": "{target}을 {position}(으)로 밀기",
+    "BUFF": "{target}에게 {buffType} {duration}턴",
+    "DEBUFF": "{target}에게 {buffType} {duration}턴",
+    "DELAY_TURN": "{target} 턴 {value} 지연",
+    "ADVANCE_TURN": "{target} 턴 {value} 앞당김",
+    "REPOSITION": "{target}을 {position}(으)로 재배치",
+    "DELAYED": "{delayRounds}턴 후 {delayedEffect}",
+    "SWAP": "{target} ↔ {swapTarget} 교환"
+  },
+  "target": {
+    "side": {
+      "SELF": "자신",
+      "ENEMY": "적",
+      "ALLY": "아군"
+    },
+    "position": {
+      "FRONT": "전열",
+      "BACK": "후열",
+      "ANY": ""
+    },
+    "select": {
+      "HIGHEST_AGI": "",
+      "LOWEST_HP": "최저HP",
+      "HIGHEST_ATK": "최고ATK",
+      "RANDOM": "무작위",
+      "FASTEST_TURN": "빠른턴",
+      "FIRST": ""
+    }
+  },
+  "buffType": {
+    "ATK_UP": "공격력 증가",
+    "ATK_DOWN": "공격력 감소",
+    "GUARD_UP": "방어력 증가",
+    "GUARD_DOWN": "방어력 감소",
+    "AGI_UP": "민첩 증가",
+    "AGI_DOWN": "민첩 감소",
+    "POISON": "중독",
+    "REGEN": "재생",
+    "STUN": "기절",
+    "COVER": "엄호"
+  },
+  "stat": {
+    "hp": "HP",
+    "maxHp": "최대HP",
+    "atk": "ATK",
+    "grd": "GRD",
+    "agi": "AGI"
+  },
+  "position": {
+    "FRONT": "전열",
+    "BACK": "후열"
+  },
+  "slotFormat": "[{condition}] {name}: {effects}",
+  "defensiveTag": "[우선]",
+  "effectSeparator": ", ",
+  "noEffects": "효과 없음"
+}

@@ -1,0 +1,80 @@
+{
+  "condition": {
+    "ALWAYS": "Always",
+    "POSITION_FRONT": "When in front row",
+    "POSITION_BACK": "When in back row",
+    "HP_BELOW": "When HP below {value}%",
+    "HP_ABOVE": "When HP above {value}%",
+    "ENEMY_FRONT_EXISTS": "When enemy front row exists",
+    "ENEMY_BACK_EXISTS": "When enemy back row exists",
+    "ALLY_HP_BELOW": "When ally HP below {value}%",
+    "LOWEST_HP_ENEMY": "Always",
+    "FIRST_ACTION_THIS_ROUND": "When first action this round",
+    "HAS_HERO_BUFF": "When has hero buff",
+    "ENEMY_HP_BELOW": "When enemy HP below {value}%"
+  },
+  "effectType": {
+    "DAMAGE": "{stat}x{value} damage to {target}",
+    "DAMAGE_FLAT": "{value} damage to {target}",
+    "HEAL": "Heal {target} for {stat}x{value}",
+    "HEAL_FLAT": "Heal {target} for {value}",
+    "SHIELD": "{stat}x{value} shield to {target}",
+    "SHIELD_FLAT": "{value} shield to {target}",
+    "MOVE": "Move to {position}",
+    "PUSH": "Push {target} to {position}",
+    "BUFF": "Apply {buffType} to {target} for {duration}T",
+    "DEBUFF": "Apply {buffType} to {target} for {duration}T",
+    "DELAY_TURN": "Delay {target} turn by {value}",
+    "ADVANCE_TURN": "Advance {target} turn by {value}",
+    "REPOSITION": "Reposition {target} to {position}",
+    "DELAYED": "{delayedEffect} after {delayRounds}T",
+    "SWAP": "Swap {target} ↔ {swapTarget}"
+  },
+  "target": {
+    "side": {
+      "SELF": "self",
+      "ENEMY": "enemy",
+      "ALLY": "ally"
+    },
+    "position": {
+      "FRONT": "front",
+      "BACK": "back",
+      "ANY": ""
+    },
+    "select": {
+      "HIGHEST_AGI": "",
+      "LOWEST_HP": "lowest HP",
+      "HIGHEST_ATK": "highest ATK",
+      "RANDOM": "random",
+      "FASTEST_TURN": "fastest turn",
+      "FIRST": ""
+    }
+  },
+  "buffType": {
+    "ATK_UP": "ATK Up",
+    "ATK_DOWN": "ATK Down",
+    "GUARD_UP": "Guard Up",
+    "GUARD_DOWN": "Guard Down",
+    "AGI_UP": "AGI Up",
+    "AGI_DOWN": "AGI Down",
+    "POISON": "Poison",
+    "REGEN": "Regen",
+    "STUN": "Stun",
+    "COVER": "Cover"
+  },
+  "stat": {
+    "hp": "HP",
+    "maxHp": "Max HP",
+    "atk": "ATK",
+    "grd": "GRD",
+    "agi": "AGI"
+  },
+  "position": {
+    "FRONT": "front",
+    "BACK": "back"
+  },
+  "slotFormat": "[{condition}] {name}: {effects}",
+  "defensiveTag": "[Priority]",
+  "effectSeparator": ", ",
+  "noEffects": "No effects"
+}
