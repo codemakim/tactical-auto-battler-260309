@@ -169,7 +169,8 @@ export function executeTurn(state: BattleState): BattleState {
       data: { reason: 'stunned' },
     });
   } else if (selectedSlot) {
-    const result = executeAction(actor, selectedSlot, currentState);
+    const slotIndex = actor.actionSlots.indexOf(selectedSlot);
+    const result = executeAction(actor, selectedSlot, currentState, slotIndex);
     currentState = { ...currentState, units: result.units };
     if (result.turnOrder) {
       currentState = { ...currentState, turnOrder: result.turnOrder };

@@ -2,6 +2,7 @@ import { Position, Team, Target } from '../types';
 import type { BattleUnit, BattleState, ActionSlot, ActionEffect, BattleEvent, DelayedEffect } from '../types';
 import { uid } from '../utils/uid';
 import { selectTarget } from './TargetSelector';
+import { formatCondition } from '../utils/actionText';
 import {
   calculateDamage,
   calculateShield,
@@ -95,6 +96,7 @@ export function executeAction(
   source: BattleUnit,
   slot: ActionSlot,
   state: BattleState,
+  slotIndex?: number,
 ): { units: BattleUnit[]; events: BattleEvent[]; turnOrder?: string[]; delayedEffects?: DelayedEffect[] } {
   let units = [...state.units];
   let turnOrder: string[] | undefined;
@@ -109,7 +111,13 @@ export function executeAction(
     timestamp: Date.now(),
     sourceId: source.id,
     actionId: slot.action.id,
-    data: { actionName: slot.action.name },
+    data: {
+      actionName: slot.action.name,
+      conditionType: slot.condition.type,
+      conditionValue: slot.condition.value,
+      conditionText: formatCondition(slot.condition),
+      slotIndex: slotIndex ?? -1,
+    },
   });
 
   for (const effect of slot.action.effects) {

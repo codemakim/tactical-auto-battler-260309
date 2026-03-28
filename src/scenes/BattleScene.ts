@@ -784,6 +784,48 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private processEvents(events: BattleEvent[]): void {
+    // 행동 뱃지: 어떤 조건으로 어떤 액션을 실행했는지 표시
+    const actionEv = events.find((e) => e.type === 'ACTION_EXECUTED');
+    if (actionEv?.sourceId) {
+      const visual = this.unitVisuals.get(actionEv.sourceId);
+      if (visual) {
+        const actionName = (actionEv.data?.actionName as string) ?? '';
+        const condText = (actionEv.data?.conditionText as string) ?? '';
+        const condType = (actionEv.data?.conditionType as string) ?? 'ALWAYS';
+        const slotIdx = (actionEv.data?.slotIndex as number) ?? 0;
+        const circled = '\u2460\u2461\u2462\u2463\u2464'[slotIdx] ?? '';
+        const label = condType === 'ALWAYS' ? `${circled} ${actionName}` : `${circled} ${condText} → ${actionName}`;
+
+        const badge = this.add
+          .text(visual.container.x, visual.container.y - UNIT_H / 2 - 52, label, {
+            fontSize: '10px',
+            fontFamily: UITheme.font.family,
+            color: '#ccddee',
+            backgroundColor: '#1a1a2ecc',
+            padding: { x: 4, y: 2 },
+          })
+          .setOrigin(0.5)
+          .setDepth(160)
+          .setAlpha(0);
+
+        this.tweens.add({
+          targets: badge,
+          alpha: { from: 0, to: 1 },
+          y: badge.y - 8,
+          duration: 300,
+          ease: 'Power2',
+        });
+        this.tweens.add({
+          targets: badge,
+          alpha: 0,
+          duration: 400,
+          delay: 1200,
+          ease: 'Power2',
+          onComplete: () => badge.destroy(),
+        });
+      }
+    }
+
     // 플로팅 텍스트: 전투 수치 이벤트
     const floatingTexts = extractFloatingTexts(events);
     for (const ft of floatingTexts) {

@@ -74,6 +74,9 @@
     "BACK": "후열"
   },
   "slotFormat": "[{condition}] {name}: {effects}",
+  "slotSummary": "IF {condition} → {name}",
+  "slotSummaryAlways": "→ {name}",
+  "slotSummaryHeader": "[행동 로직]",
   "defensiveTag": "[우선]",
   "effectSeparator": ", ",
   "noEffects": "효과 없음"

@@ -18,6 +18,9 @@ interface LocaleData {
   stat: Record<string, string>;
   position: Record<string, string>;
   slotFormat: string;
+  slotSummary: string;
+  slotSummaryAlways: string;
+  slotSummaryHeader: string;
   defensiveTag: string;
   effectSeparator: string;
   noEffects: string;
@@ -317,4 +320,25 @@ export function formatActionSlot(slot: ActionSlot, locale?: Locale): string {
     name: `${name}${tag}`,
     effects: effectsText,
   });
+}
+
+// === Slot Summary (AI Logic Display) ===
+
+const CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
+
+export function formatSlotSummary(slot: ActionSlot, index: number, locale?: Locale): string {
+  const l = getLocale(locale);
+  const isAlways = slot.condition.type === 'ALWAYS';
+  const num = CIRCLED_DIGITS[index] ?? `${index + 1}`;
+  const name = slot.action.name;
+
+  if (isAlways) {
+    return `${num} ${template(l.slotSummaryAlways, { name })}`;
+  }
+  const condText = formatCondition(slot.condition, locale);
+  return `${num} ${template(l.slotSummary, { condition: condText, name })}`;
+}
+
+export function formatSlotsSummary(slots: ActionSlot[], locale?: Locale): string[] {
+  return slots.map((slot, i) => formatSlotSummary(slot, i, locale));
 }

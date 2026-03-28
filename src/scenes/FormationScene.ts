@@ -25,6 +25,7 @@ import { getSlotDisplayData, swapBaseActionSlots, swapRunActionSlots } from '../
 import { equipCard, unequipCard, getEquippableCards } from '../core/RunManager';
 import { calculateColumnLayout } from '../systems/UnitLayoutCalculator';
 import { validateFormation, canAddToZone } from '../systems/FormationValidator';
+import { formatSlotsSummary } from '../utils/actionText';
 
 // 영역 정의
 interface ZoneDef {
@@ -762,8 +763,12 @@ export class FormationScene extends Phaser.Scene {
       this.detailDynamic.push(swapBtn);
     }
 
+    // AI 행동 로직 요약
+    const logicY = slotStartY + cardH + 22;
+    this.renderLogicSummary(slotData, logicY);
+
     // 런 중이면 인벤토리 표시
-    const inventoryY = slotStartY + cardH + 24;
+    const inventoryY = logicY + slotData.length * 14 + 20;
     if (isRun && runState) {
       this.renderInventory(char, runState, inventoryY);
     }
@@ -811,6 +816,30 @@ export class FormationScene extends Phaser.Scene {
     this.toast.show(`${card.action.name} → 슬롯 ${this.selectedActionSlot + 1}`);
     this.selectedActionSlot = null;
     this.updateDetailPanel(char);
+  }
+
+  private renderLogicSummary(slotData: SlotDisplayData[], startY: number): void {
+    const slots = slotData.map((s) => ({ condition: s.condition, action: s.action }));
+    const lines = formatSlotsSummary(slots);
+
+    const headerText = this.add.text(UITheme.panel.padding, startY, '[행동 로직]', {
+      ...UITheme.font.small,
+      fontSize: '10px',
+      color: UITheme.colors.textSecondary,
+    });
+    this.detailPanel.add(headerText);
+    this.detailDynamic.push(headerText);
+
+    for (let i = 0; i < lines.length; i++) {
+      const ly = startY + 14 + i * 14;
+      const lineText = this.add.text(UITheme.panel.padding + 4, ly, lines[i], {
+        fontFamily: UITheme.font.family,
+        fontSize: '11px',
+        color: '#ccddee',
+      });
+      this.detailPanel.add(lineText);
+      this.detailDynamic.push(lineText);
+    }
   }
 
   private renderInventory(char: CharacterDefinition, runState: RunState, startY: number): void {

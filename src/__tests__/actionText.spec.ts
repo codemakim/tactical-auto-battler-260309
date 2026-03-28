@@ -9,6 +9,8 @@ import {
   getDefaultLocale,
   getStructuredEffect,
   getStructuredCondition,
+  formatSlotSummary,
+  formatSlotsSummary,
 } from '../utils/actionText';
 import { Target, type ActionCondition, type ActionEffect, type ActionSlot } from '../types';
 import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
@@ -454,6 +456,63 @@ describe('ClassDefinitions structured integration', () => {
         }
       }
     }
+  });
+});
+
+// === formatSlotSummary ===
+
+describe('formatSlotSummary', () => {
+  it('conditional slot shows IF → format', () => {
+    const slot: ActionSlot = {
+      condition: { type: 'POSITION_FRONT' },
+      action: { id: 't', name: 'Shield Bash', description: '', effects: [] },
+    };
+    expect(formatSlotSummary(slot, 0)).toBe('\u2460 IF 전열에 있을 때 → Shield Bash');
+    expect(formatSlotSummary(slot, 0, 'en')).toBe('\u2460 IF When in front row → Shield Bash');
+  });
+
+  it('ALWAYS condition omits IF', () => {
+    const slot: ActionSlot = {
+      condition: { type: 'ALWAYS' },
+      action: { id: 't', name: 'Strike', description: '', effects: [] },
+    };
+    expect(formatSlotSummary(slot, 1)).toBe('\u2461 → Strike');
+    expect(formatSlotSummary(slot, 1, 'en')).toBe('\u2461 → Strike');
+  });
+
+  it('index numbering', () => {
+    const slot: ActionSlot = {
+      condition: { type: 'HP_BELOW', value: 50 },
+      action: { id: 't', name: 'Fortify', description: '', effects: [] },
+    };
+    expect(formatSlotSummary(slot, 2)).toContain('\u2462');
+    expect(formatSlotSummary(slot, 2)).toContain('HP 50% 이하일 때');
+  });
+});
+
+describe('formatSlotsSummary', () => {
+  it('returns array of formatted lines', () => {
+    const slots: ActionSlot[] = [
+      {
+        condition: { type: 'POSITION_FRONT' },
+        action: { id: 't1', name: 'Shield Bash', description: '', effects: [] },
+      },
+      {
+        condition: { type: 'HP_BELOW', value: 50 },
+        action: { id: 't2', name: 'Fortify', description: '', effects: [] },
+      },
+      {
+        condition: { type: 'POSITION_BACK' },
+        action: { id: 't3', name: 'Advance', description: '', effects: [] },
+      },
+    ];
+    const lines = formatSlotsSummary(slots);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain('\u2460');
+    expect(lines[1]).toContain('\u2461');
+    expect(lines[2]).toContain('\u2462');
+    expect(lines[0]).toContain('Shield Bash');
+    expect(lines[2]).toContain('후열에 있을 때');
   });
 });
 

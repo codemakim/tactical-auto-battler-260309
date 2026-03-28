@@ -364,8 +364,17 @@ export class ReplayScene extends Phaser.Scene {
     };
 
     switch (ev.type) {
-      case 'ACTION_EXECUTED':
-        return `${findName(ev.sourceId)} → ${(ev.data?.actionName as string) ?? '행동'}`;
+      case 'ACTION_EXECUTED': {
+        const actionName = (ev.data?.actionName as string) ?? '행동';
+        const condType = (ev.data?.conditionType as string) ?? '';
+        const condText = (ev.data?.conditionText as string) ?? '';
+        const slotIdx = (ev.data?.slotIndex as number) ?? 0;
+        const circled = '\u2460\u2461\u2462\u2463\u2464'[slotIdx] ?? '';
+        if (condType && condType !== 'ALWAYS' && condText) {
+          return `${findName(ev.sourceId)} ${circled} [${condText}] → ${actionName}`;
+        }
+        return `${findName(ev.sourceId)} ${circled} → ${actionName}`;
+      }
       case 'DAMAGE_DEALT':
         return `${findName(ev.targetId)}에게 ${ev.value} 데미지`;
       case 'HEAL_APPLIED':

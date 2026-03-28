@@ -74,6 +74,9 @@
     "BACK": "back"
   },
   "slotFormat": "[{condition}] {name}: {effects}",
+  "slotSummary": "IF {condition} → {name}",
+  "slotSummaryAlways": "→ {name}",
+  "slotSummaryHeader": "[Action Logic]",
   "defensiveTag": "[Priority]",
   "effectSeparator": ", ",
   "noEffects": "No effects"
