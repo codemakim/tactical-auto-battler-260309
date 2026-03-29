@@ -2,15 +2,13 @@
  * 카드 비주얼 컴포넌트
  *
  * RewardScene, FormationScene 등에서 공용으로 사용.
- * 카드 정보를 시각적으로 표현하는 컨테이너.
- * 효과를 뱃지/태그 형태로 시각적으로 분리해서 표시.
+ * 카드 정보를 조건 / 효과 / 대상 3요소로 분리 표시.
  */
 import Phaser from 'phaser';
 import { UITheme } from './UITheme';
 import { Rarity } from '../types';
 import type { Action, ActionCondition } from '../types';
 import { getStructuredEffect, getStructuredCondition } from '../utils/actionText';
-import type { StructuredEffectData } from '../utils/actionText';
 
 // 레어리티별 테두리 색상
 const RARITY_BORDER: Record<string, number> = {
@@ -56,8 +54,6 @@ export class UICardVisual {
     const h = cfg.height ?? 150;
     this.config = { ...cfg, width: w, height: h };
     const compact = w < 100;
-    const fontSize = compact ? '8px' : '9px';
-    const nameFontSize = compact ? '10px' : '12px';
 
     this.container = scene.add.container(cfg.x, cfg.y);
 
@@ -66,42 +62,90 @@ export class UICardVisual {
     this.drawBg(cfg.selected ?? false);
     this.container.add(this.bg);
 
-    let ty = 6;
+    let ty = 5;
+    const padX = 6;
+    const labelSize = compact ? 7 : 8;
+    const valueSize = compact ? 8 : 10;
 
-    // 레어리티 라벨
+    // ── 헤더: 레어리티 + 이름 ──
     const rarityLabel = cfg.rarity ?? '기본';
     const rarityColor = cfg.rarity ? (RARITY_TEXT[cfg.rarity] ?? '#ccccdd') : '#555566';
-    this.addText(scene, w / 2, ty, rarityLabel, { fontSize: compact ? '8px' : '10px', color: rarityColor });
-    ty += compact ? 12 : 15;
+    this.addText(scene, w / 2, ty, rarityLabel, { fontSize: `${labelSize}px`, color: rarityColor });
+    ty += compact ? 10 : 13;
 
-    // 액션 이름
     this.addText(scene, w / 2, ty, cfg.action.name, {
-      fontSize: nameFontSize,
+      fontSize: compact ? '10px' : '12px',
       color: UITheme.colors.textPrimary,
     });
-    ty += compact ? 14 : 18;
+    ty += compact ? 13 : 17;
 
     // 클래스 제한
     const classLabel = cfg.classRestriction ?? '공용';
     this.addText(scene, w / 2, ty, classLabel, {
-      fontSize: compact ? '8px' : '10px',
+      fontSize: `${labelSize}px`,
       color: cfg.classRestriction ? UITheme.colors.textAccent : '#667788',
     });
-    ty += compact ? 12 : 16;
+    ty += compact ? 10 : 13;
 
-    // 조건 뱃지
+    // ── 구분선 ──
+    const divider = scene.add.graphics();
+    divider.lineStyle(1, UITheme.colors.border, 0.4);
+    divider.lineBetween(padX, ty, w - padX, ty);
+    this.container.add(divider);
+    ty += 4;
+
+    // ── 조건 섹션 ──
     if (cfg.condition) {
       const cond = getStructuredCondition(cfg.condition);
       if (!cond.isAlways) {
-        ty = this.renderConditionBadge(scene, ty, cond.text, w, compact);
+        this.addLabel(scene, padX, ty, '조건', labelSize);
+        this.addValue(scene, padX + (compact ? 22 : 28), ty, cond.text, valueSize, UITheme.colors.textSecondary, w);
+        ty += compact ? 11 : 14;
       }
     }
 
-    // 효과 뱃지 (최대 3개)
+    // ── 효과 섹션 ──
     const effects = cfg.action.effects.slice(0, 3);
     for (const effect of effects) {
       const data = getStructuredEffect(effect);
-      ty = this.renderEffectBadge(scene, ty, data, w, compact);
+
+      // 효과: 아이콘 + 수치
+      const iconTxt = scene.add
+        .text(padX, ty, data.icon, {
+          fontFamily: UITheme.font.family,
+          fontSize: `${valueSize}px`,
+          color: colorToStr(data.color),
+        })
+        .setOrigin(0, 0);
+      this.container.add(iconTxt);
+
+      const valTxt = scene.add
+        .text(padX + (compact ? 10 : 14), ty, data.valueText, {
+          fontFamily: UITheme.font.family,
+          fontSize: `${valueSize}px`,
+          color: UITheme.colors.textPrimary,
+        })
+        .setOrigin(0, 0);
+      this.container.add(valTxt);
+      ty += compact ? 11 : 13;
+
+      // 대상: → 텍스트 (compact에서도 표시, 한 줄 들여쓰기)
+      if (data.targetText) {
+        const arrow = scene.add
+          .text(padX + 4, ty, `→ ${data.targetText}`, {
+            fontFamily: UITheme.font.family,
+            fontSize: `${labelSize}px`,
+            color: colorToStr(data.color),
+          })
+          .setOrigin(0, 0)
+          .setAlpha(0.7);
+        const maxW = w - padX - 8;
+        if (arrow.width > maxW && maxW > 0) {
+          arrow.setScale(maxW / arrow.width);
+        }
+        this.container.add(arrow);
+        ty += compact ? 9 : 11;
+      }
     }
 
     // 인터랙션
@@ -120,86 +164,38 @@ export class UICardVisual {
     this.drawBg(selected);
   }
 
-  private renderConditionBadge(scene: Phaser.Scene, y: number, text: string, cardW: number, compact: boolean): number {
-    const padX = 4;
-    const padY = 2;
-    const fontSize = compact ? 7 : 8;
-    const maxTextW = cardW - 12;
-
-    const g = scene.add.graphics();
-    g.fillStyle(UITheme.colors.bgPanelLight, 0.9);
-    g.fillRoundedRect(4, y, cardW - 8, fontSize + padY * 2 + 2, 3);
-    g.lineStyle(1, UITheme.colors.border, 0.6);
-    g.strokeRoundedRect(4, y, cardW - 8, fontSize + padY * 2 + 2, 3);
-    this.container.add(g);
-
+  private addLabel(scene: Phaser.Scene, x: number, y: number, label: string, fontSize: number): void {
     const t = scene.add
-      .text(padX + 6, y + padY + 1, text, {
+      .text(x, y, label, {
         fontFamily: UITheme.font.family,
         fontSize: `${fontSize}px`,
-        color: UITheme.colors.textSecondary,
+        color: '#556677',
       })
       .setOrigin(0, 0);
-    if (t.width > maxTextW) {
-      t.setScale(maxTextW / t.width);
-    }
     this.container.add(t);
-
-    return y + fontSize + padY * 2 + 5;
   }
 
-  private renderEffectBadge(
+  private addValue(
     scene: Phaser.Scene,
+    x: number,
     y: number,
-    data: StructuredEffectData,
+    text: string,
+    fontSize: number,
+    color: string,
     cardW: number,
-    compact: boolean,
-  ): number {
-    const fontSize = compact ? 7 : 9;
-    const rowH = fontSize + 6;
-    const padX = 6;
-
-    // 아이콘
-    const iconText = scene.add
-      .text(padX, y + 2, data.icon, {
-        fontFamily: UITheme.font.family,
-        fontSize: `${fontSize + 1}px`,
-        color: colorToStr(data.color),
-      })
-      .setOrigin(0, 0);
-    this.container.add(iconText);
-
-    // 수치
-    const valueX = padX + (compact ? 10 : 14);
-    const valText = scene.add
-      .text(valueX, y + 2, data.valueText, {
+  ): void {
+    const t = scene.add
+      .text(x, y, text, {
         fontFamily: UITheme.font.family,
         fontSize: `${fontSize}px`,
-        color: UITheme.colors.textPrimary,
+        color,
       })
       .setOrigin(0, 0);
-    this.container.add(valText);
-
-    // 타겟 뱃지 (compact 모드에서는 생략)
-    if (!compact && data.targetText) {
-      const targetX = valueX + valText.width + 4;
-      const maxTargetW = cardW - targetX - 4;
-
-      const tgt = scene.add
-        .text(targetX, y + 2, data.targetText, {
-          fontFamily: UITheme.font.family,
-          fontSize: `${fontSize - 1}px`,
-          color: colorToStr(data.color),
-        })
-        .setOrigin(0, 0)
-        .setAlpha(0.7);
-      if (tgt.width > maxTargetW && maxTargetW > 0) {
-        tgt.setScale(maxTargetW / tgt.width);
-      }
-      this.container.add(tgt);
+    const maxW = cardW - x - 4;
+    if (t.width > maxW && maxW > 0) {
+      t.setScale(maxW / t.width);
     }
-
-    return y + rowH;
+    this.container.add(t);
   }
 
   private drawBg(selected: boolean): void {

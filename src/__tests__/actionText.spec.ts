@@ -28,33 +28,33 @@ describe('formatCondition', () => {
   });
 
   it('POSITION_FRONT', () => {
-    expect(formatCondition({ type: 'POSITION_FRONT' })).toBe('전열에 있을 때');
-    expect(formatCondition({ type: 'POSITION_FRONT' }, 'en')).toBe('When in front row');
+    expect(formatCondition({ type: 'POSITION_FRONT' })).toBe('자신 전열');
+    expect(formatCondition({ type: 'POSITION_FRONT' }, 'en')).toBe('Self front');
   });
 
   it('POSITION_BACK', () => {
-    expect(formatCondition({ type: 'POSITION_BACK' })).toBe('후열에 있을 때');
+    expect(formatCondition({ type: 'POSITION_BACK' })).toBe('자신 후열');
   });
 
   it('HP_BELOW with value', () => {
-    expect(formatCondition({ type: 'HP_BELOW', value: 50 })).toBe('HP 50% 이하일 때');
-    expect(formatCondition({ type: 'HP_BELOW', value: 50 }, 'en')).toBe('When HP below 50%');
+    expect(formatCondition({ type: 'HP_BELOW', value: 50 })).toBe('HP 50% 이하');
+    expect(formatCondition({ type: 'HP_BELOW', value: 50 }, 'en')).toBe('HP ≤50%');
   });
 
   it('HP_ABOVE with value', () => {
-    expect(formatCondition({ type: 'HP_ABOVE', value: 70 })).toBe('HP 70% 이상일 때');
+    expect(formatCondition({ type: 'HP_ABOVE', value: 70 })).toBe('HP 70% 이상');
   });
 
   it('ENEMY_FRONT_EXISTS', () => {
-    expect(formatCondition({ type: 'ENEMY_FRONT_EXISTS' })).toBe('적 전열에 유닛이 있을 때');
+    expect(formatCondition({ type: 'ENEMY_FRONT_EXISTS' })).toBe('적 전열 존재');
   });
 
   it('ENEMY_BACK_EXISTS', () => {
-    expect(formatCondition({ type: 'ENEMY_BACK_EXISTS' })).toBe('적 후열에 유닛이 있을 때');
+    expect(formatCondition({ type: 'ENEMY_BACK_EXISTS' })).toBe('적 후열 존재');
   });
 
   it('ALLY_HP_BELOW with value', () => {
-    expect(formatCondition({ type: 'ALLY_HP_BELOW', value: 40 })).toBe('아군 중 HP 40% 이하가 있을 때');
+    expect(formatCondition({ type: 'ALLY_HP_BELOW', value: 40 })).toBe('아군 HP 40% 이하');
   });
 
   it('LOWEST_HP_ENEMY', () => {
@@ -62,16 +62,16 @@ describe('formatCondition', () => {
   });
 
   it('FIRST_ACTION_THIS_ROUND', () => {
-    expect(formatCondition({ type: 'FIRST_ACTION_THIS_ROUND' })).toBe('라운드 첫 행동일 때');
+    expect(formatCondition({ type: 'FIRST_ACTION_THIS_ROUND' })).toBe('첫 행동');
   });
 
   it('HAS_HERO_BUFF', () => {
-    expect(formatCondition({ type: 'HAS_HERO_BUFF' })).toBe('영웅 버프가 있을 때');
+    expect(formatCondition({ type: 'HAS_HERO_BUFF' })).toBe('영웅 버프');
   });
 
   it('ENEMY_HP_BELOW with value', () => {
-    expect(formatCondition({ type: 'ENEMY_HP_BELOW', value: 30 })).toBe('적 중 HP 30% 이하가 있을 때');
-    expect(formatCondition({ type: 'ENEMY_HP_BELOW', value: 30 }, 'en')).toBe('When enemy HP below 30%');
+    expect(formatCondition({ type: 'ENEMY_HP_BELOW', value: 30 })).toBe('적 HP 30% 이하');
+    expect(formatCondition({ type: 'ENEMY_HP_BELOW', value: 30 }, 'en')).toBe('Enemy HP ≤30%');
   });
 });
 
@@ -266,11 +266,9 @@ describe('formatActionSlot', () => {
         ],
       },
     };
-    expect(formatActionSlot(slot)).toBe(
-      '[전열에 있을 때] Shield Bash: 적 전열에게 ATKx1.2 피해, 자신에게 GRDx0.8 실드',
-    );
+    expect(formatActionSlot(slot)).toBe('[자신 전열] Shield Bash: 적 전열에게 ATKx1.2 피해, 자신에게 GRDx0.8 실드');
     expect(formatActionSlot(slot, 'en')).toBe(
-      '[When in front row] Shield Bash: ATKx1.2 damage to enemy front, GRDx0.8 shield to self',
+      '[Self front] Shield Bash: ATKx1.2 damage to enemy front, GRDx0.8 shield to self',
     );
   });
 
@@ -289,7 +287,7 @@ describe('formatActionSlot', () => {
       },
     };
     const result = formatActionSlot(slot);
-    expect(result).toContain('[후열에 있을 때]');
+    expect(result).toContain('[자신 후열]');
     expect(result).toContain('Charge');
     expect(result).toContain('전열(으)로 이동');
     expect(result).toContain('ATKx1.4 피해');
@@ -429,12 +427,12 @@ describe('getStructuredCondition', () => {
   it('non-ALWAYS returns isAlways false', () => {
     const c = getStructuredCondition({ type: 'POSITION_FRONT' });
     expect(c.isAlways).toBe(false);
-    expect(c.text).toBe('전열에 있을 때');
+    expect(c.text).toBe('자신 전열');
   });
 
   it('locale en', () => {
     const c = getStructuredCondition({ type: 'HP_BELOW', value: 50 }, 'en');
-    expect(c.text).toBe('When HP below 50%');
+    expect(c.text).toBe('HP ≤50%');
     expect(c.isAlways).toBe(false);
   });
 });
@@ -467,8 +465,8 @@ describe('formatSlotSummary', () => {
       condition: { type: 'POSITION_FRONT' },
       action: { id: 't', name: 'Shield Bash', description: '', effects: [] },
     };
-    expect(formatSlotSummary(slot, 0)).toBe('\u2460 IF 전열에 있을 때 → Shield Bash');
-    expect(formatSlotSummary(slot, 0, 'en')).toBe('\u2460 IF When in front row → Shield Bash');
+    expect(formatSlotSummary(slot, 0)).toBe('\u2460 IF 자신 전열 → Shield Bash');
+    expect(formatSlotSummary(slot, 0, 'en')).toBe('\u2460 IF Self front → Shield Bash');
   });
 
   it('ALWAYS condition omits IF', () => {
@@ -486,7 +484,7 @@ describe('formatSlotSummary', () => {
       action: { id: 't', name: 'Fortify', description: '', effects: [] },
     };
     expect(formatSlotSummary(slot, 2)).toContain('\u2462');
-    expect(formatSlotSummary(slot, 2)).toContain('HP 50% 이하일 때');
+    expect(formatSlotSummary(slot, 2)).toContain('HP 50% 이하');
   });
 });
 
@@ -512,7 +510,7 @@ describe('formatSlotsSummary', () => {
     expect(lines[1]).toContain('\u2461');
     expect(lines[2]).toContain('\u2462');
     expect(lines[0]).toContain('Shield Bash');
-    expect(lines[2]).toContain('후열에 있을 때');
+    expect(lines[2]).toContain('자신 후열');
   });
 });
 

@@ -1,17 +1,17 @@
 {
   "condition": {
     "ALWAYS": "항상",
-    "POSITION_FRONT": "전열에 있을 때",
-    "POSITION_BACK": "후열에 있을 때",
-    "HP_BELOW": "HP {value}% 이하일 때",
-    "HP_ABOVE": "HP {value}% 이상일 때",
-    "ENEMY_FRONT_EXISTS": "적 전열에 유닛이 있을 때",
-    "ENEMY_BACK_EXISTS": "적 후열에 유닛이 있을 때",
-    "ALLY_HP_BELOW": "아군 중 HP {value}% 이하가 있을 때",
+    "POSITION_FRONT": "자신 전열",
+    "POSITION_BACK": "자신 후열",
+    "HP_BELOW": "HP {value}% 이하",
+    "HP_ABOVE": "HP {value}% 이상",
+    "ENEMY_FRONT_EXISTS": "적 전열 존재",
+    "ENEMY_BACK_EXISTS": "적 후열 존재",
+    "ALLY_HP_BELOW": "아군 HP {value}% 이하",
     "LOWEST_HP_ENEMY": "항상",
-    "FIRST_ACTION_THIS_ROUND": "라운드 첫 행동일 때",
-    "HAS_HERO_BUFF": "영웅 버프가 있을 때",
-    "ENEMY_HP_BELOW": "적 중 HP {value}% 이하가 있을 때"
+    "FIRST_ACTION_THIS_ROUND": "첫 행동",
+    "HAS_HERO_BUFF": "영웅 버프",
+    "ENEMY_HP_BELOW": "적 HP {value}% 이하"
   },
   "effectType": {
     "DAMAGE": "{target}에게 {stat}x{value} 피해",

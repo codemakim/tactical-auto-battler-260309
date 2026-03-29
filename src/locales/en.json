@@ -1,17 +1,17 @@
 {
   "condition": {
     "ALWAYS": "Always",
-    "POSITION_FRONT": "When in front row",
-    "POSITION_BACK": "When in back row",
-    "HP_BELOW": "When HP below {value}%",
-    "HP_ABOVE": "When HP above {value}%",
-    "ENEMY_FRONT_EXISTS": "When enemy front row exists",
-    "ENEMY_BACK_EXISTS": "When enemy back row exists",
-    "ALLY_HP_BELOW": "When ally HP below {value}%",
+    "POSITION_FRONT": "Self front",
+    "POSITION_BACK": "Self back",
+    "HP_BELOW": "HP ≤{value}%",
+    "HP_ABOVE": "HP ≥{value}%",
+    "ENEMY_FRONT_EXISTS": "Enemy front exists",
+    "ENEMY_BACK_EXISTS": "Enemy back exists",
+    "ALLY_HP_BELOW": "Ally HP ≤{value}%",
     "LOWEST_HP_ENEMY": "Always",
-    "FIRST_ACTION_THIS_ROUND": "When first action this round",
-    "HAS_HERO_BUFF": "When has hero buff",
-    "ENEMY_HP_BELOW": "When enemy HP below {value}%"
+    "FIRST_ACTION_THIS_ROUND": "First action",
+    "HAS_HERO_BUFF": "Hero buff",
+    "ENEMY_HP_BELOW": "Enemy HP ≤{value}%"
   },
   "effectType": {
     "DAMAGE": "{stat}x{value} damage to {target}",
