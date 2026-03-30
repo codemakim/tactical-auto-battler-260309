@@ -43,12 +43,14 @@ export class UICardVisual {
   readonly container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Graphics;
   private config: Required<Pick<UICardVisualConfig, 'width' | 'height'>> & UICardVisualConfig;
+  private sceneRef: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, cfg: UICardVisualConfig) {
     const w = cfg.width ?? 110;
     const h = cfg.height ?? 150;
     this.config = { ...cfg, width: w, height: h };
     const compact = w < 110;
+    this.sceneRef = scene;
 
     this.container = scene.add.container(cfg.x, cfg.y);
 
@@ -59,7 +61,7 @@ export class UICardVisual {
 
     let ty = 5;
     const padX = compact ? 5 : 6;
-    const labelSize = compact ? 8 : 10;
+    const labelSize = compact ? 8 : 11;
 
     // ── 헤더: 레어리티 + 이름 ──
     const rarityLabel = cfg.rarity ?? '기본';
@@ -68,10 +70,10 @@ export class UICardVisual {
     ty += compact ? 12 : 15;
 
     this.addText(scene, w / 2, ty, cfg.action.name, {
-      fontSize: compact ? '11px' : '14px',
+      fontSize: compact ? '11px' : '15px',
       color: UITheme.colors.textPrimary,
     });
-    ty += compact ? 15 : 20;
+    ty += compact ? 15 : 21;
 
     // 클래스 제한
     const classLabel = cfg.classRestriction ?? '공용';
@@ -79,7 +81,7 @@ export class UICardVisual {
       fontSize: `${labelSize}px`,
       color: cfg.classRestriction ? UITheme.colors.textAccent : '#667788',
     });
-    ty += compact ? 12 : 15;
+    ty += compact ? 12 : 16;
 
     // ── 구분선 ──
     const divider = scene.add.graphics();
@@ -140,9 +142,9 @@ export class UICardVisual {
     labelSize: number,
     compact: boolean,
   ): number {
-    const badgeFontSize = compact ? 8 : 10;
-    const badgeHeight = compact ? 16 : 18;
-    const gapX = 4;
+    const badgeFontSize = compact ? 8 : 11;
+    const badgeHeight = compact ? 17 : 20;
+    const gapX = compact ? 4 : 5;
     const gapY = 4;
     const maxWidth = cardW - x - 6;
     this.addLabel(scene, x, y, title, labelSize);
@@ -151,7 +153,7 @@ export class UICardVisual {
     let cursorY = y + labelSize + 4;
 
     for (const badge of badges) {
-      const badgeWidth = Math.min(this.measureBadgeWidth(badge.text, badgeFontSize), maxWidth);
+      const badgeWidth = Math.min(this.measureBadgeWidth(badge.text, badgeFontSize, compact), maxWidth);
       if (cursorX !== x && cursorX + badgeWidth > x + maxWidth) {
         cursorX = x;
         cursorY += badgeHeight + gapY;
@@ -175,8 +177,17 @@ export class UICardVisual {
     return cursorY + badgeHeight;
   }
 
-  private measureBadgeWidth(text: string, fontSize: number): number {
-    return Math.max(34, text.length * (fontSize + 1) + 10);
+  private measureBadgeWidth(text: string, fontSize: number, compact: boolean): number {
+    const horizontalPadding = compact ? 8 : 10;
+    const probe = this.sceneRef.add
+      .text(0, 0, text, {
+        fontFamily: UITheme.font.family,
+        fontSize: `${fontSize}px`,
+      })
+      .setVisible(false);
+    const width = Math.ceil(probe.width) + horizontalPadding * 2;
+    probe.destroy();
+    return Math.max(compact ? 40 : 48, width);
   }
 
   private createBadge(
@@ -190,6 +201,7 @@ export class UICardVisual {
     fontSize: number,
   ): { bg: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text } {
     const palette = this.getBadgePalette(tone);
+    const horizontalPadding = fontSize >= 11 ? 10 : 8;
     const bg = scene.add.graphics();
     bg.fillStyle(palette.fill, 0.95);
     bg.fillRoundedRect(x, y, width, height, 4);
@@ -197,16 +209,12 @@ export class UICardVisual {
     bg.strokeRoundedRect(x, y, width, height, 4);
 
     const label = scene.add
-      .text(x + width / 2, y + 2, text, {
+      .text(x + horizontalPadding, y + 2, text, {
         fontFamily: UITheme.font.family,
         fontSize: `${fontSize}px`,
         color: palette.text,
       })
-      .setOrigin(0.5, 0);
-
-    if (label.width > width - 8) {
-      label.setScale((width - 8) / label.width, 1);
-    }
+      .setOrigin(0, 0);
 
     return { bg, label };
   }

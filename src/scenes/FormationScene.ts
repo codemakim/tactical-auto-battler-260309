@@ -1200,8 +1200,8 @@ export class FormationScene extends Phaser.Scene {
 
   private openCardEditorOverlay(char: CharacterDefinition): void {
     this.overlayMode = 'card';
-    const overlayWidth = 1040;
-    const overlayHeight = 640;
+    const overlayWidth = 1080;
+    const overlayHeight = 670;
     const contentY = this.createOverlay('카드 편집', overlayWidth, overlayHeight);
     const panel = this.overlayPanel;
     if (!panel) return;
@@ -1219,12 +1219,12 @@ export class FormationScene extends Phaser.Scene {
     const runState = gameState.runState;
     const isRun = !!runState;
     const slotData = getSlotDisplayData(char, runState);
-    const cardW = 170;
-    const cardH = 220;
+    const cardW = 188;
+    const cardH = 246;
     const cardGap = 26;
     const slotStartX = UITheme.panel.padding;
     const slotStartY = contentY + 74;
-    const logicX = slotStartX + 3 * cardW + 2 * cardGap + 40;
+    const logicX = slotStartX + 3 * cardW + 2 * cardGap + 34;
     const logicY = slotStartY - 4;
 
     for (const slot of slotData) {
@@ -1295,13 +1295,13 @@ export class FormationScene extends Phaser.Scene {
 
     this.renderLogicSummaryOnOverlay(slotData, logicX, logicY, 250);
     if (isRun && runState) {
-      const inventoryY = slotStartY + cardH + 56;
+      const inventoryY = slotStartY + cardH + 52;
       this.renderInventoryOnOverlay(char, runState, inventoryY);
     }
 
     const closeBtn = new UIButton(this, {
       x: overlayWidth - 136,
-      y: overlayHeight - 74,
+      y: overlayHeight - 72,
       width: 120,
       height: 42,
       label: '닫기',
