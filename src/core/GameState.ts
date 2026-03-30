@@ -6,6 +6,14 @@
 import type { CharacterDefinition, HeroType, Position, RunState, BattleReplayEntry, ReplaySessionData } from '../types';
 import { CharacterClass, HeroType as HT } from '../types';
 import { createCharacterDef } from '../entities/UnitFactory';
+import {
+  createGameStateDataFromSave,
+  extractSaveData,
+  hasSaveDataInStorage,
+  loadSaveDataFromStorage,
+  saveSaveDataToStorage,
+} from '../systems/SaveSystem';
+import type { SaveData, StorageLike } from '../systems/SaveSystem';
 
 // === 편성 슬롯 ===
 
@@ -61,6 +69,18 @@ function createDefaultFormation(characters: CharacterDefinition[]): FormationDat
   };
 }
 
+function createInitialState(): GameStateData {
+  const characters = createStarterCharacters();
+  return {
+    gold: 500,
+    characters,
+    maxCharacterSlots: 8,
+    formation: createDefaultFormation(characters),
+    presets: [],
+    battleReplays: [],
+  };
+}
+
 /**
  * 싱글톤 게임 상태 매니저
  * Scene 간 데이터 공유를 위해 전역 인스턴스 사용
@@ -69,15 +89,7 @@ export class GameStateManager {
   private state: GameStateData;
 
   constructor() {
-    const characters = createStarterCharacters();
-    this.state = {
-      gold: 500,
-      characters,
-      maxCharacterSlots: 8,
-      formation: createDefaultFormation(characters),
-      presets: [],
-      battleReplays: [],
-    };
+    this.state = createInitialState();
   }
 
   // === 조회 ===
@@ -110,6 +122,13 @@ export class GameStateManager {
     return this.state.battleReplays;
   }
 
+  getState(): GameStateData {
+    return {
+      ...createGameStateDataFromSave(extractSaveData(this.state)),
+      runState: this.state.runState,
+    };
+  }
+
   /** ID로 캐릭터 찾기 */
   getCharacter(id: string): CharacterDefinition | undefined {
     return this.state.characters.find((c) => c.id === id);
@@ -130,10 +149,12 @@ export class GameStateManager {
 
   setGold(gold: number): void {
     this.state.gold = gold;
+    this.persist();
   }
 
   addGold(amount: number): void {
     this.state.gold += amount;
+    this.persist();
   }
 
   setRunState(runState: RunState | undefined): void {
@@ -142,6 +163,7 @@ export class GameStateManager {
     if (!runState) {
       this.state.battleReplays = [];
     }
+    this.persist();
   }
 
   addBattleReplay(stage: number, replayData: ReplaySessionData): void {
@@ -150,6 +172,7 @@ export class GameStateManager {
 
   addCharacter(character: CharacterDefinition): void {
     this.state.characters.push(character);
+    this.persist();
   }
 
   /** 캐릭터 정보 갱신 (ID 기준 교체) */
@@ -157,11 +180,13 @@ export class GameStateManager {
     const idx = this.state.characters.findIndex((c) => c.id === charDef.id);
     if (idx >= 0) {
       this.state.characters[idx] = charDef;
+      this.persist();
     }
   }
 
   setFormation(formation: FormationData): void {
     this.state.formation = formation;
+    this.persist();
   }
 
   /** 편성 슬롯에 캐릭터 배치 */
@@ -169,11 +194,13 @@ export class GameStateManager {
     const slots = [...this.state.formation.slots];
     slots[index] = { characterId, position };
     this.state.formation = { ...this.state.formation, slots };
+    this.persist();
   }
 
   /** 영웅 유형 변경 */
   setHeroType(heroType: HeroType): void {
     this.state.formation = { ...this.state.formation, heroType };
+    this.persist();
   }
 
   /** 프리셋 저장 */
@@ -188,6 +215,7 @@ export class GameStateManager {
     } else {
       this.state.presets.push(preset);
     }
+    this.persist();
   }
 
   /** 프리셋 불러오기 */
@@ -195,20 +223,37 @@ export class GameStateManager {
     const preset = this.state.presets.find((p) => p.name === name);
     if (!preset) return false;
     this.state.formation = { ...preset.formation };
+    this.persist();
     return true;
+  }
+
+  loadSaveData(saveData: SaveData): void {
+    this.state = createGameStateDataFromSave(saveData);
+  }
+
+  saveToStorage(storage?: StorageLike | null): boolean {
+    return saveSaveDataToStorage(extractSaveData(this.state), storage);
+  }
+
+  loadFromStorage(storage?: StorageLike | null): boolean {
+    const saveData = loadSaveDataFromStorage(storage);
+    if (!saveData) return false;
+    this.loadSaveData(saveData);
+    return true;
+  }
+
+  hasSaveData(storage?: StorageLike | null): boolean {
+    return hasSaveDataInStorage(storage);
   }
 
   /** 상태 초기화 (디버그용) */
   reset(): void {
-    const characters = createStarterCharacters();
-    this.state = {
-      gold: 500,
-      characters,
-      maxCharacterSlots: 8,
-      formation: createDefaultFormation(characters),
-      presets: [],
-      battleReplays: [],
-    };
+    this.state = createInitialState();
+    this.persist();
+  }
+
+  private persist(): void {
+    this.saveToStorage();
   }
 }
 

@@ -262,6 +262,8 @@ Town을 중심으로 영속적으로 저장되는 데이터:
 
 ```typescript
 interface SaveData {
+  version: 1;
+
   // 플레이어 자원
   gold: number;
 
@@ -269,33 +271,33 @@ interface SaveData {
   characters: CharacterDef[];      // 보유 캐릭터 목록
   maxCharacterSlots: number;       // 보유 슬롯 상한
 
+  // 현재 편성
+  formation: {
+    slots: {
+      characterId: string;
+      position: Position;
+    }[];
+    heroType: HeroType;
+  };
+
   // 편성 프리셋
   presets: FormationPreset[];      // 저장된 편성 목록
 
-  // 영웅
-  heroType: HeroType;              // 현재 선택된 영웅
-
-  // 전장 진행
-  battlefieldProgress: {
-    [battlefieldId: string]: {
-      unlocked: boolean;
-      cleared: boolean;
-      bestRecord?: number;         // 최고 스테이지
-    };
-  };
-
-  // (향후) 마을 건물 레벨
-  // (향후) 업적
-  // (향후) 설정
+  // MVP 제외
+  // runState, battleReplays 같은 런타임 상태는 저장하지 않음
+  // battlefieldProgress는 후속 작업에서 추가
+  // (향후) 마을 건물 레벨 / 업적 / 설정
 }
 
 interface FormationPreset {
   name: string;
-  slots: {
-    characterId: string;
-    position: Position;
-  }[];
-  heroType: HeroType;
+  formation: {
+    slots: {
+      characterId: string;
+      position: Position;
+    }[];
+    heroType: HeroType;
+  };
 }
 ```
 

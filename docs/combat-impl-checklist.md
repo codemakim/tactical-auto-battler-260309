@@ -266,7 +266,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 - [x] 타이틀 표시
 - [x] START 버튼 → Town 전이
-- [ ] 세이브/로드 연동 (시작하기/이어하기 분기)
+- [x] 세이브/로드 연동 (시작하기/이어하기 분기, Codex, 2026-03-30)
 
 ### §3. Town 허브 (TownScene)
 
@@ -275,7 +275,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [~] 훈련소 (Training Ground) — TrainingSystem 연동 필요
 - [x] 작전실 (War Room) → 편성 화면 이동
 - [x] 출격 게이트 (Sortie Gate) → 출격 선택 이동
-- [ ] 골드 표시 (상단)
+- [x] 골드 표시 (상단, Codex, 2026-03-30)
 - [ ] 영웅 정보 표시
 - [ ] 세이브/로드
 
@@ -312,10 +312,10 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 ### 세이브/로드 시스템
 
-- [ ] SaveData 구조 정의
-- [ ] LocalStorage/IndexedDB 저장/불러오기
-- [ ] 골드 영속 저장
-- [ ] 캐릭터 로스터 영속 저장
+- [x] SaveData 구조 정의 (MVP, Codex, 2026-03-30)
+- [x] LocalStorage/IndexedDB 저장/불러오기 (LocalStorage MVP, Codex, 2026-03-30)
+- [x] 골드 영속 저장 (Codex, 2026-03-30)
+- [x] 캐릭터 로스터 영속 저장 (Codex, 2026-03-30)
 - [ ] 전장 진행도 영속 저장
 
 ---

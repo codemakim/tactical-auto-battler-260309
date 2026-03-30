@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { gameState } from '../core/GameState';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -65,6 +66,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    gameState.loadFromStorage();
+
     // 워리어 공격 애니메이션 (프레임 0 = idle, 1~28 = attack, 29~31은 빈 프레임)
     this.anims.create({
       key: 'warrior-attack-anim',

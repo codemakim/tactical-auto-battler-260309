@@ -7,6 +7,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UITheme } from '../ui/UITheme';
 import { UIModal } from '../ui/UIModal';
+import { gameState } from '../core/GameState';
 
 interface BuildingDef {
   id: string;
@@ -93,7 +94,6 @@ const BUILDINGS: BuildingDef[] = [
 ];
 
 export class TownScene extends Phaser.Scene {
-  private gold: number = 1000;
   private goldText!: Phaser.GameObjects.Text;
 
   constructor() {
@@ -130,7 +130,7 @@ export class TownScene extends Phaser.Scene {
       .setDepth(11);
 
     this.goldText = this.add
-      .text(GAME_WIDTH - 20, 12, `Gold: ${this.gold}`, {
+      .text(GAME_WIDTH - 20, 12, `Gold: ${gameState.gold}`, {
         ...UITheme.font.body,
         color: '#ffcc00',
       })

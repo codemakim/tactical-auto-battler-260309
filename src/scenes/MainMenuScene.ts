@@ -1,3 +1,4 @@
+import { gameState } from '../core/GameState';
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 
@@ -7,6 +8,8 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    const hasSave = gameState.hasSaveData();
+
     // 타이틀
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 3, 'Tactical Auto-Battle\nRoguelike', {
@@ -17,9 +20,9 @@ export class MainMenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 시작 버튼
+    // 시작 / 이어하기 버튼
     const startBtn = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, '[ START ]', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, hasSave ? '[ CONTINUE ]' : '[ START ]', {
         fontSize: '28px',
         color: '#4a9eff',
         fontFamily: 'monospace',
@@ -30,6 +33,9 @@ export class MainMenuScene extends Phaser.Scene {
     startBtn.on('pointerover', () => startBtn.setColor('#7fbfff'));
     startBtn.on('pointerout', () => startBtn.setColor('#4a9eff'));
     startBtn.on('pointerdown', () => {
+      if (!hasSave) {
+        gameState.reset();
+      }
       this.scene.start('TownScene');
     });
 
