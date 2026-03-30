@@ -8,6 +8,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UITheme } from '../ui/UITheme';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
+import { formatTownHeaderHeroInfo } from '../systems/TownHeader';
 
 interface BuildingDef {
   id: string;
@@ -127,6 +128,27 @@ export class TownScene extends Phaser.Scene {
         ...UITheme.font.heading,
         color: UITheme.colors.textPrimary,
       })
+      .setDepth(11);
+
+    const heroInfo = formatTownHeaderHeroInfo(gameState.formation.heroType);
+
+    this.add
+      .text(GAME_WIDTH - 240, 8, heroInfo.title, {
+        fontSize: '13px',
+        fontFamily: UITheme.font.family,
+        fontStyle: 'bold',
+        color: '#9dd6ff',
+      })
+      .setOrigin(1, 0)
+      .setDepth(11);
+
+    this.add
+      .text(GAME_WIDTH - 240, 24, heroInfo.subtitle, {
+        fontSize: '10px',
+        fontFamily: UITheme.font.family,
+        color: '#7f8fa6',
+      })
+      .setOrigin(1, 0)
       .setDepth(11);
 
     this.goldText = this.add
