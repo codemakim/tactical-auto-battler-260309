@@ -5,6 +5,8 @@
 > Status: Source of Truth
 > `RunMapScene` 허브 구조와 `RunMapScene -> FormationScene -> RunMapScene`,
 > `RewardScene -> RunMapScene` 전이는 이 문서를 기준으로 구현/수정한다.
+> 런 생성과 전투 상태 초기화 배선 자체는
+> `docs/run-loop-ui-spec.md`의 순수 함수/배선 설명을 함께 참고한다.
 
 ---
 
