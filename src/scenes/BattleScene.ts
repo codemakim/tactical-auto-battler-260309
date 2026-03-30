@@ -23,6 +23,12 @@ import { Team, BattlePhase, AbilityType, Difficulty, RunStatus, HeroButtonState 
 import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
 import { calculateBattleResult } from '../systems/BattleResultCalculator';
 import { extractFloatingTexts } from '../systems/FloatingTextCalculator';
+import {
+  ACTION_ANIMATION_DURATION_MS,
+  NEXT_ACTION_DELAY_MS,
+  RESULT_DELAY_MS,
+  getAnimationFrameRateForDuration,
+} from '../systems/BattleTempo';
 import { UIFloatingText } from '../ui/UIFloatingText';
 import { processDefeat } from '../core/RunManager';
 import { calculateBattleLayout } from '../systems/UnitLayoutCalculator';
@@ -718,7 +724,9 @@ export class BattleScene extends Phaser.Scene {
       actorSprite.on('animationupdate', onAnimUpdate);
 
       // 공격 애니메이션 재생
-      actorSprite.play(actorSpriteInfo.attackAnim);
+      const anim = this.anims.get(actorSpriteInfo.attackAnim);
+      const frameRate = getAnimationFrameRateForDuration(anim?.frames.length ?? 0, ACTION_ANIMATION_DURATION_MS);
+      actorSprite.play({ key: actorSpriteInfo.attackAnim, frameRate });
       actorSprite.once('animationcomplete', () => {
         this.resetSpriteToIdle(actorSprite, actorId);
         // 타격이 아직 적용 안 됐으면 (안전장치)
@@ -726,8 +734,10 @@ export class BattleScene extends Phaser.Scene {
           this.processEvents(newEvents);
           this.updateAllUnitVisuals();
         }
-        this.animating = false;
-        this.onStepComplete();
+        this.time.delayedCall(RESULT_DELAY_MS, () => {
+          this.animating = false;
+          this.onStepComplete();
+        });
       });
     } else {
       // 애니메이션 없음 — 즉시 처리
@@ -755,7 +765,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 다음 doStep을 딜레이 후 예약 */
   private scheduleNextStep(): void {
-    this.time.delayedCall(300, () => {
+    this.time.delayedCall(NEXT_ACTION_DELAY_MS, () => {
       if (this.autoPlaying && !this.battleState.isFinished && !this.animating) {
         this.doStep();
       }

@@ -12,23 +12,51 @@
 
 ## Current Task
 
-- 현재 작업 없음
+- P2 진행 중: 다음 권장 작업은 P2-6 배속 조절
 
 ## Source Specs
 
-- primary: 없음
-- secondary: 없음
+- primary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md) (§6-1 전투 화면)
+- secondary: [docs/combat-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-spec.md) (§20 전투 템포)
 - checklist: [docs/combat-impl-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-impl-checklist.md)
 
 ## Done
 
+- P1-1 리트라이 흐름 개선 (Claude)
 - P1-2 런 중 편성 조정 완료 (Codex)
 - P1-3 세이브/로드 시스템 MVP 완료 (Codex)
 - P1-4 Town 골드/영웅 정보 표시 완료 (Codex)
+- P2-5 전투 템포 상수화 완료 (Codex)
 
-## Next
+## Next — P2 Plan (전투 체감 개선)
 
-- 다음 작업 미정
+4개 작업, 독립적이므로 순서 무관. 각각 단독 커밋 가능.
+
+### P2-5: 전투 템포 (애니메이션 타이밍)
+- 스펙: combat-spec.md §20
+- 파일: `src/scenes/BattleScene.ts` (doStep, 애니메이션 타이밍)
+- 목표: 액션 0.6~0.8s, 결과 딜레이 0.2s, 다음 액션 딜레이 0.4~0.6s
+- 완료: `src/systems/BattleTempo.ts` 추가, 700ms/200ms/500ms 상수 적용
+
+### P2-6: 배속 조절 (1x / 2x / 스킵)
+- 스펙: game-flow-spec.md §6-1
+- 파일: `src/scenes/BattleScene.ts`
+- 목표: 배속 토글 버튼 (1x↔2x↔skip), 타이밍 상수에 배율 적용
+- P2-5 이후가 이상적 (타이밍 상수가 있어야 배율 곱하기 가능)
+
+### P2-7: 턴 인디케이터 갱신
+- 스펙: combat-spec.md §4
+- 파일: `src/scenes/BattleScene.ts` (턴 큐 UI)
+- 목표: 유닛 행동 완료 후 즉시 턴 큐 시각적 갱신 (현재 라운드 변경 시에만 갱신될 수 있음)
+
+### P2-8: 히어로 개입 UI 상태 (READY/QUEUED/USED)
+- 스펙: [docs/hero-intervention-ui-state-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/hero-intervention-ui-state-spec.md)
+- 파일: `src/scenes/BattleScene.ts` (영웅 개입 버튼 영역)
+- 목표: 개입 버튼이 상태별로 시각 변화 (READY=활성, QUEUED=펄스, USED=비활성)
+- 관련 타입: `HeroButtonState` (이미 정의됨)
+
+### 작업 순서 권장
+P2-5 → P2-6 (의존) → P2-7, P2-8 (독립)
 
 ## Guardrails
 
@@ -39,8 +67,7 @@
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test`
-  - `npm run format`
+  - `npm test -- battle-tempo battle-scene-turnorder engine-integration hero-button-state`
   - `npx tsc --noEmit`
 
 ## Notes
