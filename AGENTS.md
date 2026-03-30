@@ -7,6 +7,7 @@
 
 - 기존 설계 기준은 먼저 [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md)를 읽는다.
 - 작업 절차와 핸드오프 규칙은 [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)를 따른다.
+- 실시간 작업 상태는 [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)에서 확인한다.
 - 세부 규칙은 `docs/` 스펙 문서를 기준으로 판단한다.
 - 구현 전에는 관련 테스트와 현재 구현 파일을 함께 본다.
 - 변경은 가능한 한 작은 단위로 한다.

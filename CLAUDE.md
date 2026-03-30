@@ -65,6 +65,7 @@ src/
 ## Agent Handoff
 - `AGENTS.md` - 보조 에이전트용 작업 인덱스 (문서 우선순위, 코드 진입점, 테스트 맵, 작업 절차)
 - `WORKFLOW.md` - Claude/Codex 공통 작업 표준 (스펙 우선순위, 핸드오프, 체크리스트/커밋 규칙)
+- `HANDOFF.md` - 현재 작업 상태 공유용 보드 (읽은 쪽이 비우거나 다음 작업 기준으로 갱신)
 
 ## Key Commands
 - `npm run dev` - Start dev server

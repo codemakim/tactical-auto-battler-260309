@@ -34,6 +34,9 @@
 
 세션이 바뀔 때는 아래 형식으로 남긴다.
 
+실시간 전달은 루트 [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)를 우선 사용한다.
+읽은 모델은 내용을 비우거나 다음 작업 기준으로 갱신할 수 있다.
+
 ```md
 ## Current Task
 - 예: P1-2 런 중 편성 조정
@@ -80,3 +83,4 @@
 - 프로젝트 개요: [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md)
 - 작업 인덱스: [AGENTS.md](/Users/jhkim/Project/tactical-auto-battler/AGENTS.md)
 - 작업 표준: [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)
+- 실시간 핸드오프: [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)
