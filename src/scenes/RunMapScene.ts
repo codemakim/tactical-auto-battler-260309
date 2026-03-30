@@ -64,6 +64,27 @@ export class RunMapScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // 재도전 불가 경고
+    const runState = gameState.runState;
+    if (runState && !runState.retryAvailable) {
+      const warning = this.add
+        .text(GAME_WIDTH / 2, 130, '재도전 불가 — 이번이 마지막 기회입니다', {
+          fontSize: '14px',
+          fontFamily: UITheme.font.family,
+          fontStyle: 'bold',
+          color: '#ff6644',
+        })
+        .setOrigin(0.5);
+
+      this.tweens.add({
+        targets: warning,
+        alpha: { from: 1, to: 0.5 },
+        duration: 1000,
+        yoyo: true,
+        repeat: -1,
+      });
+    }
+
     // 골드
     this.add
       .text(GAME_WIDTH - 30, 30, `${gold} Gold`, {
@@ -163,23 +184,30 @@ export class RunMapScene extends Phaser.Scene {
     const btnY = GAME_HEIGHT - 100;
     const btnW = 170;
     const btnH = 48;
+    const gap = 16;
 
-    // 전투 시작
+    // 전투 시작 (중앙)
+    const runState = gameState.runState;
+    const isLastChance = runState && !runState.retryAvailable;
+    const battleLabel = isLastChance ? '전투 시작 (최후의 기회)' : '전투 시작';
+    const battleBtnW = isLastChance ? 220 : btnW;
+    const cx = GAME_WIDTH / 2;
+
     new UIButton(this, {
-      x: GAME_WIDTH / 2 - btnW / 2,
+      x: cx - battleBtnW / 2,
       y: btnY,
-      width: btnW,
+      width: battleBtnW,
       height: btnH,
-      label: '전투 시작',
+      label: battleLabel,
       style: 'primary',
       onClick: () => {
         this.scene.start('BattleScene');
       },
     });
 
-    // 편성 수정
+    // 편성 수정 (중앙 버튼 왼쪽)
     new UIButton(this, {
-      x: GAME_WIDTH / 2 - btnW / 2 - btnW - 20,
+      x: cx - battleBtnW / 2 - gap - btnW,
       y: btnY,
       width: btnW,
       height: btnH,
@@ -190,9 +218,9 @@ export class RunMapScene extends Phaser.Scene {
       },
     });
 
-    // 포기
+    // 포기 (중앙 버튼 오른쪽)
     new UIButton(this, {
-      x: GAME_WIDTH / 2 - btnW / 2 + btnW + 20,
+      x: cx + battleBtnW / 2 + gap,
       y: btnY,
       width: btnW,
       height: btnH,

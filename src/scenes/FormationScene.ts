@@ -88,11 +88,18 @@ export class FormationScene extends Phaser.Scene {
   private zoneContainers: Map<string, Phaser.GameObjects.Container> = new Map();
   private zoneUnitVisuals: Phaser.GameObjects.Container[] = [];
 
+  // 재도전 컨텍스트
+  private isRetry = false;
+  private defeatedByEnemies: Array<{ name: string; characterClass: string; hp: number; maxHp: number }> = [];
+
   constructor() {
     super({ key: 'FormationScene' });
   }
 
-  create(): void {
+  create(data?: {
+    isRetry?: boolean;
+    defeatedByEnemies?: Array<{ name: string; characterClass: string; hp: number; maxHp: number }>;
+  }): void {
     this.selectedRosterCharId = null;
     this.selectedActionSlot = null;
     this.rosterItems = [];
@@ -101,9 +108,12 @@ export class FormationScene extends Phaser.Scene {
     this.inventoryCards = [];
     this.zoneContainers = new Map();
     this.zoneUnitVisuals = [];
+    this.isRetry = data?.isRetry ?? false;
+    this.defeatedByEnemies = data?.defeatedByEnemies ?? [];
 
     this.drawBackground();
     this.drawTopBar();
+    if (this.isRetry) this.drawRetryBanner();
     this.createRosterPanel();
     this.createZones();
     this.createHeroSelector();
@@ -129,12 +139,59 @@ export class FormationScene extends Phaser.Scene {
     bar.lineBetween(0, 50, GAME_WIDTH, 50);
     bar.setDepth(10);
 
-    this.add.text(20, 14, '작전실 — 편성', { ...UITheme.font.heading, color: UITheme.colors.textPrimary }).setDepth(11);
+    const title = this.isRetry ? '재도전 — 편성 수정' : '작전실 — 편성';
+    const titleColor = this.isRetry ? '#ffaa44' : UITheme.colors.textPrimary;
+    this.add.text(20, 14, title, { ...UITheme.font.heading, color: titleColor }).setDepth(11);
 
     this.add
       .text(GAME_WIDTH - 20, 14, `Gold: ${gameState.gold}`, { ...UITheme.font.body, color: '#ffcc00' })
       .setOrigin(1, 0)
       .setDepth(11);
+  }
+
+  private drawRetryBanner(): void {
+    const bannerY = 52;
+    const bannerH = this.defeatedByEnemies.length > 0 ? 56 : 32;
+
+    // 배너 배경
+    const bg = this.add.graphics().setDepth(10);
+    bg.fillStyle(0x3a2200, 0.9);
+    bg.fillRect(0, bannerY, GAME_WIDTH, bannerH);
+    bg.lineStyle(1, 0xffaa44, 0.6);
+    bg.lineBetween(0, bannerY + bannerH, GAME_WIDTH, bannerY + bannerH);
+
+    // 메인 메시지
+    const msg = this.add
+      .text(GAME_WIDTH / 2, bannerY + 8, '패배 후 재도전 — 편성을 수정하고 다시 싸우세요! (마지막 기회)', {
+        fontSize: '13px',
+        fontFamily: UITheme.font.family,
+        fontStyle: 'bold',
+        color: '#ffcc00',
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(11);
+
+    // 남은 적 정보
+    if (this.defeatedByEnemies.length > 0) {
+      const enemyInfo = this.defeatedByEnemies.map((e) => `${e.name}(${e.hp}/${e.maxHp})`).join('  ');
+      this.add
+        .text(GAME_WIDTH / 2, bannerY + 28, `남은 적: ${enemyInfo}`, {
+          fontSize: '11px',
+          fontFamily: UITheme.font.family,
+          color: '#ff8866',
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(11);
+    }
+
+    // 메시지 펄스
+    this.tweens.add({
+      targets: msg,
+      alpha: { from: 1, to: 0.6 },
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+    });
   }
 
   // === 좌측: 보유 캐릭터 목록 ===
@@ -903,24 +960,40 @@ export class FormationScene extends Phaser.Scene {
   // === 하단 버튼 ===
 
   private createBottomButtons(): void {
+    // 뒤로 버튼: 재도전 중에는 "포기 (런 종료)"
+    const backLabel = this.isRetry ? '포기 (런 종료)' : '< 마을로';
+    const backWidth = this.isRetry ? 160 : 140;
     new UIButton(this, {
       x: 20,
       y: GAME_HEIGHT - 55,
-      width: 140,
+      width: backWidth,
       height: 44,
-      label: '< 마을로',
+      label: backLabel,
       style: 'secondary',
       onClick: () => {
-        this.scene.start('TownScene');
+        if (this.isRetry) {
+          // 재도전 포기 → RunResultScene (런 정리)
+          const rs = gameState.runState;
+          if (rs) {
+            const defeatState = { ...rs, status: RunStatus.DEFEAT } as RunState;
+            this.scene.start('RunResultScene', { runState: defeatState });
+          } else {
+            this.scene.start('TownScene');
+          }
+        } else {
+          this.scene.start('TownScene');
+        }
       },
     });
 
+    // 완료 버튼: 재도전 중에는 "재도전 출격!"
+    const actionLabel = this.isRetry ? '재도전 출격!' : '편성 완료';
     new UIButton(this, {
       x: GAME_WIDTH - 200,
       y: GAME_HEIGHT - 55,
       width: 180,
       height: 44,
-      label: '편성 완료',
+      label: actionLabel,
       style: 'primary',
       onClick: () => {
         const result = validateFormation(gameState.formation);

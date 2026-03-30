@@ -15,8 +15,7 @@
 
 - [x] FRONT / BACK 두 포지션
 - [x] 같은 포지션에 여러 유닛 가능
-- [x] 3 vs 3 포맷
-- [x] 예비 유닛 1명
+- [x] 4 vs 4 포맷 (팀 크기 4명, 예비 유닛 없음)
 
 ## 턴 순서 (§4)
 
@@ -33,11 +32,11 @@
 - [x] 행동 실패해도 턴 소모
 - [x] 라운드 시작: hasActedThisRound 리셋
 - [x] 라운드 시작: 턴 순서 재계산
-- [x] 라운드 시작: 히어로 개입 횟수 충전
+- [x] 라운드 시작: 히어로 개입 횟수 충전 (interventionsRemaining 리셋)
 - [x] 라운드 시작: 상태이상 처리 (§6.5) — POISON/REGEN 틱, 사망 처리
 - [x] 라운드 종료: 버프/디버프 지속시간 감소 (§7.1) — 만료 시 제거 + 이벤트
 - [x] 라운드 종료: 지연 효과 해석 (§7.2) — DelayedEffectSystem, 31개 테스트
-- [x] 라운드 종료: 예비 유닛 투입 (항상 BACK 진입)
+- ~~[x] 라운드 종료: 예비 유닛 투입~~ (삭제됨 — 예비 유닛 시스템 제거)
 
 ## 액션 슬롯 (§8, §9, §10)
 
@@ -89,12 +88,9 @@
 - [x] 사망 이벤트 기록
 - [x] 사망 유닛 이후 행동 불가
 
-## 예비 유닛 (§16)
+## ~~예비 유닛 (§16)~~ — 삭제됨
 
-- [x] 사망 시 예비 유닛 투입
-- [x] 진입 위치: 항상 BACK
-- [x] 투입 라운드에는 행동 불가 (hasActedThisRound: true로 진입) — battle-flow 테스트로 검증
-- [x] 다음 라운드부터 참전
+> 예비 유닛 시스템은 팀 크기 4명 확장과 함께 제거됨 (2026-03-27)
 
 ## 히어로 개입 (§17, §18, §19)
 
@@ -177,7 +173,7 @@
 - [x] 전투 종료 후 원복 (restorePreBattleActions)
 - [x] ACTION_EDITED 이벤트 타입
 - [x] 아군만 편집, 적군/사망 유닛 불가
-- [x] 예비 유닛도 스냅샷/원복 대상
+- ~~[x] 예비 유닛도 스냅샷/원복 대상~~ (삭제됨 — 예비 유닛 시스템 제거)
 - [x] HeroType 타입 정의 (COMMANDER, MAGE, SUPPORT)
 - [x] HeroDefinitions.ts — 영웅별 능력 레지스트리 (COMMON_EDIT_ACTION + UNIQUE 능력)
 - [x] 특화 능력 구현 — COMMANDER(Rally ATK_UP, Shield Order 실드), MAGE(Fireball 데미지, Weaken ATK_DOWN), SUPPORT(Heal 회복, Haste 턴앞당김)
@@ -256,6 +252,88 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] Rally (RARE, 아군 회복)
 - [x] Feint (RARE, 딜+DELAY)
 
+---
+
+## 게임 플로우 (game-flow-spec.md)
+
+### §1. Loading (BootScene)
+
+- [x] 에셋 로드 (스프라이트시트, 배경)
+- [x] 로딩 프로그레스 바
+- [x] 완료 → Title 전이
+
+### §2. Title (MainMenuScene)
+
+- [x] 타이틀 표시
+- [x] START 버튼 → Town 전이
+- [ ] 세이브/로드 연동 (시작하기/이어하기 분기)
+
+### §3. Town 허브 (TownScene)
+
+- [x] 마을 허브 화면 + 건물 인터랙션
+- [~] 병영 (Barracks) — 캐릭터 목록 표시 (상세 정보 미완)
+- [~] 훈련소 (Training Ground) — TrainingSystem 연동 필요
+- [x] 작전실 (War Room) → 편성 화면 이동
+- [x] 출격 게이트 (Sortie Gate) → 출격 선택 이동
+- [ ] 골드 표시 (상단)
+- [ ] 영웅 정보 표시
+- [ ] 세이브/로드
+
+### §4. Formation (FormationScene)
+
+- [x] 출전 슬롯 4개 배치 (FRONT/BACK)
+- [x] 드래그/클릭으로 캐릭터 배치
+- [x] 영웅 선택 (COMMANDER/MAGE/SUPPORT)
+- [x] 액션 카드 장착/해제
+- [ ] 프리셋 저장/불러오기
+
+### §5. Sortie Select (SortieScene)
+
+- [x] 전장 목록 (카드형, 난이도 표시)
+- [x] 전장별 적 미리보기
+- [x] 잠금/해금 상태
+- [x] 런 상태 생성 (createRunState)
+
+### §6. Run 루프
+
+- [x] RunMapScene — 5스테이지 노드맵, 진행 상태 추적
+- [x] BattleScene — 전투 엔진 시각화, 턴 큐, HP바, 영웅 개입 버튼
+- [x] RewardScene — 카드 5장 선택, 골드 표시, 객원 수락/거절
+- [~] 런 중 편성 조정 (RunMap→Formation 연결 상태 미확인)
+- [ ] 배속 조절 (1x / 2x / 스킵)
+- [ ] 리트라이 흐름 (패배 → 리트라이 → 편성 복귀)
+
+### §7. Run Result (RunResultScene)
+
+- [x] 승리/패배 표시
+- [x] 런 결과 계산 (calculateRunResult)
+- [x] 런 종료 처리 (finalizeRun)
+- [x] Town 복귀 버튼
+
+### 세이브/로드 시스템
+
+- [ ] SaveData 구조 정의
+- [ ] LocalStorage/IndexedDB 저장/불러오기
+- [ ] 골드 영속 저장
+- [ ] 캐릭터 로스터 영속 저장
+- [ ] 전장 진행도 영속 저장
+
+---
+
+## 교차 관심사 (Cross-Cutting)
+
+### UI 연출
+- [ ] 행동 후 즉시 턴 인디케이터 갱신
+- [ ] 히어로 개입 UI 상태 (READY/QUEUED/USED) 렌더링
+- [ ] 전투 템포 (액션 0.6~0.8s, 결과 0.2s, 다음 액션 0.4~0.6s)
+- [ ] 배속 조절 (1x / 2x / 스킵)
+
+### 데이터 정합성
+- [x] 적 편성 시스템 (enemy-encounter-spec.md 기반)
+- [x] 교착 방지 (stalemate-spec.md, 관리자의 진노)
+
+---
+
 ## 테스트 현황
 
-- 29개 테스트 파일, 369개 테스트 전체 통과 (2026-03-22 기준)
+- 48개 테스트 파일, 690개 테스트 전체 통과 (2026-03-30 기준)

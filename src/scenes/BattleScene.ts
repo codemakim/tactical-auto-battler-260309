@@ -1214,7 +1214,7 @@ export class BattleScene extends Phaser.Scene {
 
     // ── 패널 ──
     const panelW = 480;
-    const panelH = 420;
+    const panelH = result.victory ? 420 : 480;
     const panelX = (GAME_WIDTH - panelW) / 2;
     const panelY = (GAME_HEIGHT - panelH) / 2;
 
@@ -1332,7 +1332,31 @@ export class BattleScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(102);
-    y += 40;
+    y += 32;
+
+    // ── 패배 시 안내 메시지 ──
+    if (!result.victory && result.canRetry) {
+      this.add
+        .text(cx, y, '편성을 바꾸면 결과가 달라질 수 있습니다!', {
+          fontSize: '14px',
+          fontFamily: UITheme.font.family,
+          fontStyle: 'italic',
+          color: '#ffaa44',
+        })
+        .setOrigin(0.5)
+        .setDepth(102);
+      y += 24;
+    } else if (!result.victory && !result.canRetry) {
+      this.add
+        .text(cx, y, '재도전 기회를 모두 사용했습니다.', {
+          fontSize: '14px',
+          fontFamily: UITheme.font.family,
+          color: '#ff6666',
+        })
+        .setOrigin(0.5)
+        .setDepth(102);
+      y += 24;
+    }
 
     // ── 버튼 ──
     const btnW = 160;
@@ -1357,19 +1381,32 @@ export class BattleScene extends Phaser.Scene {
         },
       }).container.setDepth(103);
     } else if (result.canRetry) {
-      // 패배 + 리트라이 가능: "재도전" + "포기"
+      // 패배 + 리트라이 가능: "편성 수정 후 재도전" + "포기"
+      const retryBtnW = 200;
       new UIButton(this, {
-        x: cx - btnW - 8,
+        x: cx - retryBtnW - 8,
         y: btnY,
-        width: btnW,
+        width: retryBtnW,
         height: btnH,
-        label: '재도전',
+        label: '편성 수정 후 재도전',
         style: 'primary',
         onClick: () => {
           if (gameState.runState) {
             gameState.setRunState(processDefeat(gameState.runState));
           }
-          this.scene.start('FormationScene');
+          // 남은 적 정보를 FormationScene에 전달
+          const defeatedByEnemies = this.battleState.units
+            .filter((u) => u.team === Team.ENEMY && u.isAlive)
+            .map((u) => ({
+              name: u.name,
+              characterClass: u.characterClass,
+              hp: u.stats.hp,
+              maxHp: u.stats.maxHp,
+            }));
+          this.scene.start('FormationScene', {
+            isRetry: true,
+            defeatedByEnemies,
+          });
         },
       }).container.setDepth(103);
 
@@ -1411,11 +1448,11 @@ export class BattleScene extends Phaser.Scene {
       }).container.setDepth(103);
     }
 
-    // ── 리플레이 버튼 (공통) ──
+    // ── 리플레이 버튼 (공통, 메인 버튼 아래) ──
     const replayBtnW = 120;
     new UIButton(this, {
-      x: panelX + panelW - replayBtnW - 16,
-      y: btnY,
+      x: cx - replayBtnW / 2,
+      y: btnY + btnH + 8,
       width: replayBtnW,
       height: btnH,
       label: '리플레이',
