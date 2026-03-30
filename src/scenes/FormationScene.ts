@@ -34,6 +34,7 @@ import { calculateRowLayout } from '../systems/UnitLayoutCalculator';
 import { validateFormation, canAddToZone } from '../systems/FormationValidator';
 import { formatSlotsSummary } from '../utils/actionText';
 import { getFormationPresetSlots, getFormationPresetSlotName } from '../systems/FormationPresetSlots';
+import { getFormationLanePresentation, getFormationPanelLabels } from '../systems/FormationPresentation';
 
 // 영역 정의
 interface ZoneDef {
@@ -163,6 +164,21 @@ export class FormationScene extends Phaser.Scene {
     const gfx = this.add.graphics();
     gfx.fillStyle(0x0f0f1a, 1);
     gfx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    gfx.fillStyle(0x14172a, 0.88);
+    gfx.fillRoundedRect(284, 78, 552, 410, 14);
+    gfx.lineStyle(2, 0x324768, 0.9);
+    gfx.strokeRoundedRect(284, 78, 552, 410, 14);
+
+    gfx.fillStyle(0x192033, 0.92);
+    gfx.fillRoundedRect(294, 88, 532, 390, 12);
+
+    gfx.lineStyle(1, 0x22324f, 0.75);
+    for (let i = 0; i < 6; i++) {
+      const x = 334 + i * 96;
+      gfx.lineBetween(x, 102, x, 464);
+    }
+    gfx.lineBetween(306, 284, 814, 284);
   }
 
   private drawTopBar(): void {
@@ -235,12 +251,16 @@ export class FormationScene extends Phaser.Scene {
   // === 좌측: 보유 캐릭터 목록 ===
 
   private createRosterPanel(): void {
+    const labels = getFormationPanelLabels();
     this.rosterPanel = new UIPanel(this, {
       x: 20,
       y: 65,
       width: 240,
       height: GAME_HEIGHT - 130,
-      title: '보유 캐릭터',
+      title: labels.roster,
+      bgColor: 0x171a2b,
+      borderColor: 0x3b4f74,
+      bgAlpha: 0.98,
     });
   }
 
@@ -362,12 +382,12 @@ export class FormationScene extends Phaser.Scene {
   private createZones(): void {
     // 방향 안내
     this.add
-      .text(BACK_ZONE_X + ZONE_WIDTH / 2, ZONE_Y - 26, '아군 진행 방향 →', {
+      .text(BACK_ZONE_X + ZONE_WIDTH / 2, ZONE_Y - 34, 'TACTICAL BOARD', {
         ...UITheme.font.small,
-        color: '#444466',
+        color: '#6d7fa5',
       })
       .setOrigin(0.5)
-      .setFontSize(11);
+      .setFontSize(12);
 
     for (const zone of ZONES) {
       this.createZoneVisual(zone);
@@ -376,31 +396,55 @@ export class FormationScene extends Phaser.Scene {
 
   private createZoneVisual(zone: ZoneDef): void {
     const container = this.add.container(zone.x, zone.y);
+    const lane = getFormationLanePresentation(zone.key);
 
-    // 영역 배경: 반투명 사각형 + 점선 테두리
+    // 영역 배경: 전술 스트립
     const bg = this.add.graphics();
-    bg.fillStyle(0x16213e, 0.4);
-    bg.fillRoundedRect(0, 0, zone.width, zone.height, 8);
-    bg.lineStyle(2, UITheme.colors.border);
-    bg.strokeRoundedRect(0, 0, zone.width, zone.height, 8);
+    bg.fillStyle(lane.glowColor, 0.45);
+    bg.fillRoundedRect(0, 0, zone.width, zone.height, 12);
+    bg.lineStyle(2, lane.accentColor, 0.9);
+    bg.strokeRoundedRect(0, 0, zone.width, zone.height, 12);
+    bg.lineStyle(1, 0xffffff, 0.06);
+    bg.lineBetween(14, 44, zone.width - 14, 44);
     container.add(bg);
 
-    // 영역 라벨
+    for (let i = 0; i < zone.maxUnits; i++) {
+      const slotX = 28 + i * ((zone.width - 56) / (zone.maxUnits - 1));
+      const marker = this.add.graphics();
+      marker.fillStyle(0x101522, 0.34);
+      marker.fillRoundedRect(slotX - 36, 56, 72, 88, 10);
+      marker.lineStyle(1, lane.accentColor, 0.18);
+      marker.strokeRoundedRect(slotX - 36, 56, 72, 88, 10);
+      container.add(marker);
+    }
+
     const label = this.add
-      .text(zone.width / 2, 12, zone.label, { ...UITheme.font.small, color: '#556677' })
-      .setOrigin(0.5)
-      .setFontSize(11);
+      .text(18, 14, lane.title, {
+        fontSize: '18px',
+        fontFamily: UITheme.font.family,
+        color: `#${lane.accentColor.toString(16).padStart(6, '0')}`,
+      })
+      .setOrigin(0, 0);
     container.add(label);
+
+    const caption = this.add
+      .text(zone.width - 18, 18, lane.caption, {
+        ...UITheme.font.small,
+        color: '#7d8fb0',
+      })
+      .setOrigin(1, 0)
+      .setFontSize(10);
+    container.add(caption);
 
     // 비어있을 때 안내 텍스트
     const emptyText = this.add
-      .text(zone.width / 2, zone.height / 2, '캐릭터를\n배치하세요', {
+      .text(zone.width / 2, zone.height / 2 + 6, 'EMPTY', {
         ...UITheme.font.small,
         color: '#334455',
         align: 'center',
       })
       .setOrigin(0.5)
-      .setFontSize(11);
+      .setFontSize(12);
     container.add(emptyText);
     container.setData('emptyText', emptyText);
     container.setData('bg', bg);
@@ -413,18 +457,22 @@ export class FormationScene extends Phaser.Scene {
 
     hitArea.on('pointerover', () => {
       bg.clear();
-      bg.fillStyle(0x1e2d4e, 0.5);
-      bg.fillRoundedRect(0, 0, zone.width, zone.height, 8);
-      bg.lineStyle(2, UITheme.colors.borderHighlight);
-      bg.strokeRoundedRect(0, 0, zone.width, zone.height, 8);
+      bg.fillStyle(lane.glowColor, 0.62);
+      bg.fillRoundedRect(0, 0, zone.width, zone.height, 12);
+      bg.lineStyle(2, lane.accentColor, 1);
+      bg.strokeRoundedRect(0, 0, zone.width, zone.height, 12);
+      bg.lineStyle(1, 0xffffff, 0.08);
+      bg.lineBetween(14, 44, zone.width - 14, 44);
     });
 
     hitArea.on('pointerout', () => {
       bg.clear();
-      bg.fillStyle(0x16213e, 0.4);
-      bg.fillRoundedRect(0, 0, zone.width, zone.height, 8);
-      bg.lineStyle(2, UITheme.colors.border);
-      bg.strokeRoundedRect(0, 0, zone.width, zone.height, 8);
+      bg.fillStyle(lane.glowColor, 0.45);
+      bg.fillRoundedRect(0, 0, zone.width, zone.height, 12);
+      bg.lineStyle(2, lane.accentColor, 0.9);
+      bg.strokeRoundedRect(0, 0, zone.width, zone.height, 12);
+      bg.lineStyle(1, 0xffffff, 0.06);
+      bg.lineBetween(14, 44, zone.width - 14, 44);
     });
 
     hitArea.on('pointerdown', () => {
@@ -648,12 +696,16 @@ export class FormationScene extends Phaser.Scene {
   // === 우측 상단: 영웅 선택 ===
 
   private createHeroSelector(): void {
+    const labels = getFormationPanelLabels();
     const panel = new UIPanel(this, {
       x: 830,
       y: 65,
       width: 430,
       height: 130,
-      title: '영웅 선택',
+      title: labels.command,
+      bgColor: 0x171a2b,
+      borderColor: 0x3b4f74,
+      bgAlpha: 0.98,
     });
 
     const startX = UITheme.panel.padding;
@@ -764,12 +816,16 @@ export class FormationScene extends Phaser.Scene {
   // === 우측 하단: 상세 정보 ===
 
   private createDetailPanel(): void {
+    const labels = getFormationPanelLabels();
     this.detailPanel = new UIPanel(this, {
       x: 830,
       y: 210,
       width: 430,
       height: 440,
-      title: '선택 캐릭터',
+      title: labels.unit,
+      bgColor: 0x171a2b,
+      borderColor: 0x3b4f74,
+      bgAlpha: 0.98,
     });
 
     this.detailContent = this.add.text(
@@ -798,7 +854,7 @@ export class FormationScene extends Phaser.Scene {
     const trainingText = this.add.text(
       UITheme.panel.padding,
       this.detailPanel.contentY + 62,
-      `Training: ${char.trainingsUsed}/${char.trainingPotential}`,
+      `TRAINING ${char.trainingsUsed}/${char.trainingPotential}`,
       {
         ...UITheme.font.small,
         color: UITheme.colors.textSecondary,
@@ -808,7 +864,7 @@ export class FormationScene extends Phaser.Scene {
     this.detailDynamic.push(trainingText);
 
     const zoneLabel = gameState.formation.slots.find((slot) => slot.characterId === char.id)?.position ?? 'UNASSIGNED';
-    const zoneText = this.add.text(UITheme.panel.padding, this.detailPanel.contentY + 88, `Position: ${zoneLabel}`, {
+    const zoneText = this.add.text(UITheme.panel.padding, this.detailPanel.contentY + 88, `LINE ${zoneLabel}`, {
       ...UITheme.font.small,
       color: UITheme.colors.textAccent,
     });
@@ -816,7 +872,7 @@ export class FormationScene extends Phaser.Scene {
     this.detailDynamic.push(zoneText);
 
     const slotData = getSlotDisplayData(char, gameState.runState);
-    const logicHeader = this.add.text(UITheme.panel.padding, this.detailPanel.contentY + 132, '행동 슬롯 요약', {
+    const logicHeader = this.add.text(UITheme.panel.padding, this.detailPanel.contentY + 132, 'TACTICS', {
       ...UITheme.font.label,
       color: UITheme.colors.textGold,
     });
@@ -843,7 +899,7 @@ export class FormationScene extends Phaser.Scene {
       y: 356,
       width: 150,
       height: 40,
-      label: '카드 편집',
+      label: 'TACTICS',
       style: 'primary',
       onClick: () => this.openCardEditorOverlay(char),
     });
@@ -987,6 +1043,7 @@ export class FormationScene extends Phaser.Scene {
   private createBottomButtons(): void {
     const backConfig = getFormationBackButtonConfig(this.flowContext);
     const actionConfig = getFormationActionButtonConfig(this.flowContext);
+    const labels = getFormationPanelLabels();
     const backWidth = backConfig.label.includes('포기') ? 160 : 140;
     new UIButton(this, {
       x: 20,
@@ -1018,7 +1075,7 @@ export class FormationScene extends Phaser.Scene {
       y: GAME_HEIGHT - 55,
       width: 140,
       height: 44,
-      label: '프리셋',
+      label: labels.presets,
       style: 'secondary',
       onClick: () => this.openPresetOverlay(),
     });
@@ -1028,7 +1085,7 @@ export class FormationScene extends Phaser.Scene {
       y: GAME_HEIGHT - 55,
       width: 140,
       height: 44,
-      label: '카드 편집',
+      label: labels.cards,
       style: 'secondary',
       onClick: () => {
         const selectedChar = this.getSelectedCharacter();
@@ -1045,7 +1102,7 @@ export class FormationScene extends Phaser.Scene {
       y: GAME_HEIGHT - 55,
       width: 180,
       height: 44,
-      label: actionConfig.label,
+      label: actionConfig.targetScene === 'TownScene' ? labels.deploy : actionConfig.label,
       style: 'primary',
       onClick: () => {
         const result = validateFormation(gameState.formation);

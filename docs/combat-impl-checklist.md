@@ -298,6 +298,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] 액션 카드 배지형 가독성 개선 (상황/대상/효과, Codex, 2026-03-30)
 - [x] 카드 편집 오버레이 카드 확대 및 배지 문구 축약 (Codex, 2026-03-30)
 - [x] Formation 존 가로 스트립 레이아웃 보정 (5슬롯 대응 UI, Codex, 2026-03-30)
+- [x] Formation 화면 게임 UI 톤 리디자인 (전술 보드/짧은 라벨, Codex, 2026-03-30)
 
 ### §5. Sortie Select (SortieScene)
 
