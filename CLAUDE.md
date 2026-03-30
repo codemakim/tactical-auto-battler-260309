@@ -62,6 +62,9 @@ src/
 - `docs/game-flow-spec.md` - 게임 플로우 명세 (로딩→타이틀→마을→편성→출격→전투→결과)
 - `docs/combat-impl-checklist.md` - 구현 상태 체크리스트 (스펙 섹션별 대응)
 
+## Agent Handoff
+- `AGENTS.md` - 보조 에이전트용 작업 인덱스 (문서 우선순위, 코드 진입점, 테스트 맵, 작업 절차)
+
 ## Key Commands
 - `npm run dev` - Start dev server
 - `npm run build` - Production build

@@ -299,7 +299,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] RunMapScene — 5스테이지 노드맵, 진행 상태 추적
 - [x] BattleScene — 전투 엔진 시각화, 턴 큐, HP바, 영웅 개입 버튼
 - [x] RewardScene — 카드 5장 선택, 골드 표시, 객원 수락/거절
-- [~] 런 중 편성 조정 (RunMap→Formation 연결 상태 미확인)
+- [x] 런 중 편성 조정 (RunMap→Formation→RunMap 왕복 확인, Codex, 2026-03-30)
 - [ ] 배속 조절 (1x / 2x / 스킵)
 - [ ] 리트라이 흐름 (패배 → 리트라이 → 편성 복귀)
 
