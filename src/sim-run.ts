@@ -80,12 +80,6 @@ function logParty(run: RunState) {
       `    [${role}] ${def.name} (${def.characterClass}) HP:${stats.hp} ATK:${stats.atk} GRD:${stats.grd} AGI:${stats.agi}`,
     );
   });
-  if (run.bench.length > 0) {
-    log('  벤치:');
-    run.bench.forEach((def) => {
-      log(`    ${def.name} (${def.characterClass})`);
-    });
-  }
 }
 
 function logInventory(run: RunState) {
@@ -418,7 +412,7 @@ function main() {
 
     if (victory) {
       logSection('보상');
-      const { runState, reward, guestReward } = processVictory(run, battleState);
+      const { runState, reward } = processVictory(run, battleState);
       run = runState;
 
       log(`  골드: +${reward.gold} (총 ${run.gold})`);
@@ -431,10 +425,6 @@ function main() {
         run = selectCardReward(run, selected);
         const cls = selected.classRestriction ? `[${selected.classRestriction}]` : '[공용]';
         log(`  → 선택: ${cls} ${selected.action.name}`);
-      }
-
-      if (guestReward) {
-        log(`  객원 멤버 합류: ${guestReward.character.name} (${guestReward.character.characterClass})`);
       }
 
       logInventory(run);
@@ -453,7 +443,7 @@ function main() {
         logSection(`재도전 결과: ${retry.victory ? '승리' : '패배'}`);
 
         if (retry.victory) {
-          const { runState, reward, guestReward } = processVictory(run, retry.battleState);
+          const { runState, reward } = processVictory(run, retry.battleState);
           run = runState;
 
           log(`  골드: +${reward.gold} (총 ${run.gold})`);
@@ -461,9 +451,6 @@ function main() {
             const selected = reward.cardOptions[0];
             run = selectCardReward(run, selected);
             log(`  → 선택: ${selected.action.name}`);
-          }
-          if (guestReward) {
-            log(`  객원 멤버 합류: ${guestReward.character.name}`);
           }
 
           run = advanceStage(run);

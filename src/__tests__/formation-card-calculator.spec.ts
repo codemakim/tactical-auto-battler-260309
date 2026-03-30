@@ -62,7 +62,6 @@ function createRunState(charDef: CharacterDefinition, overrides: Partial<RunStat
     maxStages: 5,
     seed: 42,
     party: [charDef],
-    bench: [],
     cardInventory: [],
     equippedCards: {},
     gold: 0,

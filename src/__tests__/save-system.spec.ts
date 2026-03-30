@@ -53,7 +53,6 @@ describe('SaveSystem', () => {
       maxStages: 5,
       seed: 99,
       party: gameState.characters.slice(0, 2),
-      bench: [],
       cardInventory: [],
       equippedCards: {},
       gold: 50,

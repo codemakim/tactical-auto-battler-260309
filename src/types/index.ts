@@ -483,8 +483,6 @@ export interface RunState {
 
   /** 출전 멤버 정의 (4 combat) */
   party: CharacterDefinition[];
-  /** 벤치 (객원 등, 출전하지 않는 캐릭터) */
-  bench: CharacterDefinition[];
   /** 런 중 획득한 카드 인벤토리 */
   cardInventory: CardInstance[];
   /** 카드 장착 매핑: characterDefId → slotIndex → CardInstance.instanceId */
@@ -504,14 +502,6 @@ export interface RunState {
 export interface BattleReward {
   gold: number;
   cardOptions: CardInstance[]; // 선택 가능한 카드 인스턴스 목록
-}
-
-// === Character Reward (객원 멤버) ===
-
-export interface CharacterReward {
-  character: CharacterDefinition;
-  isGuest: true; // 런 종료 시 퇴장
-  probability: number; // 이 보상이 생성된 확률 (디버그/UI용)
 }
 
 // === Battle Result (전투 결과 데이터) ===

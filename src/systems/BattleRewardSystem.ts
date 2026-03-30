@@ -1,9 +1,7 @@
-import type { BattleState, RunState, BattleReward, CardInstance, CharacterReward, CharacterDefinition } from '../types';
+import type { BattleState, RunState, BattleReward, CardInstance } from '../types';
 import { Difficulty, Rarity, Team } from '../types';
 import { generateRewardFromTemplates } from './ActionCardSystem';
-import { getAvailableClasses } from '../data/ClassDefinitions';
 import { getAllTemplatesForClass } from '../data/ActionPool';
-import { generateCharacterDef } from '../entities/UnitFactory';
 
 // 난이도별 골드 배율
 const DIFFICULTY_GOLD_MULTIPLIER: Record<string, number> = {
@@ -99,53 +97,6 @@ export function generateBattleRewards(
   }));
 
   return { gold, cardOptions };
-}
-
-// 캐릭터 획득 기본 확률
-const BASE_CHARACTER_CHANCE = 0.3;
-// 난이도별 확률 보너스
-const DIFFICULTY_CHARACTER_BONUS: Record<string, number> = {
-  [Difficulty.EASY]: 0.0,
-  [Difficulty.STANDARD]: 0.05,
-  [Difficulty.HARD]: 0.1,
-  [Difficulty.NIGHTMARE]: 0.15,
-};
-// 로스터 크기당 확률 감소 (팀 크기 초과분에만 적용)
-const ROSTER_PENALTY_PER_UNIT = 0.05;
-const ROSTER_PENALTY_THRESHOLD = 3;
-
-// 선택 가능한 클래스 목록 (ClassDefinitions에서 자동 파생)
-const CHARACTER_CLASSES = getAvailableClasses();
-
-/**
- * 객원 멤버 획득 기회 계산
- * 전투 승리 시 객원 캐릭터를 획득할 확률을 계산하고, 보상 생성
- * 결정론적: seed 기반
- */
-export function generateCharacterReward(
-  seed: number,
-  difficulty: Difficulty,
-  currentRosterSize: number,
-): CharacterReward | null {
-  const rand = seededRand(seed);
-
-  // 확률 계산
-  const diffBonus = DIFFICULTY_CHARACTER_BONUS[difficulty] ?? 0;
-  const rosterPenalty = Math.max(0, currentRosterSize - ROSTER_PENALTY_THRESHOLD) * ROSTER_PENALTY_PER_UNIT;
-  const probability = Math.max(0, BASE_CHARACTER_CHANCE + diffBonus - rosterPenalty);
-
-  // 확률 판정
-  if (rand() >= probability) return null;
-
-  // 클래스 랜덤 선택
-  const classIdx = Math.floor(rand() * CHARACTER_CLASSES.length);
-  const characterClass = CHARACTER_CLASSES[classIdx];
-
-  // 객원 캐릭터 생성
-  const guestName = `Guest ${characterClass}`;
-  const character = generateCharacterDef(guestName, characterClass, seed + 2000);
-
-  return { character, isGuest: true, probability };
 }
 
 /**

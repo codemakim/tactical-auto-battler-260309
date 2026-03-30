@@ -40,7 +40,6 @@ function makeRunState(overrides: Partial<RunState> = {}): RunState {
     maxStages: 5,
     seed: 42,
     party: [dummyPartyDef],
-    bench: [],
     cardInventory: [],
     equippedCards: {},
     gold: 100,

@@ -39,7 +39,6 @@ export function createRunState(party: CharacterDefinition[], seed: number): RunS
     maxStages: DEFAULT_GAME_CONFIG.runStages,
     seed,
     party: party.map((def) => ({ ...def })),
-    bench: [],
     cardInventory: [],
     equippedCards: {},
     gold: 0,
@@ -212,7 +211,7 @@ export function equipCard(
   if (slotIndex < 0 || slotIndex > 2) return runState;
 
   // 클래스 호환 확인
-  const charDef = [...runState.party, ...runState.bench].find((d) => d.id === characterDefId);
+  const charDef = runState.party.find((d) => d.id === characterDefId);
   if (!charDef) return runState;
   if (card.classRestriction && card.classRestriction !== charDef.characterClass) return runState;
 
@@ -256,23 +255,6 @@ export function unequipCard(runState: RunState, characterDefId: string, slotInde
   };
 }
 
-/**
- * 파티 ↔ 벤치 멤버 교체
- */
-export function swapPartyMember(runState: RunState, partyIndex: number, benchIndex: number): RunState {
-  if (partyIndex < 0 || partyIndex >= runState.party.length) return runState;
-  if (benchIndex < 0 || benchIndex >= runState.bench.length) return runState;
-
-  const newParty = [...runState.party];
-  const newBench = [...runState.bench];
-
-  const temp = newParty[partyIndex];
-  newParty[partyIndex] = newBench[benchIndex];
-  newBench[benchIndex] = temp;
-
-  return { ...runState, party: newParty, bench: newBench };
-}
-
 // ═══════════════════════════════════════════
 // 스테이지 진행
 // ═══════════════════════════════════════════
@@ -303,7 +285,6 @@ export function advanceStage(runState: RunState): RunState {
 /**
  * 런 종료 처리 (run-system-spec §8)
  * - 장착 카드 제거 (기본 액션 자동 복원)
- * - 객원 멤버 퇴장
  * - 인벤토리 초기화
  * - 파티를 런 시작 시 스냅샷으로 복원
  */
@@ -314,7 +295,6 @@ export function endRun(runState: RunState): RunState {
       ...def,
       baseActionSlots: def.baseActionSlots.map((s) => ({ ...s })),
     })),
-    bench: [],
     cardInventory: [],
     equippedCards: {},
     // gold는 유지 (런 밖 성장 자원)
@@ -330,7 +310,7 @@ export function endRun(runState: RunState): RunState {
  * (공용 + 해당 클래스 카드, 이미 다른 캐릭터에 장착된 카드 제외)
  */
 export function getEquippableCards(runState: RunState, characterDefId: string): CardInstance[] {
-  const charDef = [...runState.party, ...runState.bench].find((d) => d.id === characterDefId);
+  const charDef = runState.party.find((d) => d.id === characterDefId);
   if (!charDef) return [];
 
   // 이미 장착된 카드 ID 수집
@@ -355,7 +335,7 @@ export function getEquippableCards(runState: RunState, characterDefId: string): 
  * (기본 슬롯 + 장착 카드 오버라이드 반영)
  */
 export function getEffectiveActionSlots(runState: RunState, characterDefId: string): ActionSlot[] {
-  const charDef = [...runState.party, ...runState.bench].find((d) => d.id === characterDefId);
+  const charDef = runState.party.find((d) => d.id === characterDefId);
   if (!charDef) return [];
 
   const equipped = runState.equippedCards[characterDefId];

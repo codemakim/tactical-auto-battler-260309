@@ -1212,7 +1212,6 @@ export class BattleScene extends Phaser.Scene {
         maxStages: 1,
         seed: 0,
         party: [],
-        bench: [],
         cardInventory: [],
         equippedCards: {},
         gold: 0,

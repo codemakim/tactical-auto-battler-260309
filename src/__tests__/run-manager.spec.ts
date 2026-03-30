@@ -15,7 +15,6 @@ import {
   selectCardReward,
   equipCard,
   unequipCard,
-  swapPartyMember,
   advanceStage,
   endRun,
   getEquippableCards,
@@ -62,7 +61,6 @@ describe('RunManager', () => {
       expect(run.currentStage).toBe(1);
       expect(run.maxStages).toBe(5);
       expect(run.party).toHaveLength(4);
-      expect(run.bench).toHaveLength(0);
       expect(run.cardInventory).toHaveLength(0);
       expect(run.gold).toBe(0);
       expect(run.retryAvailable).toBe(true);
@@ -267,36 +265,7 @@ describe('RunManager', () => {
   });
 
   // ═══════════════════════════════════════════
-  // 6. 편성 관리
-  // ═══════════════════════════════════════════
-
-  describe('편성 관리', () => {
-    it('파티 ↔ 벤치 멤버 교체', () => {
-      let run = createRunState(makeParty(), 42);
-      // 벤치에 객원 추가 (직접)
-      const guest = createCharacterDef('Guest', CharacterClass.CONTROLLER);
-      run = { ...run, bench: [guest] };
-
-      const originalParty0 = run.party[0].name;
-      run = swapPartyMember(run, 0, 0);
-
-      expect(run.party[0].name).toBe('Guest');
-      expect(run.bench[0].name).toBe(originalParty0);
-    });
-
-    it('유효하지 않은 인덱스는 무시된다', () => {
-      let run = createRunState(makeParty(), 42);
-      run = { ...run, bench: [createCharacterDef('Guest', CharacterClass.WARRIOR)] };
-
-      const before = run.party[0].name;
-      run = swapPartyMember(run, -1, 0);
-
-      expect(run.party[0].name).toBe(before);
-    });
-  });
-
-  // ═══════════════════════════════════════════
-  // 7. 스테이지 진행
+  // 6. 스테이지 진행
   // ═══════════════════════════════════════════
 
   describe('스테이지 진행 (advanceStage)', () => {
@@ -343,23 +312,9 @@ describe('RunManager', () => {
       expect(Object.keys(ended.equippedCards)).toHaveLength(0);
     });
 
-    it('벤치(객원)가 초기화된다', () => {
-      let run = createRunState(makeParty(), 42);
-      run = { ...run, bench: [createCharacterDef('Guest', CharacterClass.WARRIOR)] };
-
-      const ended = endRun(run);
-
-      expect(ended.bench).toHaveLength(0);
-    });
-
     it('파티가 런 시작 시 스냅샷으로 복원된다', () => {
       let run = createRunState(makeParty(), 42);
       const originalNames = run.preRunPartySnapshot.map((d) => d.name);
-
-      // 파티 교체 시뮬레이션
-      const guest = createCharacterDef('Guest', CharacterClass.CONTROLLER);
-      run = { ...run, bench: [guest] };
-      run = swapPartyMember(run, 0, 0);
 
       const ended = endRun(run);
 
