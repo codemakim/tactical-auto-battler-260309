@@ -295,6 +295,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] 카드 편집 오버레이 분리 (Codex, 2026-03-30)
 - [x] 프리셋 관리 오버레이 분리 (Codex, 2026-03-30)
 - [x] 편성 존 캐릭터 스프라이트 표시 (Codex, 2026-03-30)
+- [x] 액션 카드 배지형 가독성 개선 (상황/대상/효과, Codex, 2026-03-30)
 
 ### §5. Sortie Select (SortieScene)
 

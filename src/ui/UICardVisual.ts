@@ -8,7 +8,7 @@ import Phaser from 'phaser';
 import { UITheme } from './UITheme';
 import { Rarity } from '../types';
 import type { Action, ActionCondition } from '../types';
-import { getStructuredEffect, getStructuredCondition } from '../utils/actionText';
+import { buildActionCardBadgeModel, type ActionBadge, type ActionBadgeTone } from '../utils/actionCardBadges';
 
 // 레어리티별 테두리 색상
 const RARITY_BORDER: Record<string, number> = {
@@ -39,11 +39,6 @@ export interface UICardVisualConfig {
   onClick?: () => void;
 }
 
-/** 색상 number → '#rrggbb' 문자열 */
-function colorToStr(c: number): string {
-  return `#${c.toString(16).padStart(6, '0')}`;
-}
-
 export class UICardVisual {
   readonly container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Graphics;
@@ -63,9 +58,8 @@ export class UICardVisual {
     this.container.add(this.bg);
 
     let ty = 5;
-    const padX = 6;
+    const padX = compact ? 5 : 6;
     const labelSize = compact ? 7 : 8;
-    const valueSize = compact ? 8 : 10;
 
     // ── 헤더: 레어리티 + 이름 ──
     const rarityLabel = cfg.rarity ?? '기본';
@@ -94,59 +88,20 @@ export class UICardVisual {
     this.container.add(divider);
     ty += 4;
 
-    // ── 조건 섹션 ──
-    if (cfg.condition) {
-      const cond = getStructuredCondition(cfg.condition);
-      if (!cond.isAlways) {
-        this.addLabel(scene, padX, ty, '조건', labelSize);
-        this.addValue(scene, padX + (compact ? 22 : 28), ty, cond.text, valueSize, UITheme.colors.textSecondary, w);
-        ty += compact ? 11 : 14;
-      }
+    const badgeModel = buildActionCardBadgeModel(cfg.condition, cfg.action.effects.slice(0, 3));
+    const sectionGap = compact ? 4 : 5;
+
+    if (badgeModel.selfBadges.length > 0) {
+      ty = this.renderBadgeSection(scene, '상황', badgeModel.selfBadges, padX, ty, w, labelSize, compact);
+      ty += sectionGap;
     }
 
-    // ── 효과 섹션 ──
-    const effects = cfg.action.effects.slice(0, 3);
-    for (const effect of effects) {
-      const data = getStructuredEffect(effect);
-
-      // 효과: 아이콘 + 수치
-      const iconTxt = scene.add
-        .text(padX, ty, data.icon, {
-          fontFamily: UITheme.font.family,
-          fontSize: `${valueSize}px`,
-          color: colorToStr(data.color),
-        })
-        .setOrigin(0, 0);
-      this.container.add(iconTxt);
-
-      const valTxt = scene.add
-        .text(padX + (compact ? 10 : 14), ty, data.valueText, {
-          fontFamily: UITheme.font.family,
-          fontSize: `${valueSize}px`,
-          color: UITheme.colors.textPrimary,
-        })
-        .setOrigin(0, 0);
-      this.container.add(valTxt);
-      ty += compact ? 11 : 13;
-
-      // 대상: → 텍스트 (compact에서도 표시, 한 줄 들여쓰기)
-      if (data.targetText) {
-        const arrow = scene.add
-          .text(padX + 4, ty, `→ ${data.targetText}`, {
-            fontFamily: UITheme.font.family,
-            fontSize: `${labelSize}px`,
-            color: colorToStr(data.color),
-          })
-          .setOrigin(0, 0)
-          .setAlpha(0.7);
-        const maxW = w - padX - 8;
-        if (arrow.width > maxW && maxW > 0) {
-          arrow.setScale(maxW / arrow.width);
-        }
-        this.container.add(arrow);
-        ty += compact ? 9 : 11;
-      }
+    if (badgeModel.targetBadges.length > 0) {
+      ty = this.renderBadgeSection(scene, '대상', badgeModel.targetBadges, padX, ty, w, labelSize, compact);
+      ty += sectionGap;
     }
+
+    this.renderBadgeSection(scene, '효과', badgeModel.effectBadges, padX, ty, w, labelSize, compact);
 
     // 인터랙션
     if (cfg.interactive) {
@@ -175,27 +130,100 @@ export class UICardVisual {
     this.container.add(t);
   }
 
-  private addValue(
+  private renderBadgeSection(
+    scene: Phaser.Scene,
+    title: string,
+    badges: ActionBadge[],
+    x: number,
+    y: number,
+    cardW: number,
+    labelSize: number,
+    compact: boolean,
+  ): number {
+    const badgeFontSize = compact ? 7 : 8;
+    const badgeHeight = compact ? 14 : 15;
+    const gapX = 4;
+    const gapY = 4;
+    const maxWidth = cardW - x - 6;
+    this.addLabel(scene, x, y, title, labelSize);
+
+    let cursorX = x;
+    let cursorY = y + labelSize + 4;
+
+    for (const badge of badges) {
+      const badgeWidth = Math.min(this.measureBadgeWidth(badge.text, badgeFontSize), maxWidth);
+      if (cursorX !== x && cursorX + badgeWidth > x + maxWidth) {
+        cursorX = x;
+        cursorY += badgeHeight + gapY;
+      }
+
+      const { bg, label } = this.createBadge(
+        scene,
+        cursorX,
+        cursorY,
+        badgeWidth,
+        badgeHeight,
+        badge.text,
+        badge.tone,
+        badgeFontSize,
+      );
+      this.container.add(bg);
+      this.container.add(label);
+      cursorX += badgeWidth + gapX;
+    }
+
+    return cursorY + badgeHeight;
+  }
+
+  private measureBadgeWidth(text: string, fontSize: number): number {
+    return Math.max(34, text.length * (fontSize + 1) + 10);
+  }
+
+  private createBadge(
     scene: Phaser.Scene,
     x: number,
     y: number,
+    width: number,
+    height: number,
     text: string,
+    tone: ActionBadgeTone,
     fontSize: number,
-    color: string,
-    cardW: number,
-  ): void {
-    const t = scene.add
-      .text(x, y, text, {
+  ): { bg: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text } {
+    const palette = this.getBadgePalette(tone);
+    const bg = scene.add.graphics();
+    bg.fillStyle(palette.fill, 0.95);
+    bg.fillRoundedRect(x, y, width, height, 4);
+    bg.lineStyle(1, palette.border, 0.95);
+    bg.strokeRoundedRect(x, y, width, height, 4);
+
+    const label = scene.add
+      .text(x + width / 2, y + 2, text, {
         fontFamily: UITheme.font.family,
         fontSize: `${fontSize}px`,
-        color,
+        color: palette.text,
       })
-      .setOrigin(0, 0);
-    const maxW = cardW - x - 4;
-    if (t.width > maxW && maxW > 0) {
-      t.setScale(maxW / t.width);
+      .setOrigin(0.5, 0);
+
+    if (label.width > width - 8) {
+      label.setScale((width - 8) / label.width, 1);
     }
-    this.container.add(t);
+
+    return { bg, label };
+  }
+
+  private getBadgePalette(tone: ActionBadgeTone): { fill: number; border: number; text: string } {
+    switch (tone) {
+      case 'self':
+        return { fill: 0x16324d, border: 0x4a9eff, text: '#9ad2ff' };
+      case 'ally':
+        return { fill: 0x17344a, border: 0x68b8ff, text: '#b6ddff' };
+      case 'enemy':
+        return { fill: 0x4a1d26, border: 0xff6677, text: '#ffb3be' };
+      case 'effect':
+        return { fill: 0x2e2948, border: 0xc29bff, text: '#e3d4ff' };
+      default:
+        return { fill: 0x2a2a36, border: 0x666677, text: '#ccd0dd' };
+    }
   }
 
   private drawBg(selected: boolean): void {
