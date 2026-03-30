@@ -11,7 +11,7 @@ describe('buildActionCardBadgeModel', () => {
 
     expect(model.selfBadges).toEqual([{ text: '내 전열', tone: 'self' }]);
     expect(model.targetBadges).toEqual([{ text: '적 전열', tone: 'enemy' }]);
-    expect(model.effectBadges).toEqual([{ text: '공격 ATKx1.2', tone: 'effect' }]);
+    expect(model.effectBadges).toEqual([{ text: '🗡 ATKx1.2', tone: 'effect' }]);
   });
 
   it('적 HP 조건과 자기 대상 효과를 함께 유지한다', () => {
@@ -25,7 +25,7 @@ describe('buildActionCardBadgeModel', () => {
       { text: '적 HP 30%↓', tone: 'enemy' },
       { text: '자신', tone: 'self' },
     ]);
-    expect(model.effectBadges).toEqual([{ text: '실드 GRDx1.1', tone: 'effect' }]);
+    expect(model.effectBadges).toEqual([{ text: '🛡 GRDx1.1', tone: 'effect' }]);
   });
 
   it('복합 효과는 여러 대상 배지를 dedupe하며 swap 대상도 포함한다', () => {
@@ -46,9 +46,9 @@ describe('buildActionCardBadgeModel', () => {
       { text: '적 전열', tone: 'enemy' },
     ]);
     expect(model.effectBadges).toEqual([
-      { text: '회복 15', tone: 'effect' },
-      { text: '버프 엄호 1T', tone: 'effect' },
-      { text: '교체', tone: 'effect' },
+      { text: '✚ 15', tone: 'effect' },
+      { text: '▲ 엄호 1T', tone: 'effect' },
+      { text: '⇄', tone: 'effect' },
     ]);
   });
 });
