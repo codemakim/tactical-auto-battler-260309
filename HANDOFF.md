@@ -12,7 +12,7 @@
 
 ## Current Task
 
-- P2 진행 중: 다음 권장 작업은 P2-7 턴 인디케이터 갱신
+- P2 진행 중: 다음 권장 작업은 P2-8 히어로 개입 UI 상태
 
 ## Source Specs
 
@@ -28,6 +28,7 @@
 - P1-4 Town 골드/영웅 정보 표시 완료 (Codex)
 - P2-5 전투 템포 상수화 완료 (Codex)
 - P2-6 배속 조절 완료 (Codex)
+- P2-7 턴 인디케이터 즉시 갱신 완료 (Codex)
 
 ## Next — P2 Plan (전투 체감 개선)
 
@@ -49,6 +50,7 @@
 - 스펙: combat-spec.md §4
 - 파일: `src/scenes/BattleScene.ts` (턴 큐 UI)
 - 목표: 유닛 행동 완료 후 즉시 턴 큐 시각적 갱신 (현재 라운드 변경 시에만 갱신될 수 있음)
+- 완료: `src/systems/TurnIndicator.ts` 추가, 애니메이션 경로에서도 행동 직후 턴 큐 즉시 갱신
 
 ### P2-8: 히어로 개입 UI 상태 (READY/QUEUED/USED)
 - 스펙: [docs/hero-intervention-ui-state-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/hero-intervention-ui-state-spec.md)
@@ -57,7 +59,7 @@
 - 관련 타입: `HeroButtonState` (이미 정의됨)
 
 ### 작업 순서 권장
-P2-5 → P2-6 (의존) → P2-7, P2-8 (독립)
+P2-5 → P2-6 (의존) → P2-7 완료, 다음은 P2-8
 
 ## Guardrails
 
@@ -68,7 +70,7 @@ P2-5 → P2-6 (의존) → P2-7, P2-8 (독립)
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- battle-speed battle-tempo battle-scene-turnorder engine-integration hero-button-state`
+  - `npm test -- turn-indicator battle-scene-turnorder battle-speed battle-tempo`
   - `npx tsc --noEmit`
 
 ## Notes

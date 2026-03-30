@@ -41,6 +41,7 @@ import { calculateBattleLayout } from '../systems/UnitLayoutCalculator';
 import type { LayoutConfig } from '../systems/UnitLayoutCalculator';
 import { captureTickSnapshot } from '../systems/ReplaySnapshotCollector';
 import type { TickSnapshot, ReplaySessionData } from '../types';
+import { getRemainingTurnOrder } from '../systems/TurnIndicator';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -521,18 +522,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private updateTurnBadges(): void {
-    const turnOrder = this.battleState.turnOrder;
-
     // 모든 배지 초기화
     for (const visual of this.unitVisuals.values()) {
       visual.turnBadge.setVisible(false);
     }
 
-    // 아직 행동하지 않은 생존 유닛만 순서대로 필터
-    const remaining = turnOrder.filter((id) => {
-      const u = this.battleState.units.find((u2) => u2.id === id);
-      return u && u.isAlive && !u.hasActedThisRound;
-    });
+    const remaining = getRemainingTurnOrder(this.battleState);
 
     for (let i = 0; i < remaining.length; i++) {
       const unitId = remaining[i];
@@ -560,13 +555,7 @@ export class BattleScene extends Phaser.Scene {
   private refreshTurnQueue(): void {
     this.turnQueueContainer.removeAll(true);
 
-    const turnOrder = this.battleState.turnOrder;
-
-    // 미행동 생존 유닛만 순서대로 필터 (배지 로직과 동일)
-    const remaining = turnOrder.filter((id) => {
-      const u = this.battleState.units.find((u2) => u2.id === id);
-      return u && u.isAlive && !u.hasActedThisRound;
-    });
+    const remaining = getRemainingTurnOrder(this.battleState);
 
     if (remaining.length === 0) return;
 
@@ -748,6 +737,8 @@ export class BattleScene extends Phaser.Scene {
           hitApplied = true;
           this.processEvents(newEvents);
           this.updateAllUnitVisuals();
+          this.refreshTurnQueue();
+          this.updateHeroBtn();
         }
       };
       actorSprite.on('animationupdate', onAnimUpdate);
@@ -763,6 +754,8 @@ export class BattleScene extends Phaser.Scene {
         if (!hitApplied) {
           this.processEvents(newEvents);
           this.updateAllUnitVisuals();
+          this.refreshTurnQueue();
+          this.updateHeroBtn();
         }
         const resultDelay = Math.max(0, Math.round(RESULT_DELAY_MS * speedConfig.timingScale));
         this.time.delayedCall(resultDelay, () => {
