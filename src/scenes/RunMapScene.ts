@@ -8,6 +8,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UITheme } from '../ui/UITheme';
 import { UIButton } from '../ui/UIButton';
 import { gameState } from '../core/GameState';
+import { createRunMapFormationSceneData } from '../systems/FormationFlow';
 import { calculateStageNodes } from '../systems/RunMapCalculator';
 import { StageNodeStatus, RunStatus } from '../types';
 import type { StageNodeState, BattleReplayEntry } from '../types';
@@ -214,7 +215,7 @@ export class RunMapScene extends Phaser.Scene {
       label: '편성 수정',
       style: 'secondary',
       onClick: () => {
-        this.scene.start('FormationScene');
+        this.scene.start('FormationScene', createRunMapFormationSceneData());
       },
     });
 

@@ -23,6 +23,13 @@ import type { CharacterDefinition, SlotDisplayData, CardInstance, RunState } fro
 import { HERO_DEFINITIONS } from '../data/HeroDefinitions';
 import { getSlotDisplayData, swapBaseActionSlots, swapRunActionSlots } from '../systems/FormationCardCalculator';
 import { equipCard, unequipCard, getEquippableCards } from '../core/RunManager';
+import type { FormationFlowContext, FormationSceneData } from '../systems/FormationFlow';
+import {
+  resolveFormationFlowContext,
+  getFormationTopBarTitle,
+  getFormationBackButtonConfig,
+  getFormationActionButtonConfig,
+} from '../systems/FormationFlow';
 import { calculateColumnLayout } from '../systems/UnitLayoutCalculator';
 import { validateFormation, canAddToZone } from '../systems/FormationValidator';
 import { formatSlotsSummary } from '../utils/actionText';
@@ -90,16 +97,14 @@ export class FormationScene extends Phaser.Scene {
 
   // 재도전 컨텍스트
   private isRetry = false;
+  private flowContext: FormationFlowContext = 'TOWN';
   private defeatedByEnemies: Array<{ name: string; characterClass: string; hp: number; maxHp: number }> = [];
 
   constructor() {
     super({ key: 'FormationScene' });
   }
 
-  create(data?: {
-    isRetry?: boolean;
-    defeatedByEnemies?: Array<{ name: string; characterClass: string; hp: number; maxHp: number }>;
-  }): void {
+  create(data?: FormationSceneData): void {
     this.selectedRosterCharId = null;
     this.selectedActionSlot = null;
     this.rosterItems = [];
@@ -110,6 +115,11 @@ export class FormationScene extends Phaser.Scene {
     this.zoneUnitVisuals = [];
     this.isRetry = data?.isRetry ?? false;
     this.defeatedByEnemies = data?.defeatedByEnemies ?? [];
+    this.flowContext = resolveFormationFlowContext({
+      runState: gameState.runState,
+      isRetry: this.isRetry,
+      returnScene: data?.returnScene,
+    });
 
     this.drawBackground();
     this.drawTopBar();
@@ -139,8 +149,12 @@ export class FormationScene extends Phaser.Scene {
     bar.lineBetween(0, 50, GAME_WIDTH, 50);
     bar.setDepth(10);
 
-    const title = this.isRetry ? '재도전 — 편성 수정' : '작전실 — 편성';
-    const titleColor = this.isRetry ? '#ffaa44' : UITheme.colors.textPrimary;
+    const title = getFormationTopBarTitle(this.flowContext);
+    const titleColor = this.isRetry
+      ? '#ffaa44'
+      : this.flowContext === 'RUN_EDIT'
+        ? '#ffcc66'
+        : UITheme.colors.textPrimary;
     this.add.text(20, 14, title, { ...UITheme.font.heading, color: titleColor }).setDepth(11);
 
     this.add
@@ -960,18 +974,18 @@ export class FormationScene extends Phaser.Scene {
   // === 하단 버튼 ===
 
   private createBottomButtons(): void {
-    // 뒤로 버튼: 재도전 중에는 "포기 (런 종료)"
-    const backLabel = this.isRetry ? '포기 (런 종료)' : '< 마을로';
-    const backWidth = this.isRetry ? 160 : 140;
+    const backConfig = getFormationBackButtonConfig(this.flowContext);
+    const actionConfig = getFormationActionButtonConfig(this.flowContext);
+    const backWidth = backConfig.label.includes('포기') ? 160 : 140;
     new UIButton(this, {
       x: 20,
       y: GAME_HEIGHT - 55,
       width: backWidth,
       height: 44,
-      label: backLabel,
+      label: backConfig.label,
       style: 'secondary',
       onClick: () => {
-        if (this.isRetry) {
+        if (backConfig.targetScene === 'RunResultScene') {
           // 재도전 포기 → RunResultScene (런 정리)
           const rs = gameState.runState;
           if (rs) {
@@ -980,20 +994,20 @@ export class FormationScene extends Phaser.Scene {
           } else {
             this.scene.start('TownScene');
           }
+        } else if (backConfig.targetScene === 'RunMapScene') {
+          this.scene.start('RunMapScene');
         } else {
           this.scene.start('TownScene');
         }
       },
     });
 
-    // 완료 버튼: 재도전 중에는 "재도전 출격!"
-    const actionLabel = this.isRetry ? '재도전 출격!' : '편성 완료';
     new UIButton(this, {
       x: GAME_WIDTH - 200,
       y: GAME_HEIGHT - 55,
       width: 180,
       height: 44,
-      label: actionLabel,
+      label: actionConfig.label,
       style: 'primary',
       onClick: () => {
         const result = validateFormation(gameState.formation);
@@ -1005,8 +1019,7 @@ export class FormationScene extends Phaser.Scene {
           return;
         }
 
-        const runState = gameState.runState;
-        if (runState && runState.status === RunStatus.IN_PROGRESS) {
+        if (actionConfig.targetScene === 'RunMapScene') {
           this.scene.start('RunMapScene');
         } else {
           this.scene.start('TownScene');
