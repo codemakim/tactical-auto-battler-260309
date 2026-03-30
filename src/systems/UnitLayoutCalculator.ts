@@ -11,6 +11,13 @@ export interface UnitPosition {
   y: number;
 }
 
+export interface RowLayoutConfig {
+  xMin: number;
+  xMax: number;
+  rowY: number;
+  maxSlots: number;
+}
+
 export interface LayoutConfig {
   columns: Record<string, number>; // groupKey → colX
   yMin: number;
@@ -33,6 +40,28 @@ export function calculateColumnLayout(unitIds: string[], colX: number, yMin: num
     unitId: id,
     x: colX,
     y: yMin + ((i + 1) * range) / (n + 1),
+  }));
+}
+
+/**
+ * 단일 행 내 유닛들의 균등 배치 좌표 계산
+ *
+ * 최대 슬롯 수 기준으로 고정 간격을 유지해 좌우로 정렬한다.
+ * 현재 유닛 수가 maxSlots보다 적어도 전체 슬롯 폭 안에서 중앙 정렬된다.
+ */
+export function calculateRowLayout(unitIds: string[], config: RowLayoutConfig): UnitPosition[] {
+  const n = unitIds.length;
+  if (n === 0) return [];
+
+  const slots = Math.max(n, config.maxSlots);
+  const step = slots === 1 ? 0 : (config.xMax - config.xMin) / (slots - 1);
+  const occupiedWidth = step * Math.max(n - 1, 0);
+  const startX = (config.xMin + config.xMax - occupiedWidth) / 2;
+
+  return unitIds.map((id, index) => ({
+    unitId: id,
+    x: startX + step * index,
+    y: config.rowY,
   }));
 }
 

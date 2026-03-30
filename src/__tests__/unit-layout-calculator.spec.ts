@@ -5,7 +5,7 @@
  * calculateBattleLayout(): 전체 전투 레이아웃
  */
 import { describe, it, expect } from 'vitest';
-import { calculateColumnLayout, calculateBattleLayout } from '../systems/UnitLayoutCalculator';
+import { calculateColumnLayout, calculateBattleLayout, calculateRowLayout } from '../systems/UnitLayoutCalculator';
 import type { LayoutConfig } from '../systems/UnitLayoutCalculator';
 
 describe('calculateColumnLayout', () => {
@@ -150,5 +150,26 @@ describe('calculateBattleLayout', () => {
     const units = [{ id: 'x1', team: 'UNKNOWN', position: 'FRONT', isAlive: true }];
     const result = calculateBattleLayout(units, config);
     expect(result).toEqual([]);
+  });
+});
+
+describe('calculateRowLayout', () => {
+  it('유닛 0개면 빈 배열', () => {
+    expect(calculateRowLayout([], { xMin: 100, xMax: 500, rowY: 200, maxSlots: 5 })).toEqual([]);
+  });
+
+  it('유닛 1개면 중앙 정렬', () => {
+    const result = calculateRowLayout(['u1'], { xMin: 100, xMax: 500, rowY: 200, maxSlots: 5 });
+    expect(result).toEqual([{ unitId: 'u1', x: 300, y: 200 }]);
+  });
+
+  it('유닛 4개도 5슬롯 폭 안에서 중앙 정렬', () => {
+    const result = calculateRowLayout(['u1', 'u2', 'u3', 'u4'], { xMin: 100, xMax: 500, rowY: 200, maxSlots: 5 });
+    expect(result.map((p) => p.x)).toEqual([150, 250, 350, 450]);
+  });
+
+  it('유닛 5개면 전체 슬롯 폭을 채운다', () => {
+    const result = calculateRowLayout(['u1', 'u2', 'u3', 'u4', 'u5'], { xMin: 100, xMax: 500, rowY: 200, maxSlots: 5 });
+    expect(result.map((p) => p.x)).toEqual([100, 200, 300, 400, 500]);
   });
 });

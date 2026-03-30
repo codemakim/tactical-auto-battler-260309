@@ -30,7 +30,7 @@ import {
   getFormationBackButtonConfig,
   getFormationActionButtonConfig,
 } from '../systems/FormationFlow';
-import { calculateColumnLayout } from '../systems/UnitLayoutCalculator';
+import { calculateRowLayout } from '../systems/UnitLayoutCalculator';
 import { validateFormation, canAddToZone } from '../systems/FormationValidator';
 import { formatSlotsSummary } from '../utils/actionText';
 import { getFormationPresetSlots, getFormationPresetSlotName } from '../systems/FormationPresetSlots';
@@ -48,12 +48,14 @@ interface ZoneDef {
 }
 
 // 영역 레이아웃 상수
-const ZONE_Y = 100;
-const ZONE_HEIGHT = 360;
-const ZONE_WIDTH = 160;
+const ZONE_X = 300;
+const ZONE_Y = 110;
+const ZONE_HEIGHT = 160;
+const ZONE_WIDTH = 520;
 const ZONE_GAP = 24;
-const BACK_ZONE_X = 380;
-const FRONT_ZONE_X = BACK_ZONE_X + ZONE_WIDTH + ZONE_GAP;
+const BACK_ZONE_X = ZONE_X;
+const FRONT_ZONE_X = ZONE_X;
+const FRONT_ZONE_Y = ZONE_Y + ZONE_HEIGHT + ZONE_GAP;
 const ZONES: ZoneDef[] = [
   {
     key: 'BACK',
@@ -61,19 +63,19 @@ const ZONES: ZoneDef[] = [
     y: ZONE_Y,
     width: ZONE_WIDTH,
     height: ZONE_HEIGHT,
-    label: '← BACK (후열)',
+    label: 'BACK (후열)',
     position: Position.BACK,
-    maxUnits: 4,
+    maxUnits: 5,
   },
   {
     key: 'FRONT',
     x: FRONT_ZONE_X,
-    y: ZONE_Y,
+    y: FRONT_ZONE_Y,
     width: ZONE_WIDTH,
     height: ZONE_HEIGHT,
-    label: 'FRONT (전열) →',
+    label: 'FRONT (전열)',
     position: Position.FRONT,
-    maxUnits: 4,
+    maxUnits: 5,
   },
 ];
 
@@ -360,7 +362,7 @@ export class FormationScene extends Phaser.Scene {
   private createZones(): void {
     // 방향 안내
     this.add
-      .text((BACK_ZONE_X + FRONT_ZONE_X + ZONE_WIDTH) / 2, ZONE_Y - 20, '아군 진행 방향 →', {
+      .text(BACK_ZONE_X + ZONE_WIDTH / 2, ZONE_Y - 26, '아군 진행 방향 →', {
         ...UITheme.font.small,
         color: '#444466',
       })
@@ -505,12 +507,14 @@ export class FormationScene extends Phaser.Scene {
 
       if (charsInZone.length === 0) continue;
 
-      // calculateColumnLayout으로 영역 내 균등 배치
+      // 가로 슬롯 스트립 기준으로 균등 배치
       const unitIds = charsInZone.map((c) => c.id);
-      const colX = zone.width / 2;
-      const yMin = 30; // 라벨 아래
-      const yMax = zone.height - 10;
-      const positions = calculateColumnLayout(unitIds, colX, yMin, yMax);
+      const positions = calculateRowLayout(unitIds, {
+        xMin: 56,
+        xMax: zone.width - 56,
+        rowY: zone.height / 2 + 6,
+        maxSlots: zone.maxUnits,
+      });
 
       for (let i = 0; i < charsInZone.length; i++) {
         const char = charsInZone[i];
@@ -529,8 +533,8 @@ export class FormationScene extends Phaser.Scene {
     zone: ZoneDef,
   ): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
-    const w = zone.width - 16;
-    const h = 118;
+    const w = 88;
+    const h = 102;
 
     // 유닛 박스 배경
     const bg = this.add.graphics();
@@ -547,39 +551,40 @@ export class FormationScene extends Phaser.Scene {
         color: '#6688aa',
       })
       .setOrigin(0, 0)
-      .setFontSize(10);
+      .setFontSize(9);
     container.add(classText);
 
     const spriteInfo = FORMATION_SPRITE_MAP[char.characterClass];
     if (spriteInfo) {
       const sprite = this.add
-        .sprite(0, -10, spriteInfo.texture, spriteInfo.idleFrame)
-        .setScale(spriteInfo.scale)
+        .sprite(0, -8, spriteInfo.texture, spriteInfo.idleFrame)
+        .setScale(spriteInfo.scale * 0.82)
         .setOrigin(0.5, 0.5);
       container.add(sprite);
     }
 
     // 이름
     const nameText = this.add
-      .text(0, 26, char.name, { ...UITheme.font.label, color: UITheme.colors.textPrimary })
+      .text(0, 20, char.name, { ...UITheme.font.label, color: UITheme.colors.textPrimary })
       .setOrigin(0.5);
+    nameText.setFontSize(10);
     container.add(nameText);
 
     // 스탯
     const s = char.baseStats;
     const statText = this.add
-      .text(0, 44, `HP${s.hp}  A${s.atk}  G${s.grd}`, {
+      .text(0, 35, `HP${s.hp} A${s.atk}`, {
         ...UITheme.font.small,
         color: '#666688',
       })
       .setOrigin(0.5)
-      .setFontSize(10);
+      .setFontSize(8);
     container.add(statText);
 
     // 제거 버튼 (×)
     const removeBtn = this.add
       .text(w / 2 - 4, -h / 2 + 4, '×', {
-        fontSize: '14px',
+        fontSize: '12px',
         fontFamily: UITheme.font.family,
         color: '#aa4444',
       })
