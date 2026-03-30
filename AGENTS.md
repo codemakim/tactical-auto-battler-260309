@@ -6,6 +6,7 @@
 ## 1. Working Agreement
 
 - 기존 설계 기준은 먼저 [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md)를 읽는다.
+- 작업 절차와 핸드오프 규칙은 [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)를 따른다.
 - 세부 규칙은 `docs/` 스펙 문서를 기준으로 판단한다.
 - 구현 전에는 관련 테스트와 현재 구현 파일을 함께 본다.
 - 변경은 가능한 한 작은 단위로 한다.
@@ -56,7 +57,9 @@
 ### UI specs
 
 - 런 루프 UI: [docs/run-loop-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-loop-ui-spec.md)
+  Scene 전이 일부는 후속 스펙으로 대체됨
 - 런 맵/인트로: [docs/run-map-and-battle-intro-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-map-and-battle-intro-spec.md)
+  RunMap/Formation/Battle 전이의 현재 기준 문서
 - 전투 결과 UI: [docs/battle-result-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/battle-result-ui-spec.md)
 - 런 결과 UI: [docs/run-result-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-result-ui-spec.md)
 - 보상 UI: [docs/reward-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/reward-ui-spec.md)

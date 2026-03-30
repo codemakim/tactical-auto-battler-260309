@@ -1,6 +1,10 @@
 # 런 진행 맵 + 전투 인트로 스펙
 
 > 런 중 UX 개선: 노드맵 허브 + 전투 시작 연출 + 자동 전투 기본화
+>
+> Status: Source of Truth
+> `RunMapScene` 허브 구조와 `RunMapScene -> FormationScene -> RunMapScene`,
+> `RewardScene -> RunMapScene` 전이는 이 문서를 기준으로 구현/수정한다.
 
 ---
 

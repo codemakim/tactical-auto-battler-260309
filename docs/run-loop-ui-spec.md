@@ -2,6 +2,12 @@
 
 > game-flow-spec.md §6 + run-system-spec.md §5 기반.
 > 개별 Scene들을 5스테이지 런 루프로 연결하는 배선 작업.
+>
+> Status: Partially Superseded
+> Scene 전이 중 `RunMapScene` 허브, `RewardScene -> RunMapScene`,
+> `FormationScene -> RunMapScene` 흐름은
+> [docs/run-map-and-battle-intro-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-map-and-battle-intro-spec.md)가 최신 기준이다.
+> 이 문서는 런 초기화/전투 생성 배선과 일부 흐름 설명 참고용으로 유지한다.
 
 ---
 
