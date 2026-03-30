@@ -8,12 +8,14 @@ import { CharacterClass, HeroType as HT } from '../types';
 import { createCharacterDef } from '../entities/UnitFactory';
 import {
   createGameStateDataFromSave,
+  deleteSaveDataFromStorage,
   extractSaveData,
+  getSaveDataStatus,
   hasSaveDataInStorage,
   loadSaveDataFromStorage,
   saveSaveDataToStorage,
 } from '../systems/SaveSystem';
-import type { SaveData, StorageLike } from '../systems/SaveSystem';
+import type { SaveData, SaveDataStatus, StorageLike } from '../systems/SaveSystem';
 
 // === 편성 슬롯 ===
 
@@ -252,6 +254,14 @@ export class GameStateManager {
 
   hasSaveData(storage?: StorageLike | null): boolean {
     return hasSaveDataInStorage(storage);
+  }
+
+  getSaveStatus(storage?: StorageLike | null): SaveDataStatus {
+    return getSaveDataStatus(storage);
+  }
+
+  deleteSaveData(storage?: StorageLike | null): boolean {
+    return deleteSaveDataFromStorage(storage);
   }
 
   /** 상태 초기화 (디버그용) */

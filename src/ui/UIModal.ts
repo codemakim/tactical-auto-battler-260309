@@ -14,13 +14,16 @@ export interface UIModalConfig {
   width?: number;
   height?: number;
   buttonLabel?: string;
+  secondaryButtonLabel?: string;
   onClose?: () => void;
+  onSecondaryAction?: () => void;
 }
 
 export class UIModal {
   private dim: Phaser.GameObjects.Rectangle;
   private panel: UIPanel;
   private closeBtn: UIButton;
+  private secondaryBtn?: UIButton;
   private contentText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, config: UIModalConfig) {
@@ -54,8 +57,10 @@ export class UIModal {
     this.panel.add(this.contentText);
 
     // 닫기 버튼
+    const hasSecondary = !!config.secondaryButtonLabel;
+    const primaryX = hasSecondary ? w / 2 + 10 : (w - 140) / 2;
     this.closeBtn = new UIButton(scene, {
-      x: (w - 140) / 2,
+      x: primaryX,
       y: h - 60,
       width: 140,
       height: 40,
@@ -67,11 +72,28 @@ export class UIModal {
       },
     });
     this.panel.add(this.closeBtn.container);
+
+    if (config.secondaryButtonLabel) {
+      this.secondaryBtn = new UIButton(scene, {
+        x: w / 2 - 150,
+        y: h - 60,
+        width: 140,
+        height: 40,
+        label: config.secondaryButtonLabel,
+        style: 'secondary',
+        onClick: () => {
+          this.destroy();
+          config.onSecondaryAction?.();
+        },
+      });
+      this.panel.add(this.secondaryBtn.container);
+    }
   }
 
   destroy(): void {
     this.dim.destroy();
     this.closeBtn.destroy();
+    this.secondaryBtn?.destroy();
     this.panel.destroy();
   }
 }

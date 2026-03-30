@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: P3-11 편성 프리셋, P3-10 훈련소 UI, P3-9 병영 상세
+- 최근 완료: 세이브 UX 마감, P3-11 편성 프리셋, P3-10 훈련소 UI
 
 ## Source Specs
 
@@ -35,10 +35,11 @@
 - P3-10 훈련소 UI 완료 (Codex)
 - P3-11 편성 프리셋 완료 (Codex)
 - P3-12 타이틀 세이브 분기 완료 (Codex)
+- 세이브 삭제/손상 세이브 안내 완료 (Codex)
 
-## Next — P3 Plan (메타 루프 확장)
+## Next
 
-남은 작업은 모두 UI/메타 루프 연결 성격. 각각 단독 커밋 가능.
+다음 작업 미정.
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1
@@ -64,8 +65,9 @@
 - 목표: 세이브 없음=START, 세이브 있음=CONTINUE/NEW GAME 분기
 - 완료: `src/systems/TitleMenu.ts` 추가, MainMenuScene 버튼 분기 적용
 
-### 작업 순서 권장
-P3 메타 루프 주요 항목 완료. 다음 작업 미정
+### Save UX
+- 파일: `src/systems/SaveSystem.ts`, `src/scenes/MainMenuScene.ts`
+- 완료: Delete Save, corrupted save 감지, 타이틀 안내 문구, 삭제 확인 모달
 
 ## Guardrails
 
@@ -76,7 +78,7 @@ P3 메타 루프 주요 항목 완료. 다음 작업 미정
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- formation-preset-slots save-system formation-flow`
+  - `npm test -- save-system title-menu`
   - `npx tsc --noEmit`
 
 ## Notes

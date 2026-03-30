@@ -10,6 +10,8 @@ export interface StorageLike {
   removeItem?(key: string): void;
 }
 
+export type SaveDataStatus = 'empty' | 'valid' | 'corrupted';
+
 export interface SaveData {
   version: typeof SAVE_DATA_VERSION;
   gold: number;
@@ -97,4 +99,17 @@ export function loadSaveDataFromStorage(storage: StorageLike | null = getDefault
   } catch {
     return null;
   }
+}
+
+export function getSaveDataStatus(storage: StorageLike | null = getDefaultStorage()): SaveDataStatus {
+  if (!storage) return 'empty';
+  const raw = storage.getItem(SAVE_STORAGE_KEY);
+  if (!raw) return 'empty';
+  return loadSaveDataFromStorage(storage) ? 'valid' : 'corrupted';
+}
+
+export function deleteSaveDataFromStorage(storage: StorageLike | null = getDefaultStorage()): boolean {
+  if (!storage?.removeItem) return false;
+  storage.removeItem(SAVE_STORAGE_KEY);
+  return true;
 }

@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GameStateManager } from '../core/GameState';
 import {
+  deleteSaveDataFromStorage,
   extractSaveData,
+  getSaveDataStatus,
   loadSaveDataFromStorage,
   saveSaveDataToStorage,
   SAVE_STORAGE_KEY,
@@ -148,5 +150,23 @@ describe('SaveSystem', () => {
     expect(gameState.deletePreset('alpha')).toBe(true);
     expect(gameState.presets.map((preset) => preset.name)).toEqual(['beta']);
     expect(gameState.deletePreset('missing')).toBe(false);
+  });
+
+  it('저장 삭제가 가능하다', () => {
+    expect(gameState.saveToStorage(storage)).toBe(true);
+    expect(storage.getItem(SAVE_STORAGE_KEY)).not.toBeNull();
+
+    expect(deleteSaveDataFromStorage(storage)).toBe(true);
+    expect(storage.getItem(SAVE_STORAGE_KEY)).toBeNull();
+  });
+
+  it('손상된 저장 데이터는 corrupted 상태로 구분된다', () => {
+    expect(getSaveDataStatus(storage)).toBe('empty');
+
+    storage.setItem(SAVE_STORAGE_KEY, '{bad json');
+    expect(getSaveDataStatus(storage)).toBe('corrupted');
+
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({ version: 999 }));
+    expect(getSaveDataStatus(storage)).toBe('corrupted');
   });
 });

@@ -3,7 +3,8 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UIButton } from '../ui/UIButton';
 import { UITheme } from '../ui/UITheme';
-import { getTitleMenuButtons, type TitleMenuAction } from '../systems/TitleMenu';
+import { getTitleMenuButtons, getTitleMenuMessage, type TitleMenuAction } from '../systems/TitleMenu';
+import { UIModal } from '../ui/UIModal';
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
@@ -11,8 +12,9 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
-    const hasSave = gameState.hasSaveData();
-    const menuButtons = getTitleMenuButtons(hasSave);
+    const saveStatus = gameState.getSaveStatus();
+    const menuButtons = getTitleMenuButtons(saveStatus);
+    const message = getTitleMenuMessage(saveStatus);
 
     // 타이틀
     this.add
@@ -24,17 +26,19 @@ export class MainMenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    if (hasSave) {
+    if (message) {
       this.add
-        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Saved progress detected', {
+        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, message, {
           fontSize: '16px',
-          color: UITheme.colors.textSecondary,
+          color: saveStatus === 'corrupted' ? UITheme.colors.textWarning : UITheme.colors.textSecondary,
           fontFamily: UITheme.font.family,
+          align: 'center',
+          wordWrap: { width: 460 },
         })
         .setOrigin(0.5);
     }
 
-    const startY = hasSave ? GAME_HEIGHT / 2 + 36 : GAME_HEIGHT / 2 + 60;
+    const startY = message ? GAME_HEIGHT / 2 + 48 : GAME_HEIGHT / 2 + 60;
     menuButtons.forEach((button, index) => {
       new UIButton(this, {
         x: GAME_WIDTH / 2 - 110,
@@ -58,6 +62,22 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private onMenuAction(action: TitleMenuAction): void {
+    if (action === 'delete_save') {
+      new UIModal(this, {
+        title: '세이브 삭제',
+        content: '현재 세이브 데이터를 삭제합니다.\n정말 계속하시겠습니까?\n\n삭제 후에는 되돌릴 수 없습니다.',
+        buttonLabel: '삭제',
+        secondaryButtonLabel: '취소',
+        onClose: () => {
+          gameState.deleteSaveData();
+          gameState.reset();
+          this.scene.restart();
+        },
+        onSecondaryAction: () => {},
+      });
+      return;
+    }
+
     if (action === 'start' || action === 'new_game') {
       gameState.reset();
     }
