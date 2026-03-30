@@ -1200,7 +1200,9 @@ export class FormationScene extends Phaser.Scene {
 
   private openCardEditorOverlay(char: CharacterDefinition): void {
     this.overlayMode = 'card';
-    const contentY = this.createOverlay('카드 편집', 920, 620);
+    const overlayWidth = 1040;
+    const overlayHeight = 640;
+    const contentY = this.createOverlay('카드 편집', overlayWidth, overlayHeight);
     const panel = this.overlayPanel;
     if (!panel) return;
 
@@ -1217,11 +1219,13 @@ export class FormationScene extends Phaser.Scene {
     const runState = gameState.runState;
     const isRun = !!runState;
     const slotData = getSlotDisplayData(char, runState);
-    const cardW = 120;
-    const cardH = 150;
-    const cardGap = 14;
+    const cardW = 170;
+    const cardH = 220;
+    const cardGap = 26;
     const slotStartX = UITheme.panel.padding;
     const slotStartY = contentY + 74;
+    const logicX = slotStartX + 3 * cardW + 2 * cardGap + 40;
+    const logicY = slotStartY - 4;
 
     for (const slot of slotData) {
       const cx = slotStartX + slot.slotIndex * (cardW + cardGap);
@@ -1289,16 +1293,15 @@ export class FormationScene extends Phaser.Scene {
       this.overlayDynamic.push(swapBtn);
     }
 
-    const logicY = slotStartY + cardH + 28;
-    this.renderLogicSummaryOnOverlay(slotData, logicY);
+    this.renderLogicSummaryOnOverlay(slotData, logicX, logicY, 250);
     if (isRun && runState) {
-      const inventoryY = logicY + slotData.length * 14 + 24;
+      const inventoryY = slotStartY + cardH + 56;
       this.renderInventoryOnOverlay(char, runState, inventoryY);
     }
 
     const closeBtn = new UIButton(this, {
-      x: 760,
-      y: 546,
+      x: overlayWidth - 136,
+      y: overlayHeight - 74,
       width: 120,
       height: 42,
       label: '닫기',
@@ -1309,23 +1312,29 @@ export class FormationScene extends Phaser.Scene {
     this.overlayButtons.push(closeBtn);
   }
 
-  private renderLogicSummaryOnOverlay(slotData: SlotDisplayData[], startY: number): void {
+  private renderLogicSummaryOnOverlay(
+    slotData: SlotDisplayData[],
+    startX: number,
+    startY: number,
+    width: number,
+  ): void {
     if (!this.overlayPanel) return;
     const slots = slotData.map((s) => ({ condition: s.condition, action: s.action }));
     const lines = formatSlotsSummary(slots);
-    const headerText = this.add.text(UITheme.panel.padding, startY, '[행동 로직]', {
+    const headerText = this.add.text(startX, startY, '[행동 로직]', {
       ...UITheme.font.small,
-      fontSize: '10px',
+      fontSize: '12px',
       color: UITheme.colors.textSecondary,
     });
     this.overlayPanel.add(headerText);
     this.overlayDynamic.push(headerText);
     for (let i = 0; i < lines.length; i++) {
-      const ly = startY + 14 + i * 14;
-      const lineText = this.add.text(UITheme.panel.padding + 4, ly, lines[i], {
+      const ly = startY + 20 + i * 20;
+      const lineText = this.add.text(startX + 4, ly, lines[i], {
         fontFamily: UITheme.font.family,
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#ccddee',
+        wordWrap: { width },
       });
       this.overlayPanel.add(lineText);
       this.overlayDynamic.push(lineText);
@@ -1352,10 +1361,10 @@ export class FormationScene extends Phaser.Scene {
       return;
     }
 
-    const cardW = 90;
-    const cardH = 120;
-    const cardGap = 8;
-    const cols = 4;
+    const cardW = 110;
+    const cardH = 150;
+    const cardGap = 12;
+    const cols = 5;
     const invStartY = startY + 20;
     for (let i = 0; i < equippable.length; i++) {
       const invCard = equippable[i];

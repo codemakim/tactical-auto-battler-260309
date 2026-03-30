@@ -48,7 +48,7 @@ export class UICardVisual {
     const w = cfg.width ?? 110;
     const h = cfg.height ?? 150;
     this.config = { ...cfg, width: w, height: h };
-    const compact = w < 100;
+    const compact = w < 110;
 
     this.container = scene.add.container(cfg.x, cfg.y);
 
@@ -59,19 +59,19 @@ export class UICardVisual {
 
     let ty = 5;
     const padX = compact ? 5 : 6;
-    const labelSize = compact ? 7 : 8;
+    const labelSize = compact ? 8 : 10;
 
     // ── 헤더: 레어리티 + 이름 ──
     const rarityLabel = cfg.rarity ?? '기본';
     const rarityColor = cfg.rarity ? (RARITY_TEXT[cfg.rarity] ?? '#ccccdd') : '#555566';
     this.addText(scene, w / 2, ty, rarityLabel, { fontSize: `${labelSize}px`, color: rarityColor });
-    ty += compact ? 10 : 13;
+    ty += compact ? 12 : 15;
 
     this.addText(scene, w / 2, ty, cfg.action.name, {
-      fontSize: compact ? '10px' : '12px',
+      fontSize: compact ? '11px' : '14px',
       color: UITheme.colors.textPrimary,
     });
-    ty += compact ? 13 : 17;
+    ty += compact ? 15 : 20;
 
     // 클래스 제한
     const classLabel = cfg.classRestriction ?? '공용';
@@ -79,7 +79,7 @@ export class UICardVisual {
       fontSize: `${labelSize}px`,
       color: cfg.classRestriction ? UITheme.colors.textAccent : '#667788',
     });
-    ty += compact ? 10 : 13;
+    ty += compact ? 12 : 15;
 
     // ── 구분선 ──
     const divider = scene.add.graphics();
@@ -89,7 +89,7 @@ export class UICardVisual {
     ty += 4;
 
     const badgeModel = buildActionCardBadgeModel(cfg.condition, cfg.action.effects.slice(0, 3));
-    const sectionGap = compact ? 4 : 5;
+    const sectionGap = compact ? 4 : 6;
 
     if (badgeModel.selfBadges.length > 0) {
       ty = this.renderBadgeSection(scene, '상황', badgeModel.selfBadges, padX, ty, w, labelSize, compact);
@@ -140,8 +140,8 @@ export class UICardVisual {
     labelSize: number,
     compact: boolean,
   ): number {
-    const badgeFontSize = compact ? 7 : 8;
-    const badgeHeight = compact ? 14 : 15;
+    const badgeFontSize = compact ? 8 : 10;
+    const badgeHeight = compact ? 16 : 18;
     const gapX = 4;
     const gapY = 4;
     const maxWidth = cardW - x - 6;

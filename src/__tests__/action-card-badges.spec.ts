@@ -10,7 +10,7 @@ describe('buildActionCardBadgeModel', () => {
     const model = buildActionCardBadgeModel(condition, effects);
 
     expect(model.selfBadges).toEqual([{ text: '내 전열', tone: 'self' }]);
-    expect(model.targetBadges).toEqual([{ text: '적 전열 우선', tone: 'enemy' }]);
+    expect(model.targetBadges).toEqual([{ text: '적 전열', tone: 'enemy' }]);
     expect(model.effectBadges).toEqual([{ text: '공격 ATKx1.2', tone: 'effect' }]);
   });
 
@@ -42,13 +42,13 @@ describe('buildActionCardBadgeModel', () => {
     expect(model.targetBadges).toEqual([
       { text: '아군 HP 40%↓', tone: 'ally' },
       { text: '아군 최저 HP', tone: 'ally' },
-      { text: '적 후열 우선', tone: 'enemy' },
-      { text: '적 전열 우선', tone: 'enemy' },
+      { text: '적 후열', tone: 'enemy' },
+      { text: '적 전열', tone: 'enemy' },
     ]);
     expect(model.effectBadges).toEqual([
       { text: '회복 15', tone: 'effect' },
-      { text: '버프 COVER 1T', tone: 'effect' },
-      { text: '위치 교체', tone: 'effect' },
+      { text: '버프 엄호 1T', tone: 'effect' },
+      { text: '교체', tone: 'effect' },
     ]);
   });
 });
