@@ -12,7 +12,7 @@
 
 ## Current Task
 
-- P2 진행 중: 다음 권장 작업은 P2-8 히어로 개입 UI 상태
+- 현재 진행 중인 작업 없음
 
 ## Source Specs
 
@@ -29,6 +29,7 @@
 - P2-5 전투 템포 상수화 완료 (Codex)
 - P2-6 배속 조절 완료 (Codex)
 - P2-7 턴 인디케이터 즉시 갱신 완료 (Codex)
+- P2-8 히어로 개입 UI 상태 렌더링 완료 (Codex)
 
 ## Next — P2 Plan (전투 체감 개선)
 
@@ -57,9 +58,10 @@
 - 파일: `src/scenes/BattleScene.ts` (영웅 개입 버튼 영역)
 - 목표: 개입 버튼이 상태별로 시각 변화 (READY=활성, QUEUED=펄스, USED=비활성)
 - 관련 타입: `HeroButtonState` (이미 정의됨)
+- 완료: 상태별 프레젠테이션 분리, QUEUED gold border + pulse, TARGETING secondary, USED/DISABLED 비활성 렌더링
 
 ### 작업 순서 권장
-P2-5 → P2-6 (의존) → P2-7 완료, 다음은 P2-8
+P2-5 → P2-6 → P2-7 → P2-8 완료
 
 ## Guardrails
 
@@ -70,7 +72,7 @@ P2-5 → P2-6 (의존) → P2-7 완료, 다음은 P2-8
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- turn-indicator battle-scene-turnorder battle-speed battle-tempo`
+  - `npm test -- hero-button-presentation hero-button-state hero-intervention-ui`
   - `npx tsc --noEmit`
 
 ## Notes

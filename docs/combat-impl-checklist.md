@@ -98,8 +98,8 @@
 - [x] 라운드 시작 시 충전
 - [x] 횟수 소진 시 사용 불가
 - [x] 개입 큐잉 (§18 스펙 일치): heroIntervene() = queueIntervention() 래퍼, 다음 유닛 행동 직전 자동 발동 (executeTurn 내), 24개 테스트
-- [ ] 개입 UI 상태 전환 (READY → QUEUED → USED) 실제 렌더링
-- [ ] 개입 UI 상태 (READY / QUEUED / USED) — BattlePhase/Hero 상태 기반 렌더링
+- [x] 개입 UI 상태 전환 (READY → QUEUED → USED) 실제 렌더링 (Codex, 2026-03-30)
+- [x] 개입 UI 상태 (READY / QUEUED / USED) — BattlePhase/Hero 상태 기반 렌더링 (Codex, 2026-03-30)
 
 ## 결정론 (§19 / data-model-spec)
 
@@ -117,7 +117,7 @@
 ## 교차 관심사 / UI 연출
 
 - [x] 행동 후 즉시 턴 인디케이터 갱신 (Codex, 2026-03-30)
-- [ ] 히어로 개입 UI 상태 (READY/QUEUED/USED) 렌더링
+- [x] 히어로 개입 UI 상태 (READY/QUEUED/USED) 렌더링 (Codex, 2026-03-30)
 
 ## 리플레이 (§21)
 

@@ -16,6 +16,11 @@ export interface UIButtonConfig {
   disabled?: boolean;
 }
 
+interface UIButtonPaletteOverride {
+  border?: number;
+  text?: string;
+}
+
 export class UIButton {
   readonly container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Graphics;
@@ -25,6 +30,7 @@ export class UIButton {
   private style: 'primary' | 'secondary';
   private width: number;
   private height: number;
+  private paletteOverride?: UIButtonPaletteOverride;
 
   constructor(scene: Phaser.Scene, config: UIButtonConfig) {
     this.style = config.style ?? 'primary';
@@ -81,20 +87,40 @@ export class UIButton {
 
     this.bg.fillStyle(color, 1);
     this.bg.fillRoundedRect(0, 0, this.width, this.height, 4);
-    this.bg.lineStyle(1, hovered && !this.disabled ? UITheme.colors.borderHighlight : UITheme.colors.border);
+    const borderColor =
+      this.paletteOverride?.border ??
+      (hovered && !this.disabled ? UITheme.colors.borderHighlight : UITheme.colors.border);
+    this.bg.lineStyle(1, borderColor);
     this.bg.strokeRoundedRect(0, 0, this.width, this.height, 4);
   }
 
   setDisabled(disabled: boolean): this {
     this.disabled = disabled;
     this.hitArea.setInteractive({ useHandCursor: !disabled });
-    this.text.setColor(disabled ? UITheme.colors.textDisabled : UITheme.colors.textPrimary);
+    this.text.setColor(
+      disabled ? UITheme.colors.textDisabled : (this.paletteOverride?.text ?? UITheme.colors.textPrimary),
+    );
     this.drawBg(false);
     return this;
   }
 
   setLabel(label: string): this {
     this.text.setText(label);
+    return this;
+  }
+
+  setStyle(style: 'primary' | 'secondary'): this {
+    this.style = style;
+    this.drawBg(false);
+    return this;
+  }
+
+  setPaletteOverride(paletteOverride?: UIButtonPaletteOverride): this {
+    this.paletteOverride = paletteOverride;
+    this.text.setColor(
+      this.disabled ? UITheme.colors.textDisabled : (this.paletteOverride?.text ?? UITheme.colors.textPrimary),
+    );
+    this.drawBg(false);
     return this;
   }
 

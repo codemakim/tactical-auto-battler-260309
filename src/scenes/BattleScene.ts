@@ -42,6 +42,7 @@ import type { LayoutConfig } from '../systems/UnitLayoutCalculator';
 import { captureTickSnapshot } from '../systems/ReplaySnapshotCollector';
 import type { TickSnapshot, ReplaySessionData } from '../types';
 import { getRemainingTurnOrder } from '../systems/TurnIndicator';
+import { getHeroButtonPresentation } from '../systems/HeroButtonPresentation';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -955,6 +956,11 @@ export class BattleScene extends Phaser.Scene {
 
   private updateHeroBtn(): void {
     const btnState = this.getHeroBtnState();
+    const presentation = getHeroButtonPresentation({
+      state: btnState,
+      interventionsRemaining: this.battleState.hero.interventionsRemaining,
+      queuedAbilityName: this.battleState.hero.queuedAbility?.name,
+    });
 
     // 펄스 정리
     if (this.heroBtnPulse) {
@@ -963,39 +969,27 @@ export class BattleScene extends Phaser.Scene {
       this.heroBtn.container.setAlpha(1);
     }
 
-    switch (btnState) {
-      case HeroButtonState.READY: {
-        const remaining = this.battleState.hero.interventionsRemaining;
-        this.heroBtn.setLabel(`영웅 개입 (${remaining})`);
-        this.heroBtn.setDisabled(false);
-        break;
-      }
-      case HeroButtonState.QUEUED: {
-        const abilityName = this.battleState.hero.queuedAbility?.name ?? '능력';
-        this.heroBtn.setLabel(`${abilityName} 대기중`);
-        this.heroBtn.setDisabled(false);
-        // 펄스 애니메이션
-        this.heroBtnPulse = this.tweens.add({
-          targets: this.heroBtn.container,
-          alpha: { from: 1, to: 0.7 },
-          duration: 500,
-          yoyo: true,
-          repeat: -1,
-        });
-        break;
-      }
-      case HeroButtonState.USED:
-        this.heroBtn.setLabel('개입 완료');
-        this.heroBtn.setDisabled(true);
-        break;
-      case HeroButtonState.TARGETING:
-        this.heroBtn.setLabel('취소');
-        this.heroBtn.setDisabled(false);
-        break;
-      case HeroButtonState.DISABLED:
-        this.heroBtn.setLabel('영웅 개입');
-        this.heroBtn.setDisabled(true);
-        break;
+    this.heroBtn
+      .setStyle(presentation.style)
+      .setPaletteOverride(
+        presentation.queuedBorderColor
+          ? {
+              border: presentation.queuedBorderColor,
+              text: UITheme.colors.textGold,
+            }
+          : undefined,
+      )
+      .setLabel(presentation.label)
+      .setDisabled(presentation.disabled);
+
+    if (presentation.pulsing) {
+      this.heroBtnPulse = this.tweens.add({
+        targets: this.heroBtn.container,
+        alpha: { from: 1, to: 0.8 },
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+      });
     }
   }
 
