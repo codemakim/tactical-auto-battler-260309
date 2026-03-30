@@ -13,11 +13,12 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
+- 최근 완료: P3-12 타이틀 세이브 분기
 
 ## Source Specs
 
-- primary: [docs/combat-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-spec.md) (§4 턴 순서)
-- secondary: [docs/hero-intervention-ui-state-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/hero-intervention-ui-state-spec.md)
+- primary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md) (§2 Title)
+- secondary: [docs/combat-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-spec.md)
 - checklist: [docs/combat-impl-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-impl-checklist.md)
 
 ## Done
@@ -30,38 +31,35 @@
 - P2-6 배속 조절 완료 (Codex)
 - P2-7 턴 인디케이터 즉시 갱신 완료 (Codex)
 - P2-8 히어로 개입 UI 상태 렌더링 완료 (Codex)
+- P3-12 타이틀 세이브 분기 완료 (Codex)
 
-## Next — P2 Plan (전투 체감 개선)
+## Next — P3 Plan (메타 루프 확장)
 
-4개 작업, 독립적이므로 순서 무관. 각각 단독 커밋 가능.
+남은 작업은 모두 UI/메타 루프 연결 성격. 각각 단독 커밋 가능.
 
-### P2-5: 전투 템포 (애니메이션 타이밍)
-- 스펙: combat-spec.md §20
-- 파일: `src/scenes/BattleScene.ts` (doStep, 애니메이션 타이밍)
-- 목표: 액션 0.6~0.8s, 결과 딜레이 0.2s, 다음 액션 딜레이 0.4~0.6s
-- 완료: `src/systems/BattleTempo.ts` 추가, 700ms/200ms/500ms 상수 적용
+### P3-9: 병영 상세
+- 스펙: game-flow-spec.md §3-1
+- 파일: `src/scenes/TownScene.ts`
+- 목표: 캐릭터 상세 정보 확인 (스탯, 클래스, 액션 카드)
 
-### P2-6: 배속 조절 (1x / 2x / 스킵)
-- 스펙: game-flow-spec.md §6-1
-- 파일: `src/scenes/BattleScene.ts`
-- 목표: 배속 토글 버튼 (1x↔2x↔skip), 타이밍 상수에 배율 적용
-- 완료: `src/systems/BattleSpeed.ts` 추가, 1x↔2x↔skip 순환 및 타이밍 배율 적용
+### P3-10: 훈련소 UI
+- 스펙: game-flow-spec.md §3-2
+- 파일: `src/scenes/TownScene.ts`
+- 목표: TrainingSystem 연동, 골드 소모/훈련 가능 여부 표시
 
-### P2-7: 턴 인디케이터 갱신
-- 스펙: combat-spec.md §4
-- 파일: `src/scenes/BattleScene.ts` (턴 큐 UI)
-- 목표: 유닛 행동 완료 후 즉시 턴 큐 시각적 갱신 (현재 라운드 변경 시에만 갱신될 수 있음)
-- 완료: `src/systems/TurnIndicator.ts` 추가, 애니메이션 경로에서도 행동 직후 턴 큐 즉시 갱신
+### P3-11: 편성 프리셋
+- 스펙: game-flow-spec.md §3-3 / 현재 GameState preset 구조
+- 파일: `src/scenes/FormationScene.ts`, `src/core/GameState.ts`
+- 목표: 프리셋 저장/불러오기 UI 연결
 
-### P2-8: 히어로 개입 UI 상태 (READY/QUEUED/USED)
-- 스펙: [docs/hero-intervention-ui-state-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/hero-intervention-ui-state-spec.md)
-- 파일: `src/scenes/BattleScene.ts` (영웅 개입 버튼 영역)
-- 목표: 개입 버튼이 상태별로 시각 변화 (READY=활성, QUEUED=펄스, USED=비활성)
-- 관련 타입: `HeroButtonState` (이미 정의됨)
-- 완료: 상태별 프레젠테이션 분리, QUEUED gold border + pulse, TARGETING secondary, USED/DISABLED 비활성 렌더링
+### P3-12: 타이틀 세이브 분기
+- 스펙: game-flow-spec.md §2
+- 파일: `src/scenes/MainMenuScene.ts`
+- 목표: 세이브 없음=START, 세이브 있음=CONTINUE/NEW GAME 분기
+- 완료: `src/systems/TitleMenu.ts` 추가, MainMenuScene 버튼 분기 적용
 
 ### 작업 순서 권장
-P2-5 → P2-6 → P2-7 → P2-8 완료
+P3-12 완료, 다음은 P3-9 또는 P3-11
 
 ## Guardrails
 
@@ -72,7 +70,7 @@ P2-5 → P2-6 → P2-7 → P2-8 완료
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- hero-button-presentation hero-button-state hero-intervention-ui`
+  - `npm test -- title-menu save-system`
   - `npx tsc --noEmit`
 
 ## Notes

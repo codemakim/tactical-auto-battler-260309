@@ -271,7 +271,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 - [x] 타이틀 표시
 - [x] START 버튼 → Town 전이
-- [x] 세이브/로드 연동 (시작하기/이어하기 분기, Codex, 2026-03-30)
+- [x] 세이브/로드 연동 (세이브 없음=START, 세이브 있음=CONTINUE/NEW GAME, Codex, 2026-03-30)
 
 ### §3. Town 허브 (TownScene)
 
