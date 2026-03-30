@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: P3-12 타이틀 세이브 분기
+- 최근 완료: P3-9 병영 상세, P3-12 타이틀 세이브 분기
 
 ## Source Specs
 
@@ -31,6 +31,7 @@
 - P2-6 배속 조절 완료 (Codex)
 - P2-7 턴 인디케이터 즉시 갱신 완료 (Codex)
 - P2-8 히어로 개입 UI 상태 렌더링 완료 (Codex)
+- P3-9 병영 상세 완료 (Codex)
 - P3-12 타이틀 세이브 분기 완료 (Codex)
 
 ## Next — P3 Plan (메타 루프 확장)
@@ -41,6 +42,7 @@
 - 스펙: game-flow-spec.md §3-1
 - 파일: `src/scenes/TownScene.ts`
 - 목표: 캐릭터 상세 정보 확인 (스탯, 클래스, 액션 카드)
+- 완료: 병영 오버레이 추가, 목록 선택 + 상세 정보 렌더링
 
 ### P3-10: 훈련소 UI
 - 스펙: game-flow-spec.md §3-2
@@ -59,7 +61,7 @@
 - 완료: `src/systems/TitleMenu.ts` 추가, MainMenuScene 버튼 분기 적용
 
 ### 작업 순서 권장
-P3-12 완료, 다음은 P3-9 또는 P3-11
+P3-9, P3-12 완료. 다음은 P3-10 또는 P3-11
 
 ## Guardrails
 
@@ -70,7 +72,7 @@ P3-12 완료, 다음은 P3-9 또는 P3-11
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- title-menu save-system`
+  - `npm test -- barracks-detail town-header`
   - `npx tsc --noEmit`
 
 ## Notes

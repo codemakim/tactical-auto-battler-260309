@@ -7,8 +7,12 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UITheme } from '../ui/UITheme';
 import { UIModal } from '../ui/UIModal';
+import { UIPanel } from '../ui/UIPanel';
+import { UIButton } from '../ui/UIButton';
 import { gameState } from '../core/GameState';
 import { formatTownHeaderHeroInfo } from '../systems/TownHeader';
+import { getBarracksRosterSummary, getCharacterDetailViewModel } from '../systems/BarracksDetail';
+import type { CharacterDefinition } from '../types';
 
 interface BuildingDef {
   id: string;
@@ -46,7 +50,7 @@ const BUILDINGS: BuildingDef[] = [
     hitWidth: 270,
     hitHeight: 150,
     labelOffsetY: -75,
-    implemented: false,
+    implemented: true,
   },
   {
     id: 'warroom',
@@ -96,6 +100,11 @@ const BUILDINGS: BuildingDef[] = [
 
 export class TownScene extends Phaser.Scene {
   private goldText!: Phaser.GameObjects.Text;
+  private overlayDim?: Phaser.GameObjects.Rectangle;
+  private overlayPanel?: UIPanel;
+  private overlayButtons: UIButton[] = [];
+  private overlayTexts: Phaser.GameObjects.Text[] = [];
+  private selectedBarracksCharacterId?: string;
 
   constructor() {
     super({ key: 'TownScene' });
@@ -262,6 +271,9 @@ export class TownScene extends Phaser.Scene {
   /** 구현된 건물 기능 열기 */
   private openBuildingFeature(def: BuildingDef): void {
     switch (def.id) {
+      case 'barracks':
+        this.openBarracksPanel();
+        break;
       case 'sortie':
         this.scene.start('SortieScene');
         break;
@@ -274,5 +286,155 @@ export class TownScene extends Phaser.Scene {
           content: def.description,
         });
     }
+  }
+
+  private openBarracksPanel(): void {
+    const characters = gameState.characters;
+    if (characters.length === 0) {
+      new UIModal(this, {
+        title: '병영',
+        content: '보유 중인 캐릭터가 없습니다.',
+      });
+      return;
+    }
+
+    this.destroyOverlay();
+
+    const panelWidth = 900;
+    const panelHeight = 520;
+    const panelX = (GAME_WIDTH - panelWidth) / 2;
+    const panelY = (GAME_HEIGHT - panelHeight) / 2;
+    const rosterSummary = getBarracksRosterSummary(characters.length, gameState.maxCharacterSlots);
+    const selectedId = this.selectedBarracksCharacterId ?? characters[0].id;
+    const selectedCharacter = characters.find((character) => character.id === selectedId) ?? characters[0];
+
+    this.overlayDim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
+      .setInteractive()
+      .setDepth(100);
+    this.overlayDim.on('pointerdown', () => this.destroyOverlay());
+
+    this.overlayPanel = new UIPanel(this, {
+      x: panelX,
+      y: panelY,
+      width: panelWidth,
+      height: panelHeight,
+      title: '병영',
+      borderColor: UITheme.colors.borderLight,
+    });
+    this.overlayPanel.setDepth(101);
+
+    const listWidth = 250;
+    const detailX = UITheme.panel.padding + listWidth + 24;
+    const contentTop = this.overlayPanel.contentY;
+
+    const rosterText = this.add.text(UITheme.panel.padding, contentTop, rosterSummary.countLabel, {
+      ...UITheme.font.small,
+      color: UITheme.colors.textAccent,
+    });
+    this.overlayPanel.add(rosterText);
+    this.overlayTexts.push(rosterText);
+
+    const divider = this.add.graphics();
+    divider.lineStyle(1, UITheme.colors.borderLight, 0.9);
+    divider.lineBetween(detailX - 14, contentTop, detailX - 14, panelHeight - 78);
+    this.overlayPanel.add(divider);
+
+    characters.forEach((character, index) => {
+      const isSelected = character.id === selectedCharacter.id;
+      const btn = new UIButton(this, {
+        x: UITheme.panel.padding,
+        y: contentTop + 34 + index * 52,
+        width: listWidth,
+        height: 42,
+        label: `${character.name} (${character.characterClass})`,
+        style: isSelected ? 'primary' : 'secondary',
+        onClick: () => {
+          this.selectedBarracksCharacterId = character.id;
+          this.openBarracksPanel();
+        },
+      });
+      this.overlayPanel!.add(btn.container);
+      this.overlayButtons.push(btn);
+    });
+
+    this.renderBarracksDetail(selectedCharacter, detailX, contentTop);
+
+    const closeBtn = new UIButton(this, {
+      x: panelWidth - 156,
+      y: panelHeight - 58,
+      width: 132,
+      height: 40,
+      label: '닫기',
+      style: 'secondary',
+      onClick: () => this.destroyOverlay(),
+    });
+    this.overlayPanel.add(closeBtn.container);
+    this.overlayButtons.push(closeBtn);
+  }
+
+  private renderBarracksDetail(character: CharacterDefinition, x: number, top: number): void {
+    if (!this.overlayPanel) return;
+
+    const detail = getCharacterDetailViewModel(character);
+    const titleText = this.add.text(x, top, detail.title, {
+      ...UITheme.font.heading,
+      color: UITheme.colors.textPrimary,
+    });
+    this.overlayPanel.add(titleText);
+    this.overlayTexts.push(titleText);
+
+    const classText = this.add.text(x, top + 42, detail.classLabel, {
+      ...UITheme.font.body,
+      color: '#9dd6ff',
+    });
+    this.overlayPanel.add(classText);
+    this.overlayTexts.push(classText);
+
+    const trainingText = this.add.text(x, top + 72, detail.trainingLabel, {
+      ...UITheme.font.small,
+      color: UITheme.colors.textSecondary,
+    });
+    this.overlayPanel.add(trainingText);
+    this.overlayTexts.push(trainingText);
+
+    const statsText = this.add.text(x, top + 112, detail.statsLabel, {
+      ...UITheme.font.body,
+      color: UITheme.colors.textPrimary,
+      wordWrap: { width: 560 },
+    });
+    this.overlayPanel.add(statsText);
+    this.overlayTexts.push(statsText);
+
+    const actionHeader = this.add.text(x, top + 168, 'Action Slots', {
+      ...UITheme.font.body,
+      color: UITheme.colors.textGold,
+    });
+    this.overlayPanel.add(actionHeader);
+    this.overlayTexts.push(actionHeader);
+
+    detail.actionsLabel.forEach((actionLabel, index) => {
+      const actionText = this.add.text(x, top + 204 + index * 34, actionLabel, {
+        ...UITheme.font.body,
+        color: UITheme.colors.textPrimary,
+        wordWrap: { width: 560 },
+      });
+      this.overlayPanel!.add(actionText);
+      this.overlayTexts.push(actionText);
+    });
+  }
+
+  private destroyOverlay(): void {
+    this.overlayTexts.forEach((text) => text.destroy());
+    this.overlayTexts = [];
+
+    this.overlayButtons.forEach((button) => button.destroy());
+    this.overlayButtons = [];
+
+    this.overlayPanel?.destroy();
+    this.overlayPanel = undefined;
+
+    this.overlayDim?.destroy();
+    this.overlayDim = undefined;
   }
 }
