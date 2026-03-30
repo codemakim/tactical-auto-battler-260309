@@ -1,13 +1,13 @@
 /**
- * FormationScene — 편성 화면 (영역 기반 자유 배치)
+ * FormationScene — 편성 화면
  *
- * 레이아웃:
- * - 좌측: 보유 캐릭터 목록 (roster)
- * - 중앙: BACK 영역 / FRONT 영역 (자유 배치, 4명)
- * - 우측: 영웅 선택 + 상세 정보
- * - 하단: 출격/뒤로 버튼
+ * 메인 레이아웃:
+ * - 좌측: ROSTER
+ * - 중앙: TACTICAL BOARD
+ * - 하단: COMMAND / PRESETS / TACTICS / DEPLOY
  *
- * 영역에 캐릭터를 올려놓으면 UnitLayoutCalculator로 자동 균등 배치.
+ * 상세 정보와 영웅 선택은 메인 화면에 상시 노출하지 않고
+ * 오버레이와 보드 HUD로 분리한다.
  */
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
@@ -99,17 +99,16 @@ const FORMATION_SPRITE_MAP: Record<string, FormationSpriteConfig> = {
 export class FormationScene extends Phaser.Scene {
   private rosterPanel!: UIPanel;
   private rosterItems: Phaser.GameObjects.Container[] = [];
-  private heroButtons: Phaser.GameObjects.Container[] = [];
-  private detailPanel!: UIPanel;
-  private detailContent!: Phaser.GameObjects.Text;
-  private detailButtons: UIButton[] = [];
   private slotCards: UICardVisual[] = [];
   private inventoryCards: UICardVisual[] = [];
-  private detailDynamic: Phaser.GameObjects.GameObject[] = [];
   private selectedPresetSlotIndex = 0;
   private selectedActionSlot: number | null = null;
   private selectedRosterCharId: string | null = null;
   private toast!: UIToast;
+  private currentHeroText!: Phaser.GameObjects.Text;
+  private selectedUnitTitle!: Phaser.GameObjects.Text;
+  private selectedUnitMeta!: Phaser.GameObjects.Text;
+  private selectedUnitTactics!: Phaser.GameObjects.Text;
 
   // 영역 관련
   private zoneContainers: Map<string, Phaser.GameObjects.Container> = new Map();
@@ -133,7 +132,6 @@ export class FormationScene extends Phaser.Scene {
     this.selectedRosterCharId = null;
     this.selectedActionSlot = null;
     this.rosterItems = [];
-    this.heroButtons = [];
     this.slotCards = [];
     this.inventoryCards = [];
     this.zoneContainers = new Map();
@@ -151,8 +149,7 @@ export class FormationScene extends Phaser.Scene {
     if (this.isRetry) this.drawRetryBanner();
     this.createRosterPanel();
     this.createZones();
-    this.createHeroSelector();
-    this.createDetailPanel();
+    this.createBoardHud();
     this.createBottomButtons();
     this.toast = new UIToast(this, { y: GAME_HEIGHT - 110, duration: 2500 });
     this.refreshAll();
@@ -366,14 +363,14 @@ export class FormationScene extends Phaser.Scene {
       this.selectedRosterCharId = null;
       this.selectedActionSlot = null;
       this.refreshRoster();
-      this.updateDetailPanel();
+      this.updateSelectionHud();
       return;
     }
 
     this.selectedRosterCharId = char.id;
     this.selectedActionSlot = null;
     this.refreshRoster();
-    this.updateDetailPanel(char);
+    this.updateSelectionHud(char);
     this.toast.show(`${char.name} 선택됨 — 영역을 클릭해 배치하세요`);
   }
 
@@ -487,7 +484,10 @@ export class FormationScene extends Phaser.Scene {
       // 로스터 선택 없이 영역 클릭 → 영역 내 캐릭터가 있으면 첫 번째 캐릭터 상세 표시
       const charsInZone = this.getCharactersInZone(zone.key);
       if (charsInZone.length > 0) {
-        this.updateDetailPanel(charsInZone[0]);
+        const firstChar = charsInZone[0];
+        this.selectedRosterCharId = firstChar.id;
+        this.refreshRoster();
+        this.updateSelectionHud(firstChar);
       } else {
         this.toast.show('좌측에서 캐릭터를 먼저 선택하세요');
       }
@@ -657,7 +657,7 @@ export class FormationScene extends Phaser.Scene {
       this.selectedRosterCharId = char.id;
       this.selectedActionSlot = null;
       this.refreshRoster();
-      this.updateDetailPanel(char);
+      this.updateSelectionHud(char);
       this.toast.show(`${char.name} 선택됨 — 다른 영역을 클릭해 이동하세요`);
     });
 
@@ -693,218 +693,78 @@ export class FormationScene extends Phaser.Scene {
     this.refreshAll();
   }
 
-  // === 우측 상단: 영웅 선택 ===
-
-  private createHeroSelector(): void {
+  private createBoardHud(): void {
     const labels = getFormationPanelLabels();
-    const panel = new UIPanel(this, {
-      x: 830,
-      y: 65,
-      width: 430,
-      height: 130,
-      title: labels.command,
-      bgColor: 0x171a2b,
-      borderColor: 0x3b4f74,
-      bgAlpha: 0.98,
+    const boardX = 300;
+    const boardY = 505;
+    const boardWidth = 520;
+    const boardHeight = 132;
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x14192a, 0.96);
+    bg.fillRoundedRect(boardX, boardY, boardWidth, boardHeight, 14);
+    bg.lineStyle(2, 0x33486a, 0.9);
+    bg.strokeRoundedRect(boardX, boardY, boardWidth, boardHeight, 14);
+
+    this.add
+      .text(boardX + 18, boardY + 14, labels.command, {
+        fontSize: '11px',
+        fontFamily: UITheme.font.family,
+        color: '#7f95bd',
+      })
+      .setOrigin(0, 0);
+
+    this.currentHeroText = this.add.text(boardX + 18, boardY + 34, '', {
+      fontSize: '18px',
+      fontFamily: UITheme.font.family,
+      color: UITheme.colors.textPrimary,
     });
 
-    const startX = UITheme.panel.padding;
-    const startY = panel.contentY + 4;
-    const btnW = 125;
-    const gap = 12;
-
-    for (let i = 0; i < HERO_TYPES.length; i++) {
-      const ht = HERO_TYPES[i];
-      const def = HERO_DEFINITIONS[ht];
-      const bx = startX + i * (btnW + gap);
-
-      const container = this.add.container(bx, startY);
-      const bg = this.add.graphics();
-      container.add(bg);
-
-      const nameText = this.add
-        .text(btnW / 2, 12, def.name, { ...UITheme.font.label, color: UITheme.colors.textPrimary })
-        .setOrigin(0.5);
-      container.add(nameText);
-
-      const descText = this.add
-        .text(btnW / 2, 32, def.description.substring(0, 12), {
-          ...UITheme.font.small,
-          color: '#666688',
-        })
-        .setOrigin(0.5)
-        .setFontSize(10);
-      container.add(descText);
-
-      const hitArea = this.add.rectangle(btnW / 2, 22, btnW, 44, 0x000000, 0).setInteractive({ useHandCursor: true });
-      container.add(hitArea);
-
-      hitArea.on('pointerdown', () => {
-        if (gameState.runState) {
-          if (ht === gameState.formation.heroType) {
-            this.showHeroDetail(ht);
-          } else {
-            this.toast.show('런 중에는 영웅을 변경할 수 없습니다');
-          }
-          return;
-        }
-        gameState.setHeroType(ht);
-        this.refreshHeroSelector();
-        this.showHeroDetail(ht);
-      });
-
-      container.setData('bg', bg);
-      container.setData('heroType', ht);
-      container.setData('hitArea', hitArea);
-      panel.add(container);
-      this.heroButtons.push(container);
-    }
-
-    this.refreshHeroSelector();
-  }
-
-  private refreshHeroSelector(): void {
-    const currentHero = gameState.formation.heroType;
-    const isRun = !!gameState.runState;
-    const btnW = 125;
-    const btnH = 44;
-
-    for (const container of this.heroButtons) {
-      const bg = container.getData('bg') as Phaser.GameObjects.Graphics;
-      const ht = container.getData('heroType') as string;
-      const isSelected = ht === currentHero;
-
-      bg.clear();
-      if (isRun && !isSelected) {
-        bg.fillStyle(0x111122, 0.6);
-        bg.fillRoundedRect(0, 0, btnW, btnH, 4);
-        bg.lineStyle(1, 0x333344);
-        bg.strokeRoundedRect(0, 0, btnW, btnH, 4);
-      } else {
-        bg.fillStyle(isSelected ? 0x2a4a3a : 0x1a1a2e, 0.9);
-        bg.fillRoundedRect(0, 0, btnW, btnH, 4);
-        bg.lineStyle(2, isSelected ? 0x10b981 : UITheme.colors.border);
-        bg.strokeRoundedRect(0, 0, btnW, btnH, 4);
-      }
-
-      container.setAlpha(isRun && !isSelected ? 0.5 : 1);
-    }
-  }
-
-  private showHeroDetail(heroType: string): void {
-    const def = HERO_DEFINITIONS[heroType];
-    if (!def) return;
-
-    this.selectedRosterCharId = null;
-    this.selectedActionSlot = null;
-    this.clearDetailDynamic();
-    this.destroyOverlay();
-    this.clearDetailButtons();
-
-    const lines = [`${def.name} — ${def.description}`];
-    lines.push('');
-    lines.push('능력 목록:');
-    for (const ability of def.abilities) {
-      const typeTag = ability.abilityType === 'EDIT_ACTION' ? '[편집]' : '[효과]';
-      lines.push(`  ${typeTag} ${ability.name}`);
-      lines.push(`    ${ability.description}`);
-    }
-
-    this.detailContent.setText(lines.join('\n'));
-  }
-
-  // === 우측 하단: 상세 정보 ===
-
-  private createDetailPanel(): void {
-    const labels = getFormationPanelLabels();
-    this.detailPanel = new UIPanel(this, {
-      x: 830,
-      y: 210,
-      width: 430,
-      height: 440,
-      title: labels.unit,
-      bgColor: 0x171a2b,
-      borderColor: 0x3b4f74,
-      bgAlpha: 0.98,
+    this.selectedUnitTitle = this.add.text(boardX + 18, boardY + 72, 'UNIT', {
+      ...UITheme.font.label,
+      color: '#7f95bd',
     });
 
-    this.detailContent = this.add.text(
-      UITheme.panel.padding,
-      this.detailPanel.contentY + 4,
-      '캐릭터를 선택하면\n상세 정보가 표시됩니다.',
-      { ...UITheme.font.body, color: UITheme.colors.textSecondary, wordWrap: { width: 398 } },
-    );
-    this.detailPanel.add(this.detailContent);
+    this.selectedUnitMeta = this.add.text(boardX + 96, boardY + 72, '', {
+      ...UITheme.font.small,
+      color: UITheme.colors.textPrimary,
+    });
+
+    this.selectedUnitTactics = this.add.text(boardX + 18, boardY + 96, '', {
+      ...UITheme.font.small,
+      color: '#9fb3d8',
+      wordWrap: { width: boardWidth - 36 },
+    });
   }
 
-  private updateDetailPanel(char?: CharacterDefinition): void {
-    this.clearDetailDynamic();
-    this.clearDetailButtons();
-
-    if (!char) {
-      this.detailContent.setText('캐릭터를 선택하면\n상세 정보가 표시됩니다.');
+  private refreshCommandHud(): void {
+    const heroType = gameState.formation.heroType;
+    const hero = HERO_DEFINITIONS[heroType];
+    if (!hero) {
+      this.currentHeroText.setText('');
       return;
     }
 
-    const s = char.baseStats;
-    this.detailContent.setText(
-      `${char.name} — ${char.characterClass}\nHP: ${s.hp}  ATK: ${s.atk}  GRD: ${s.grd}  AGI: ${s.agi}`,
-    );
+    const lockTag = gameState.runState ? '  [LOCKED]' : '';
+    this.currentHeroText.setText(`${hero.name}${lockTag}`);
+  }
 
-    const trainingText = this.add.text(
-      UITheme.panel.padding,
-      this.detailPanel.contentY + 62,
-      `TRAINING ${char.trainingsUsed}/${char.trainingPotential}`,
-      {
-        ...UITheme.font.small,
-        color: UITheme.colors.textSecondary,
-      },
-    );
-    this.detailPanel.add(trainingText);
-    this.detailDynamic.push(trainingText);
+  private updateSelectionHud(char?: CharacterDefinition): void {
+    if (!char) {
+      this.selectedUnitMeta.setText('선택한 유닛 없음');
+      this.selectedUnitTactics.setText('로스터나 보드에서 유닛을 선택한 뒤 TACTICS에서 행동 카드를 조정하세요.');
+      return;
+    }
 
+    const stats = char.baseStats;
     const zoneLabel = gameState.formation.slots.find((slot) => slot.characterId === char.id)?.position ?? 'UNASSIGNED';
-    const zoneText = this.add.text(UITheme.panel.padding, this.detailPanel.contentY + 88, `LINE ${zoneLabel}`, {
-      ...UITheme.font.small,
-      color: UITheme.colors.textAccent,
-    });
-    this.detailPanel.add(zoneText);
-    this.detailDynamic.push(zoneText);
-
     const slotData = getSlotDisplayData(char, gameState.runState);
-    const logicHeader = this.add.text(UITheme.panel.padding, this.detailPanel.contentY + 132, 'TACTICS', {
-      ...UITheme.font.label,
-      color: UITheme.colors.textGold,
-    });
-    this.detailPanel.add(logicHeader);
-    this.detailDynamic.push(logicHeader);
+    const actions = slotData.map((slot, index) => `${index + 1}. ${slot.action.name}`).join('   ');
 
-    slotData.forEach((slot, index) => {
-      const line = this.add.text(
-        UITheme.panel.padding,
-        this.detailPanel.contentY + 160 + index * 18,
-        `${index + 1}. ${slot.condition.type} -> ${slot.action.name}`,
-        {
-          ...UITheme.font.small,
-          color: UITheme.colors.textPrimary,
-          wordWrap: { width: 388 },
-        },
-      );
-      this.detailPanel.add(line);
-      this.detailDynamic.push(line);
-    });
-
-    const editBtn = new UIButton(this, {
-      x: UITheme.panel.padding,
-      y: 356,
-      width: 150,
-      height: 40,
-      label: 'TACTICS',
-      style: 'primary',
-      onClick: () => this.openCardEditorOverlay(char),
-    });
-    this.detailPanel.add(editBtn.container);
-    this.detailButtons.push(editBtn);
+    this.selectedUnitMeta.setText(
+      `${char.name} / ${char.characterClass}  HP ${stats.hp}  ATK ${stats.atk}  GRD ${stats.grd}  AGI ${stats.agi}  LINE ${zoneLabel}`,
+    );
+    this.selectedUnitTactics.setText(actions);
   }
 
   private onActionSlotClick(char: CharacterDefinition, slot: SlotDisplayData): void {
@@ -921,7 +781,6 @@ export class FormationScene extends Phaser.Scene {
       this.selectedActionSlot = slot.slotIndex;
       this.toast.show(`슬롯 ${slot.slotIndex + 1} 선택 — 인벤토리에서 카드를 선택하세요`);
     }
-    this.updateDetailPanel(char);
     this.openCardEditorOverlay(char);
   }
 
@@ -932,12 +791,12 @@ export class FormationScene extends Phaser.Scene {
       const newRunState = swapRunActionSlots(runState, char.id, indexA, indexB);
       gameState.setRunState(newRunState);
       const updatedChar = newRunState.party.find((c) => c.id === char.id) ?? char;
-      this.updateDetailPanel(updatedChar);
+      this.updateSelectionHud(updatedChar);
       this.openCardEditorOverlay(updatedChar);
     } else {
       const newCharDef = swapBaseActionSlots(char, indexA, indexB);
       gameState.updateCharacter(newCharDef);
-      this.updateDetailPanel(newCharDef);
+      this.updateSelectionHud(newCharDef);
       this.openCardEditorOverlay(newCharDef);
     }
 
@@ -951,91 +810,8 @@ export class FormationScene extends Phaser.Scene {
     gameState.setRunState(newRunState);
     this.toast.show(`${card.action.name} → 슬롯 ${this.selectedActionSlot + 1}`);
     this.selectedActionSlot = null;
-    this.updateDetailPanel(char);
+    this.updateSelectionHud(char);
     this.openCardEditorOverlay(char);
-  }
-
-  private renderLogicSummary(slotData: SlotDisplayData[], startY: number): void {
-    const slots = slotData.map((s) => ({ condition: s.condition, action: s.action }));
-    const lines = formatSlotsSummary(slots);
-
-    const headerText = this.add.text(UITheme.panel.padding, startY, '[행동 로직]', {
-      ...UITheme.font.small,
-      fontSize: '10px',
-      color: UITheme.colors.textSecondary,
-    });
-    this.detailPanel.add(headerText);
-    this.detailDynamic.push(headerText);
-
-    for (let i = 0; i < lines.length; i++) {
-      const ly = startY + 14 + i * 14;
-      const lineText = this.add.text(UITheme.panel.padding + 4, ly, lines[i], {
-        fontFamily: UITheme.font.family,
-        fontSize: '11px',
-        color: '#ccddee',
-      });
-      this.detailPanel.add(lineText);
-      this.detailDynamic.push(lineText);
-    }
-  }
-
-  private renderInventory(char: CharacterDefinition, runState: RunState, startY: number): void {
-    const equippable = getEquippableCards(runState, char.id);
-
-    const invLabel = this.add.text(UITheme.panel.padding, startY, '인벤토리', {
-      ...UITheme.font.label,
-      color: UITheme.colors.textAccent,
-    });
-    this.detailPanel.add(invLabel);
-    this.detailDynamic.push(invLabel);
-
-    if (equippable.length === 0) {
-      const noCards = this.add.text(UITheme.panel.padding, startY + 22, '장착 가능한 카드 없음', {
-        ...UITheme.font.small,
-        color: UITheme.colors.textDisabled,
-      });
-      this.detailPanel.add(noCards);
-      this.detailDynamic.push(noCards);
-      return;
-    }
-
-    const cardW = 90;
-    const cardH = 120;
-    const cardGap = 8;
-    const cols = 4;
-    const invStartY = startY + 20;
-
-    for (let i = 0; i < equippable.length; i++) {
-      const invCard = equippable[i];
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const cx = UITheme.panel.padding + col * (cardW + cardGap);
-      const cy = invStartY + row * (cardH + cardGap);
-
-      const visual = new UICardVisual(this, {
-        x: cx,
-        y: cy,
-        width: cardW,
-        height: cardH,
-        action: invCard.action,
-        rarity: invCard.rarity,
-        classRestriction: invCard.classRestriction,
-        interactive: this.selectedActionSlot !== null,
-        onClick: () => this.onInventoryCardClick(char, invCard),
-      });
-      this.detailPanel.add(visual.container);
-      this.inventoryCards.push(visual);
-    }
-  }
-
-  private clearDetailDynamic(): void {
-    for (const obj of this.detailDynamic) obj.destroy();
-    this.detailDynamic = [];
-  }
-
-  private clearDetailButtons(): void {
-    for (const button of this.detailButtons) button.destroy();
-    this.detailButtons = [];
   }
 
   // === 하단 버튼 ===
@@ -1071,7 +847,17 @@ export class FormationScene extends Phaser.Scene {
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH / 2 - 170,
+      x: GAME_WIDTH / 2 - 245,
+      y: GAME_HEIGHT - 55,
+      width: 140,
+      height: 44,
+      label: labels.command,
+      style: 'secondary',
+      onClick: () => this.openCommandOverlay(),
+    });
+
+    new UIButton(this, {
+      x: GAME_WIDTH / 2 - 95,
       y: GAME_HEIGHT - 55,
       width: 140,
       height: 44,
@@ -1081,7 +867,7 @@ export class FormationScene extends Phaser.Scene {
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH / 2 - 20,
+      x: GAME_WIDTH / 2 + 55,
       y: GAME_HEIGHT - 55,
       width: 140,
       height: 44,
@@ -1164,6 +950,108 @@ export class FormationScene extends Phaser.Scene {
     this.overlayDim?.destroy();
     this.overlayDim = undefined;
     this.overlayMode = null;
+  }
+
+  private openCommandOverlay(): void {
+    const labels = getFormationPanelLabels();
+    const contentY = this.createOverlay(labels.command, 640, 280);
+    const panel = this.overlayPanel;
+    if (!panel) return;
+
+    const currentHero = gameState.formation.heroType;
+    const isRun = !!gameState.runState;
+    const startX = UITheme.panel.padding;
+    const startY = contentY + 12;
+    const cardWidth = 182;
+    const gap = 18;
+
+    HERO_TYPES.forEach((heroType, index) => {
+      const def = HERO_DEFINITIONS[heroType];
+      const isSelected = heroType === currentHero;
+      const isLocked = isRun && !isSelected;
+      const x = startX + index * (cardWidth + gap);
+      const y = startY;
+
+      const bg = this.add.graphics();
+      bg.fillStyle(isSelected ? 0x203d31 : 0x181d2d, 0.96);
+      bg.fillRoundedRect(x, y, cardWidth, 122, 10);
+      bg.lineStyle(2, isSelected ? 0x10b981 : 0x344866, 1);
+      bg.strokeRoundedRect(x, y, cardWidth, 122, 10);
+      panel.add(bg);
+      this.overlayDynamic.push(bg);
+
+      const name = this.add.text(x + 16, y + 14, def.name, {
+        ...UITheme.font.label,
+        color: isLocked ? UITheme.colors.textDisabled : UITheme.colors.textPrimary,
+      });
+      panel.add(name);
+      this.overlayDynamic.push(name);
+
+      const desc = this.add.text(x + 16, y + 42, def.description, {
+        ...UITheme.font.small,
+        color: '#93a5c5',
+        wordWrap: { width: cardWidth - 32 },
+      });
+      panel.add(desc);
+      this.overlayDynamic.push(desc);
+
+      const abilitySummary = this.add.text(
+        x + 16,
+        y + 82,
+        def.abilities
+          .map((ability) => ability.name)
+          .slice(0, 2)
+          .join(' / '),
+        {
+          ...UITheme.font.small,
+          color: '#6eb2ff',
+          wordWrap: { width: cardWidth - 32 },
+        },
+      );
+      panel.add(abilitySummary);
+      this.overlayDynamic.push(abilitySummary);
+
+      const hitArea = this.add
+        .rectangle(x + cardWidth / 2, y + 61, cardWidth, 122, 0x000000, 0)
+        .setInteractive({ useHandCursor: !isLocked });
+      panel.add(hitArea);
+      this.overlayDynamic.push(hitArea);
+
+      if (!isLocked) {
+        hitArea.on('pointerdown', () => {
+          if (heroType !== currentHero) {
+            gameState.setHeroType(heroType);
+            this.refreshCommandHud();
+            this.toast.show(`${def.name} 선택`);
+          }
+          this.destroyOverlay();
+        });
+      }
+    });
+
+    const hint = this.add.text(
+      UITheme.panel.padding,
+      contentY + 164,
+      isRun ? '런 중에는 현재 COMMAND만 유지됩니다.' : 'COMMAND는 런 시작 전까지 자유롭게 변경할 수 있습니다.',
+      {
+        ...UITheme.font.small,
+        color: isRun ? '#f5c06a' : UITheme.colors.textSecondary,
+      },
+    );
+    panel.add(hint);
+    this.overlayDynamic.push(hint);
+
+    const closeBtn = new UIButton(this, {
+      x: 640 - 136,
+      y: 280 - 72,
+      width: 120,
+      height: 42,
+      label: '닫기',
+      style: 'secondary',
+      onClick: () => this.destroyOverlay(),
+    });
+    panel.add(closeBtn.container);
+    this.overlayButtons.push(closeBtn);
   }
 
   private openPresetOverlay(): void {
@@ -1455,8 +1343,8 @@ export class FormationScene extends Phaser.Scene {
   private refreshAll(): void {
     this.refreshRoster();
     this.refreshZones();
-    this.refreshHeroSelector();
+    this.refreshCommandHud();
     const selectedChar = this.getSelectedCharacter();
-    this.updateDetailPanel(selectedChar ?? undefined);
+    this.updateSelectionHud(selectedChar ?? undefined);
   }
 }

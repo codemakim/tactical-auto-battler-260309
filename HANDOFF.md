@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: Formation 화면 게임 UI 톤 리디자인
+- 최근 완료: Formation 우측 패널 제거, COMMAND 오버레이 + 보드 HUD 재구성
 - 다음 작업 미정
 
 ## Source Specs
@@ -42,6 +42,7 @@
 - 카드 편집 오버레이 카드 확대, 배지 문구 축약, 로케일 문구 재사용 정리 (Codex)
 - Formation 존을 세로 박스에서 가로 스트립 2줄로 변경, 5슬롯 대응 레이아웃 추가 (Codex)
 - Formation 패널/라인 라벨을 문서형에서 전술 UI 카피로 교체, 중앙 보드 연출 추가 (Codex)
+- Formation 우측 COMMAND/UNIT 패널 제거, COMMAND 오버레이와 보드 하단 HUD로 재구성 (Codex)
 
 ## Next
 
