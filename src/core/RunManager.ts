@@ -11,15 +11,14 @@ import type {
   CardInstance,
   BattleState,
   BattleReward,
-  CharacterReward,
   HeroType,
   ActionSlot,
 } from '../types';
-import { RunStatus, Difficulty, Team, Position } from '../types';
+import { RunStatus, Team, Position } from '../types';
 import { createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { createBattleState, runFullBattle, restorePreBattleActions } from './BattleEngine';
-import { generateEncounter, type EnemyUnit } from '../systems/EnemyGenerator';
-import { generateBattleRewards, generateCharacterReward, applyReward } from '../systems/BattleRewardSystem';
+import { generateEncounter } from '../systems/EnemyGenerator';
+import { generateBattleRewards } from '../systems/BattleRewardSystem';
 import { DEFAULT_GAME_CONFIG } from '../types';
 
 // ═══════════════════════════════════════════
@@ -68,14 +67,24 @@ export interface BattleOutcome {
  * Scene에서 stepBattle()로 한 턴씩 진행할 때 사용.
  * 풀피 리셋 적용 (run-system-spec §7)
  */
-export function createStageBattleState(runState: RunState, heroType?: HeroType): BattleState {
+export function createStageBattleState(
+  runState: RunState,
+  heroType?: HeroType,
+  formationSlots?: Array<{ characterId: string; position: Position }>,
+): BattleState {
   resetUnitCounter();
 
   const battleSeed = runState.seed + runState.currentStage * 1000;
 
   // 파티 → BattleUnit (풀피, 4명 전원 출전)
+  // formationSlots가 있으면 편성 화면에서 설정한 포지션 사용
   const playerUnits = runState.party.map((def, i) => {
-    const unit = createUnit(def, Team.PLAYER, i < 2 ? Position.FRONT : Position.BACK);
+    let pos = i < 2 ? Position.FRONT : Position.BACK; // 폴백
+    if (formationSlots) {
+      const slot = formationSlots.find((s) => s.characterId === def.id);
+      if (slot) pos = slot.position;
+    }
+    const unit = createUnit(def, Team.PLAYER, pos);
     return applyEquippedCards(unit, def.id, runState);
   });
 
@@ -136,7 +145,6 @@ function applyEquippedCards(
 export interface RewardResult {
   runState: RunState;
   reward: BattleReward;
-  guestReward: CharacterReward | null;
 }
 
 /**
@@ -151,24 +159,9 @@ export function processVictory(runState: RunState, battleState: BattleState): Re
   const reward = generateBattleRewards(battleState, partyClasses, rewardSeed);
 
   // 골드 적용
-  let newRunState: RunState = { ...runState, gold: runState.gold + reward.gold };
+  const newRunState: RunState = { ...runState, gold: runState.gold + reward.gold };
 
-  // 객원 멤버 기회 (Stage 2~4)
-  let guestReward: CharacterReward | null = null;
-  const stage = runState.currentStage;
-  if (stage >= 2 && stage <= 4) {
-    const currentRosterSize = newRunState.party.length + newRunState.bench.length;
-    guestReward = generateCharacterReward(rewardSeed + 500, Difficulty.STANDARD, currentRosterSize);
-
-    if (guestReward) {
-      newRunState = {
-        ...newRunState,
-        bench: [...newRunState.bench, guestReward.character],
-      };
-    }
-  }
-
-  return { runState: newRunState, reward, guestReward };
+  return { runState: newRunState, reward };
 }
 
 /**

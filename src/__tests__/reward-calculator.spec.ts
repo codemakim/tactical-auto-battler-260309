@@ -5,12 +5,12 @@
  * calculateRewardPhase() / applyRewardSelections() 순수 함수 검증
  *
  * 카테고리:
- * 1. calculateRewardPhase — 골드/카드/게스트/스테이지 데이터 추출
- * 2. applyRewardSelections — 카드 선택, 게스트 수락/거절, 스테이지 진행
+ * 1. calculateRewardPhase — 골드/카드/스테이지 데이터 추출
+ * 2. applyRewardSelections — 카드 선택, 스테이지 진행
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { calculateRewardPhase, applyRewardSelections } from '../systems/RewardCalculator';
-import { createRunState, processVictory } from '../core/RunManager';
+import { createRunState } from '../core/RunManager';
 import { createBattleState, runFullBattle } from '../core/BattleEngine';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { resetCardInstanceCounter } from '../systems/BattleRewardSystem';
@@ -89,35 +89,6 @@ describe('calculateRewardPhase', () => {
     }
   });
 
-  it('Stage 1에서 게스트 없음 (Stage 2~4만)', () => {
-    const party = makeParty();
-    const runState = createRunState(party, 300);
-    expect(runState.currentStage).toBe(1);
-
-    const battleState = makeVictoryBattle(party, 301);
-    const { rewardData } = calculateRewardPhase(runState, battleState);
-
-    expect(rewardData.guestReward).toBeNull();
-  });
-
-  it('Stage 2~4에서 게스트 기회 존재 (시드에 따라 결정)', () => {
-    const party = makeParty();
-    // 여러 시드로 시도하여 게스트가 나오는 경우 확인
-    let foundGuest = false;
-    for (let seed = 400; seed < 500; seed++) {
-      const runState = { ...createRunState(party, seed), currentStage: 3 };
-      const battleState = makeVictoryBattle(party, seed + 1);
-      const { rewardData } = calculateRewardPhase(runState, battleState);
-      if (rewardData.guestReward !== null) {
-        foundGuest = true;
-        expect(rewardData.guestReward.character).toBeDefined();
-        expect(rewardData.guestReward.isGuest).toBe(true);
-        break;
-      }
-    }
-    expect(foundGuest).toBe(true);
-  });
-
   it('isLastStage: Stage < maxStages → false', () => {
     const party = makeParty();
     const runState = { ...createRunState(party, 500), currentStage: 2 };
@@ -150,23 +121,6 @@ describe('calculateRewardPhase', () => {
 
     expect(updatedRunState.gold).toBe(rewardData.goldEarned);
   });
-
-  it('게스트 발생 시 updatedRunState.bench에 추가되어 있음', () => {
-    const party = makeParty();
-    let guestAdded = false;
-    for (let seed = 800; seed < 900; seed++) {
-      const runState = { ...createRunState(party, seed), currentStage: 3 };
-      const battleState = makeVictoryBattle(party, seed + 1);
-      const { rewardData, updatedRunState } = calculateRewardPhase(runState, battleState);
-      if (rewardData.guestReward !== null) {
-        expect(updatedRunState.bench).toHaveLength(1);
-        expect(updatedRunState.bench[0].id).toBe(rewardData.guestReward.character.id);
-        guestAdded = true;
-        break;
-      }
-    }
-    expect(guestAdded).toBe(true);
-  });
 });
 
 // ═══════════════════════════════════════════
@@ -187,7 +141,7 @@ describe('applyRewardSelections', () => {
     const { updatedRunState, cardOptions } = prepareRewardState();
     expect(updatedRunState.cardInventory).toHaveLength(0);
 
-    const result = applyRewardSelections(updatedRunState, cardOptions[0], true);
+    const result = applyRewardSelections(updatedRunState, cardOptions[0]);
 
     expect(result.cardInventory).toHaveLength(1);
     expect(result.cardInventory[0].instanceId).toBe(cardOptions[0].instanceId);
@@ -196,44 +150,16 @@ describe('applyRewardSelections', () => {
   it('카드 건너뛰기 시 인벤토리 변화 없음', () => {
     const { updatedRunState } = prepareRewardState();
 
-    const result = applyRewardSelections(updatedRunState, null, true);
+    const result = applyRewardSelections(updatedRunState, null);
 
     expect(result.cardInventory).toHaveLength(0);
-  });
-
-  it('게스트 수락 시 bench 유지', () => {
-    // bench에 게스트를 수동으로 추가
-    const { updatedRunState } = prepareRewardState();
-    const guest = createCharacterDef('Guest', CharacterClass.LANCER);
-    const stateWithGuest: RunState = {
-      ...updatedRunState,
-      bench: [guest],
-    };
-
-    const result = applyRewardSelections(stateWithGuest, null, true, guest.id);
-
-    expect(result.bench).toHaveLength(1);
-    expect(result.bench[0].id).toBe(guest.id);
-  });
-
-  it('게스트 거절 시 bench에서 제거', () => {
-    const { updatedRunState } = prepareRewardState();
-    const guest = createCharacterDef('Guest', CharacterClass.LANCER);
-    const stateWithGuest: RunState = {
-      ...updatedRunState,
-      bench: [guest],
-    };
-
-    const result = applyRewardSelections(stateWithGuest, null, false, guest.id);
-
-    expect(result.bench).toHaveLength(0);
   });
 
   it('다음 스테이지 진행 (Stage 1 → 2)', () => {
     const { updatedRunState } = prepareRewardState();
     expect(updatedRunState.currentStage).toBe(1);
 
-    const result = applyRewardSelections(updatedRunState, null, true);
+    const result = applyRewardSelections(updatedRunState, null);
 
     expect(result.currentStage).toBe(2);
     expect(result.retryAvailable).toBe(true); // 새 스테이지에서 리트라이 복원
@@ -244,27 +170,23 @@ describe('applyRewardSelections', () => {
     const { updatedRunState } = prepareRewardState();
     const lastStageState: RunState = { ...updatedRunState, currentStage: 5 };
 
-    const result = applyRewardSelections(lastStageState, null, true);
+    const result = applyRewardSelections(lastStageState, null);
 
     expect(result.status).toBe(RunStatus.VICTORY);
   });
 
-  it('카드 선택 + 게스트 거절 + 스테이지 진행 복합', () => {
+  it('카드 선택 + 스테이지 진행 복합', () => {
     const { updatedRunState, cardOptions } = prepareRewardState();
-    const guest = createCharacterDef('Guest', CharacterClass.CONTROLLER);
-    const stateWithGuest: RunState = {
+    const state: RunState = {
       ...updatedRunState,
-      bench: [guest],
       currentStage: 3,
     };
 
-    const result = applyRewardSelections(stateWithGuest, cardOptions[2], false, guest.id);
+    const result = applyRewardSelections(state, cardOptions[2]);
 
     // 카드 추가됨
     expect(result.cardInventory).toHaveLength(1);
     expect(result.cardInventory[0].instanceId).toBe(cardOptions[2].instanceId);
-    // 게스트 제거됨
-    expect(result.bench).toHaveLength(0);
     // 스테이지 진행
     expect(result.currentStage).toBe(4);
   });
@@ -276,7 +198,7 @@ describe('applyRewardSelections', () => {
     const { rewardData, updatedRunState } = calculateRewardPhase(runState, battleState);
 
     const goldBefore = updatedRunState.gold;
-    const result = applyRewardSelections(updatedRunState, null, true);
+    const result = applyRewardSelections(updatedRunState, null);
 
     // applyRewardSelections는 골드를 건드리지 않음
     expect(result.gold).toBe(goldBefore);

@@ -141,37 +141,6 @@ describe('RunManager', () => {
       expect(reward.cardOptions.length).toBeGreaterThan(0);
       expect(runState.gold).toBeGreaterThan(0);
     });
-
-    it('Stage 2~4에서 객원 멤버 기회가 있다', () => {
-      // 여러 seed로 시도하여 최소 한 번은 객원 획득
-      let gotGuest = false;
-      for (let seed = 0; seed < 50; seed++) {
-        const run = createRunState(makeParty(), seed);
-        const stageRun = { ...run, currentStage: 2 };
-        const { battleState } = executeStageBattle(stageRun);
-        const { guestReward } = processVictory(stageRun, battleState);
-        if (guestReward) {
-          gotGuest = true;
-          break;
-        }
-      }
-      expect(gotGuest).toBe(true);
-    });
-
-    it('객원 멤버는 벤치에 추가된다', () => {
-      // 객원이 확실히 나오는 seed 찾기
-      for (let seed = 0; seed < 100; seed++) {
-        const run = createRunState(makeParty(), seed);
-        const stageRun = { ...run, currentStage: 2 };
-        const { battleState } = executeStageBattle(stageRun);
-        const { guestReward, runState } = processVictory(stageRun, battleState);
-        if (guestReward) {
-          expect(runState.bench).toHaveLength(1);
-          expect(guestReward.isGuest).toBe(true);
-          return;
-        }
-      }
-    });
   });
 
   describe('패배 처리 (processDefeat)', () => {

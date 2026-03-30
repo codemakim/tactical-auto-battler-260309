@@ -4,7 +4,7 @@
  * 레이아웃:
  * - 상단: 골드 표시 + 스테이지 정보
  * - 중앙: 카드 선택 (5장 → 1장)
- * - 하단: 게스트 멤버 (Stage 2~4) + 진행 버튼
+ * - 하단: 진행 버튼
  */
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
@@ -14,7 +14,7 @@ import { UIToast } from '../ui/UIToast';
 import { UICardVisual } from '../ui/UICardVisual';
 import { gameState } from '../core/GameState';
 import { calculateRewardPhase, applyRewardSelections } from '../systems/RewardCalculator';
-import type { RunState, BattleState, RewardPhaseData, CardInstance, CharacterReward } from '../types';
+import type { RunState, BattleState, RewardPhaseData } from '../types';
 
 // 카드 표시 상수
 const CARD_W = 150;
@@ -34,8 +34,6 @@ export class RewardScene extends Phaser.Scene {
   // 선택 상태
   private selectedCardIndex: number | null = null;
   private cardDecided: boolean = false;
-  private acceptGuest: boolean = true; // 기본값: 수락
-  private guestDecided: boolean = false;
 
   // UI 참조
   private cardVisuals: UICardVisual[] = [];
@@ -48,8 +46,6 @@ export class RewardScene extends Phaser.Scene {
   create(data: SceneData): void {
     this.selectedCardIndex = null;
     this.cardDecided = false;
-    this.acceptGuest = true;
-    this.guestDecided = false;
     this.cardVisuals = [];
 
     // 보상 데이터 계산
@@ -62,14 +58,6 @@ export class RewardScene extends Phaser.Scene {
     this.drawBackground();
     this.drawGoldSection();
     this.drawCardSection();
-
-    if (this.rewardData.guestReward) {
-      this.drawGuestSection();
-    } else {
-      this.guestDecided = true;
-    }
-
-    this.checkAutoTransition();
   }
 
   // ── 배경 ──
@@ -119,6 +107,7 @@ export class RewardScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
       this.cardDecided = true;
+      this.time.delayedCall(800, () => this.onProceed());
       return;
     }
 
@@ -195,7 +184,7 @@ export class RewardScene extends Phaser.Scene {
     this.cardDecided = true;
     this.confirmBtn.setDisabled(true);
     this.toast.show(`카드 획득: ${this.rewardData.cardOptions[this.selectedCardIndex].action.name}`);
-    this.checkAutoTransition();
+    this.time.delayedCall(800, () => this.onProceed());
   }
 
   private onSkipCard(): void {
@@ -203,109 +192,21 @@ export class RewardScene extends Phaser.Scene {
     this.cardDecided = true;
     this.confirmBtn.setDisabled(true);
     this.toast.show('카드 건너뛰기');
-    this.checkAutoTransition();
-  }
-
-  // ── 게스트 멤버 ──
-
-  private drawGuestSection(): void {
-    const guest = this.rewardData.guestReward!;
-    const y = 420;
-    const cx = GAME_WIDTH / 2;
-
-    // 구분선
-    const line = this.add.graphics();
-    line.lineStyle(1, UITheme.colors.border);
-    line.lineBetween(cx - 300, y - 10, cx + 300, y - 10);
-
-    this.add
-      .text(cx, y, '객원 멤버 등장!', {
-        fontSize: '16px',
-        fontFamily: UITheme.font.family,
-        fontStyle: 'bold',
-        color: '#4a9eff',
-      })
-      .setOrigin(0.5);
-
-    // 캐릭터 정보
-    const charDef = guest.character;
-    const statsText = `HP:${charDef.baseStats.hp}  ATK:${charDef.baseStats.atk}  GRD:${charDef.baseStats.grd}  AGI:${charDef.baseStats.agi}`;
-
-    this.add
-      .text(cx, y + 28, `${charDef.name}  (${charDef.characterClass})`, {
-        fontSize: '14px',
-        fontFamily: UITheme.font.family,
-        color: '#ccccdd',
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, y + 50, statsText, {
-        fontSize: '12px',
-        fontFamily: UITheme.font.family,
-        color: '#8899aa',
-      })
-      .setOrigin(0.5);
-
-    // 영입/거절 버튼
-    new UIButton(this, {
-      x: cx - 170,
-      y: y + 74,
-      width: 150,
-      height: 40,
-      label: '영입',
-      style: 'primary',
-      onClick: () => this.onAcceptGuest(),
-    });
-
-    new UIButton(this, {
-      x: cx + 20,
-      y: y + 74,
-      width: 150,
-      height: 40,
-      label: '거절',
-      style: 'secondary',
-      onClick: () => this.onRejectGuest(),
-    });
-  }
-
-  private onAcceptGuest(): void {
-    this.acceptGuest = true;
-    this.guestDecided = true;
-    this.toast.show(`${this.rewardData.guestReward!.character.name} 영입!`);
-    this.checkAutoTransition();
-  }
-
-  private onRejectGuest(): void {
-    this.acceptGuest = false;
-    this.guestDecided = true;
-    this.toast.show('객원 멤버를 거절했습니다');
-    this.checkAutoTransition();
-  }
-
-  // ── 자동 전환 ──
-
-  private checkAutoTransition(): void {
-    if (!this.cardDecided || !this.guestDecided) return;
-
-    // 모든 선택 완료 → 짧은 딜레이 후 자동 전환
     this.time.delayedCall(800, () => this.onProceed());
   }
+
+  // ── 전환 ──
 
   private onProceed(): void {
     const selectedCard = this.selectedCardIndex !== null ? this.rewardData.cardOptions[this.selectedCardIndex] : null;
 
-    const guestId = this.rewardData.guestReward?.character.id;
-
-    const finalRunState = applyRewardSelections(this.updatedRunState, selectedCard, this.acceptGuest, guestId);
+    const finalRunState = applyRewardSelections(this.updatedRunState, selectedCard);
 
     gameState.setRunState(finalRunState);
 
     if (this.rewardData.isLastStage) {
-      // 런 완료 → 결과 화면
       this.scene.start('RunResultScene', { runState: finalRunState });
     } else {
-      // 다음 스테이지 → 편성
       this.scene.start('RunMapScene');
     }
   }

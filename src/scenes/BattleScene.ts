@@ -109,8 +109,11 @@ const CLASS_SPRITE_MAP: Record<string, ClassSpriteConfig> = {
     attack: 'controller-attack',
     attackAnim: 'controller-attack-anim',
     idleFrame: 0,
-    hitFrame: 12,
+    hitFrame: 8,
     scale: 3.8,
+    hit: 'controller-hit',
+    hitAnim: 'controller-hit-anim',
+    idleAfterHit: true,
   },
 };
 
@@ -291,9 +294,9 @@ export class BattleScene extends Phaser.Scene {
     const runState = gameState.runState;
 
     if (runState) {
-      // 런 모드: RunManager에서 BattleState 생성
+      // 런 모드: RunManager에서 BattleState 생성 (편성 포지션 반영)
       const heroType = gameState.formation.heroType;
-      this.battleState = createStageBattleState(runState, heroType);
+      this.battleState = createStageBattleState(runState, heroType, gameState.formation.slots);
     } else {
       // 독립 전투 모드 (폴백)
       const formation = gameState.formation;

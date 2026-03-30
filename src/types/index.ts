@@ -543,7 +543,6 @@ export interface BattleResultData {
 export interface RewardPhaseData {
   goldEarned: number;
   cardOptions: CardInstance[];
-  guestReward: CharacterReward | null;
   currentStage: number;
   maxStages: number;
   isLastStage: boolean;

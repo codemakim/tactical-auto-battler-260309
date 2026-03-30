@@ -63,6 +63,10 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 768,
       frameHeight: 448,
     });
+    this.load.spritesheet('controller-hit', 'src/assets/sprites/controller-hit.png', {
+      frameWidth: 768,
+      frameHeight: 448,
+    });
   }
 
   create(): void {
@@ -128,6 +132,14 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'guardian-hit-anim',
       frames: this.anims.generateFrameNumbers('guardian-hit', { start: 0, end: 28 }),
+      frameRate: 20,
+      repeat: 0,
+    });
+
+    // 컨트롤러 피격 애니메이션 (프레임 0~15, 4x4 시트)
+    this.anims.create({
+      key: 'controller-hit-anim',
+      frames: this.anims.generateFrameNumbers('controller-hit', { start: 0, end: 15 }),
       frameRate: 20,
       repeat: 0,
     });
