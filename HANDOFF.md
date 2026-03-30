@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: P3-9 병영 상세, P3-12 타이틀 세이브 분기
+- 최근 완료: P3-10 훈련소 UI, P3-9 병영 상세, P3-12 타이틀 세이브 분기
 
 ## Source Specs
 
@@ -32,6 +32,7 @@
 - P2-7 턴 인디케이터 즉시 갱신 완료 (Codex)
 - P2-8 히어로 개입 UI 상태 렌더링 완료 (Codex)
 - P3-9 병영 상세 완료 (Codex)
+- P3-10 훈련소 UI 완료 (Codex)
 - P3-12 타이틀 세이브 분기 완료 (Codex)
 
 ## Next — P3 Plan (메타 루프 확장)
@@ -48,6 +49,7 @@
 - 스펙: game-flow-spec.md §3-2
 - 파일: `src/scenes/TownScene.ts`
 - 목표: TrainingSystem 연동, 골드 소모/훈련 가능 여부 표시
+- 완료: 훈련소 오버레이 추가, 캐릭터 선택 + 훈련 버튼 + 골드/상태 반영
 
 ### P3-11: 편성 프리셋
 - 스펙: game-flow-spec.md §3-3 / 현재 GameState preset 구조
@@ -61,7 +63,7 @@
 - 완료: `src/systems/TitleMenu.ts` 추가, MainMenuScene 버튼 분기 적용
 
 ### 작업 순서 권장
-P3-9, P3-12 완료. 다음은 P3-10 또는 P3-11
+P3-9, P3-10, P3-12 완료. 다음은 P3-11
 
 ## Guardrails
 
@@ -72,7 +74,7 @@ P3-9, P3-12 완료. 다음은 P3-10 또는 P3-11
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- barracks-detail town-header`
+  - `npm test -- training-ground training-cost training`
   - `npx tsc --noEmit`
 
 ## Notes

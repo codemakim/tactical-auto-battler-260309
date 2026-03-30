@@ -12,7 +12,8 @@ import { UIButton } from '../ui/UIButton';
 import { gameState } from '../core/GameState';
 import { formatTownHeaderHeroInfo } from '../systems/TownHeader';
 import { getBarracksRosterSummary, getCharacterDetailViewModel } from '../systems/BarracksDetail';
-import type { CharacterDefinition } from '../types';
+import { applyTrainingToCharacter, getTrainingCharacterViewModel } from '../systems/TrainingGround';
+import type { CharacterDefinition, TrainableStat } from '../types';
 
 interface BuildingDef {
   id: string;
@@ -39,7 +40,7 @@ const BUILDINGS: BuildingDef[] = [
     hitWidth: 240,
     hitHeight: 130,
     labelOffsetY: -75,
-    implemented: false,
+    implemented: true,
   },
   {
     id: 'barracks',
@@ -105,6 +106,7 @@ export class TownScene extends Phaser.Scene {
   private overlayButtons: UIButton[] = [];
   private overlayTexts: Phaser.GameObjects.Text[] = [];
   private selectedBarracksCharacterId?: string;
+  private selectedTrainingCharacterId?: string;
 
   constructor() {
     super({ key: 'TownScene' });
@@ -271,6 +273,9 @@ export class TownScene extends Phaser.Scene {
   /** 구현된 건물 기능 열기 */
   private openBuildingFeature(def: BuildingDef): void {
     switch (def.id) {
+      case 'training':
+        this.openTrainingPanel();
+        break;
       case 'barracks':
         this.openBarracksPanel();
         break;
@@ -436,5 +441,179 @@ export class TownScene extends Phaser.Scene {
 
     this.overlayDim?.destroy();
     this.overlayDim = undefined;
+  }
+
+  private openTrainingPanel(): void {
+    const characters = gameState.characters;
+    if (characters.length === 0) {
+      new UIModal(this, {
+        title: '훈련소',
+        content: '훈련할 캐릭터가 없습니다.',
+      });
+      return;
+    }
+
+    this.destroyOverlay();
+
+    const panelWidth = 900;
+    const panelHeight = 520;
+    const panelX = (GAME_WIDTH - panelWidth) / 2;
+    const panelY = (GAME_HEIGHT - panelHeight) / 2;
+    const selectedId = this.selectedTrainingCharacterId ?? characters[0].id;
+    const selectedCharacter = characters.find((character) => character.id === selectedId) ?? characters[0];
+    const viewModel = getTrainingCharacterViewModel(selectedCharacter, gameState.gold);
+
+    this.overlayDim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
+      .setInteractive()
+      .setDepth(100);
+    this.overlayDim.on('pointerdown', () => this.destroyOverlay());
+
+    this.overlayPanel = new UIPanel(this, {
+      x: panelX,
+      y: panelY,
+      width: panelWidth,
+      height: panelHeight,
+      title: '훈련소',
+      borderColor: UITheme.colors.borderLight,
+    });
+    this.overlayPanel.setDepth(101);
+
+    const listWidth = 250;
+    const detailX = UITheme.panel.padding + listWidth + 24;
+    const contentTop = this.overlayPanel.contentY;
+
+    const goldText = this.add.text(UITheme.panel.padding, contentTop, `Gold: ${gameState.gold}`, {
+      ...UITheme.font.small,
+      color: UITheme.colors.textGold,
+    });
+    this.overlayPanel.add(goldText);
+    this.overlayTexts.push(goldText);
+
+    const divider = this.add.graphics();
+    divider.lineStyle(1, UITheme.colors.borderLight, 0.9);
+    divider.lineBetween(detailX - 14, contentTop, detailX - 14, panelHeight - 78);
+    this.overlayPanel.add(divider);
+
+    characters.forEach((character, index) => {
+      const isSelected = character.id === selectedCharacter.id;
+      const btn = new UIButton(this, {
+        x: UITheme.panel.padding,
+        y: contentTop + 34 + index * 52,
+        width: listWidth,
+        height: 42,
+        label: `${character.name} (${character.characterClass})`,
+        style: isSelected ? 'primary' : 'secondary',
+        onClick: () => {
+          this.selectedTrainingCharacterId = character.id;
+          this.openTrainingPanel();
+        },
+      });
+      this.overlayPanel!.add(btn.container);
+      this.overlayButtons.push(btn);
+    });
+
+    this.renderTrainingDetail(selectedCharacter, viewModel, detailX, contentTop);
+
+    const closeBtn = new UIButton(this, {
+      x: panelWidth - 156,
+      y: panelHeight - 58,
+      width: 132,
+      height: 40,
+      label: '닫기',
+      style: 'secondary',
+      onClick: () => this.destroyOverlay(),
+    });
+    this.overlayPanel.add(closeBtn.container);
+    this.overlayButtons.push(closeBtn);
+  }
+
+  private renderTrainingDetail(
+    character: CharacterDefinition,
+    viewModel: ReturnType<typeof getTrainingCharacterViewModel>,
+    x: number,
+    top: number,
+  ): void {
+    if (!this.overlayPanel) return;
+
+    const titleText = this.add.text(x, top, viewModel.title, {
+      ...UITheme.font.heading,
+      color: UITheme.colors.textPrimary,
+    });
+    this.overlayPanel.add(titleText);
+    this.overlayTexts.push(titleText);
+
+    const classText = this.add.text(x, top + 42, `Class: ${character.characterClass}`, {
+      ...UITheme.font.body,
+      color: '#9dd6ff',
+    });
+    this.overlayPanel.add(classText);
+    this.overlayTexts.push(classText);
+
+    const trainingText = this.add.text(x, top + 76, viewModel.trainingLabel, {
+      ...UITheme.font.small,
+      color: UITheme.colors.textSecondary,
+    });
+    this.overlayPanel.add(trainingText);
+    this.overlayTexts.push(trainingText);
+
+    const costText = this.add.text(x, top + 106, viewModel.costLabel, {
+      ...UITheme.font.body,
+      color: UITheme.colors.textGold,
+    });
+    this.overlayPanel.add(costText);
+    this.overlayTexts.push(costText);
+
+    const statusText = this.add.text(x, top + 138, viewModel.statusLabel, {
+      ...UITheme.font.body,
+      color: viewModel.statusLabel === '훈련 가능' ? UITheme.colors.textAccent : UITheme.colors.textWarning,
+    });
+    this.overlayPanel.add(statusText);
+    this.overlayTexts.push(statusText);
+
+    const statText = this.add.text(
+      x,
+      top + 186,
+      `HP ${character.baseStats.hp}  ATK ${character.baseStats.atk}  GRD ${character.baseStats.grd}  AGI ${character.baseStats.agi}`,
+      {
+        ...UITheme.font.body,
+        color: UITheme.colors.textPrimary,
+      },
+    );
+    this.overlayPanel.add(statText);
+    this.overlayTexts.push(statText);
+
+    viewModel.options.forEach((option, index) => {
+      const btn = new UIButton(this, {
+        x: x + (index % 2) * 180,
+        y: top + 240 + Math.floor(index / 2) * 58,
+        width: 160,
+        height: 42,
+        label: option.label,
+        style: 'primary',
+        disabled: option.disabled,
+        onClick: () => this.applyTraining(character, option.stat),
+      });
+      this.overlayPanel!.add(btn.container);
+      this.overlayButtons.push(btn);
+    });
+  }
+
+  private applyTraining(character: CharacterDefinition, stat: TrainableStat): void {
+    const result = applyTrainingToCharacter(character, gameState.gold, stat);
+    if ('error' in result) {
+      this.goldText.setText(`Gold: ${gameState.gold}`);
+      new UIModal(this, {
+        title: '훈련소',
+        content: result.error,
+      });
+      return;
+    }
+
+    gameState.updateCharacter(result.character);
+    gameState.setGold(result.remainingGold);
+    this.goldText.setText(`Gold: ${gameState.gold}`);
+    this.selectedTrainingCharacterId = result.character.id;
+    this.openTrainingPanel();
   }
 }

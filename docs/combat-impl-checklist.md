@@ -277,7 +277,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 - [x] 마을 허브 화면 + 건물 인터랙션
 - [x] 병영 (Barracks) — 캐릭터 목록 + 상세 정보 표시 (Codex, 2026-03-30)
-- [~] 훈련소 (Training Ground) — TrainingSystem 연동 필요
+- [x] 훈련소 (Training Ground) — TrainingSystem 연동 + 비용/상태 표시 (Codex, 2026-03-30)
 - [x] 작전실 (War Room) → 편성 화면 이동
 - [x] 출격 게이트 (Sortie Gate) → 출격 선택 이동
 - [x] 골드 표시 (상단, Codex, 2026-03-30)
