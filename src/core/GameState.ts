@@ -227,6 +227,14 @@ export class GameStateManager {
     return true;
   }
 
+  deletePreset(name: string): boolean {
+    const before = this.state.presets.length;
+    this.state.presets = this.state.presets.filter((preset) => preset.name !== name);
+    if (this.state.presets.length === before) return false;
+    this.persist();
+    return true;
+  }
+
   loadSaveData(saveData: SaveData): void {
     this.state = createGameStateDataFromSave(saveData);
   }

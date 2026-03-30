@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: P3-10 훈련소 UI, P3-9 병영 상세, P3-12 타이틀 세이브 분기
+- 최근 완료: P3-11 편성 프리셋, P3-10 훈련소 UI, P3-9 병영 상세
 
 ## Source Specs
 
@@ -33,6 +33,7 @@
 - P2-8 히어로 개입 UI 상태 렌더링 완료 (Codex)
 - P3-9 병영 상세 완료 (Codex)
 - P3-10 훈련소 UI 완료 (Codex)
+- P3-11 편성 프리셋 완료 (Codex)
 - P3-12 타이틀 세이브 분기 완료 (Codex)
 
 ## Next — P3 Plan (메타 루프 확장)
@@ -55,6 +56,7 @@
 - 스펙: game-flow-spec.md §3-3 / 현재 GameState preset 구조
 - 파일: `src/scenes/FormationScene.ts`, `src/core/GameState.ts`
 - 목표: 프리셋 저장/불러오기 UI 연결
+- 완료: Preset 1~3 슬롯 UI, 저장/불러오기/삭제, GameState.deletePreset 추가
 
 ### P3-12: 타이틀 세이브 분기
 - 스펙: game-flow-spec.md §2
@@ -63,7 +65,7 @@
 - 완료: `src/systems/TitleMenu.ts` 추가, MainMenuScene 버튼 분기 적용
 
 ### 작업 순서 권장
-P3-9, P3-10, P3-12 완료. 다음은 P3-11
+P3 메타 루프 주요 항목 완료. 다음 작업 미정
 
 ## Guardrails
 
@@ -74,7 +76,7 @@ P3-9, P3-10, P3-12 완료. 다음은 P3-11
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- training-ground training-cost training`
+  - `npm test -- formation-preset-slots save-system formation-flow`
   - `npx tsc --noEmit`
 
 ## Notes

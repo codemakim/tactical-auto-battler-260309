@@ -33,6 +33,7 @@ import {
 import { calculateColumnLayout } from '../systems/UnitLayoutCalculator';
 import { validateFormation, canAddToZone } from '../systems/FormationValidator';
 import { formatSlotsSummary } from '../utils/actionText';
+import { getFormationPresetSlots, getFormationPresetSlotName } from '../systems/FormationPresetSlots';
 
 // 영역 정의
 interface ZoneDef {
@@ -87,6 +88,10 @@ export class FormationScene extends Phaser.Scene {
   private slotCards: UICardVisual[] = [];
   private inventoryCards: UICardVisual[] = [];
   private detailDynamic: Phaser.GameObjects.GameObject[] = [];
+  private presetPanel!: UIPanel;
+  private presetButtons: UIButton[] = [];
+  private presetDynamic: Phaser.GameObjects.GameObject[] = [];
+  private selectedPresetSlotIndex = 0;
   private selectedActionSlot: number | null = null;
   private selectedRosterCharId: string | null = null;
   private toast!: UIToast;
@@ -128,6 +133,7 @@ export class FormationScene extends Phaser.Scene {
     this.createZones();
     this.createHeroSelector();
     this.createDetailPanel();
+    this.createPresetPanel();
     this.createBottomButtons();
     this.toast = new UIToast(this, { y: GAME_HEIGHT - 110, duration: 2500 });
     this.refreshAll();
@@ -1028,11 +1034,122 @@ export class FormationScene extends Phaser.Scene {
     });
   }
 
+  private createPresetPanel(): void {
+    this.presetPanel = new UIPanel(this, {
+      x: 280,
+      y: 525,
+      width: 520,
+      height: 120,
+      title: '편성 프리셋',
+    });
+  }
+
+  private refreshPresetPanel(): void {
+    this.clearPresetPanel();
+
+    const slots = getFormationPresetSlots(gameState.presets);
+    const startY = this.presetPanel.contentY + 6;
+
+    slots.forEach((slot, index) => {
+      const isSelected = index === this.selectedPresetSlotIndex;
+      const button = new UIButton(this, {
+        x: UITheme.panel.padding + index * 110,
+        y: startY,
+        width: 100,
+        height: 38,
+        label: slot.filled ? slot.name : `${slot.name} (Empty)`,
+        style: isSelected ? 'primary' : 'secondary',
+        onClick: () => {
+          this.selectedPresetSlotIndex = index;
+          this.refreshPresetPanel();
+        },
+      });
+      this.presetPanel.add(button.container);
+      this.presetButtons.push(button);
+    });
+
+    const selectedSlot = slots[this.selectedPresetSlotIndex];
+    const summaryText = this.add.text(
+      UITheme.panel.padding,
+      startY + 48,
+      selectedSlot.filled
+        ? `${selectedSlot.name}: ${selectedSlot.preset!.formation.slots.length} units / ${selectedSlot.preset!.formation.heroType}`
+        : `${selectedSlot.name}: 비어 있음`,
+      {
+        ...UITheme.font.small,
+        color: selectedSlot.filled ? UITheme.colors.textAccent : UITheme.colors.textSecondary,
+      },
+    );
+    this.presetPanel.add(summaryText);
+    this.presetDynamic.push(summaryText);
+
+    const saveBtn = new UIButton(this, {
+      x: 240,
+      y: startY + 42,
+      width: 80,
+      height: 38,
+      label: '저장',
+      style: 'primary',
+      onClick: () => {
+        const name = getFormationPresetSlotName(this.selectedPresetSlotIndex);
+        gameState.savePreset(name);
+        this.toast.show(`${name} 저장`);
+        this.refreshPresetPanel();
+      },
+    });
+    this.presetPanel.add(saveBtn.container);
+    this.presetButtons.push(saveBtn);
+
+    const loadBtn = new UIButton(this, {
+      x: 330,
+      y: startY + 42,
+      width: 80,
+      height: 38,
+      label: '불러오기',
+      style: 'secondary',
+      disabled: !selectedSlot.filled,
+      onClick: () => {
+        if (!selectedSlot.filled) return;
+        gameState.loadPreset(selectedSlot.name);
+        this.toast.show(`${selectedSlot.name} 불러오기`);
+        this.refreshAll();
+      },
+    });
+    this.presetPanel.add(loadBtn.container);
+    this.presetButtons.push(loadBtn);
+
+    const deleteBtn = new UIButton(this, {
+      x: 420,
+      y: startY + 42,
+      width: 80,
+      height: 38,
+      label: '삭제',
+      style: 'secondary',
+      disabled: !selectedSlot.filled,
+      onClick: () => {
+        if (!selectedSlot.filled) return;
+        gameState.deletePreset(selectedSlot.name);
+        this.toast.show(`${selectedSlot.name} 삭제`);
+        this.refreshPresetPanel();
+      },
+    });
+    this.presetPanel.add(deleteBtn.container);
+    this.presetButtons.push(deleteBtn);
+  }
+
+  private clearPresetPanel(): void {
+    this.presetButtons.forEach((button) => button.destroy());
+    this.presetButtons = [];
+    this.presetDynamic.forEach((obj) => obj.destroy());
+    this.presetDynamic = [];
+  }
+
   // === 전체 갱신 ===
 
   private refreshAll(): void {
     this.refreshRoster();
     this.refreshZones();
     this.refreshHeroSelector();
+    this.refreshPresetPanel();
   }
 }

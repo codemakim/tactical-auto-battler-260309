@@ -119,4 +119,34 @@ describe('SaveSystem', () => {
     expect(restored.formation.heroType).toBe(HeroType.SUPPORT);
     expect(restored.presets.map((p) => p.name)).toContain('roundtrip');
   });
+
+  it('같은 이름으로 저장하면 프리셋을 덮어쓴다', () => {
+    const firstChar = gameState.characters[0];
+    const secondChar = gameState.characters[1];
+
+    gameState.setFormation({
+      slots: [{ characterId: firstChar.id, position: Position.FRONT }],
+      heroType: HeroType.COMMANDER,
+    });
+    gameState.savePreset('alpha');
+
+    gameState.setFormation({
+      slots: [{ characterId: secondChar.id, position: Position.BACK }],
+      heroType: HeroType.MAGE,
+    });
+    gameState.savePreset('alpha');
+
+    expect(gameState.presets).toHaveLength(1);
+    expect(gameState.presets[0].formation.heroType).toBe(HeroType.MAGE);
+    expect(gameState.presets[0].formation.slots[0]).toEqual({ characterId: secondChar.id, position: Position.BACK });
+  });
+
+  it('프리셋 삭제가 가능하다', () => {
+    gameState.savePreset('alpha');
+    gameState.savePreset('beta');
+
+    expect(gameState.deletePreset('alpha')).toBe(true);
+    expect(gameState.presets.map((preset) => preset.name)).toEqual(['beta']);
+    expect(gameState.deletePreset('missing')).toBe(false);
+  });
 });

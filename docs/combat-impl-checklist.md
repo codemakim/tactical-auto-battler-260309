@@ -290,7 +290,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] 드래그/클릭으로 캐릭터 배치
 - [x] 영웅 선택 (COMMANDER/MAGE/SUPPORT)
 - [x] 액션 카드 장착/해제
-- [ ] 프리셋 저장/불러오기
+- [x] 프리셋 저장/불러오기/삭제 (3 슬롯, Codex, 2026-03-30)
 
 ### §5. Sortie Select (SortieScene)
 
