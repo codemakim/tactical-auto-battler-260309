@@ -12,12 +12,12 @@
 
 ## Current Task
 
-- P2 진행 중: 다음 권장 작업은 P2-6 배속 조절
+- P2 진행 중: 다음 권장 작업은 P2-7 턴 인디케이터 갱신
 
 ## Source Specs
 
-- primary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md) (§6-1 전투 화면)
-- secondary: [docs/combat-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-spec.md) (§20 전투 템포)
+- primary: [docs/combat-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-spec.md) (§4 턴 순서)
+- secondary: [docs/hero-intervention-ui-state-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/hero-intervention-ui-state-spec.md)
 - checklist: [docs/combat-impl-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-impl-checklist.md)
 
 ## Done
@@ -27,6 +27,7 @@
 - P1-3 세이브/로드 시스템 MVP 완료 (Codex)
 - P1-4 Town 골드/영웅 정보 표시 완료 (Codex)
 - P2-5 전투 템포 상수화 완료 (Codex)
+- P2-6 배속 조절 완료 (Codex)
 
 ## Next — P2 Plan (전투 체감 개선)
 
@@ -42,7 +43,7 @@
 - 스펙: game-flow-spec.md §6-1
 - 파일: `src/scenes/BattleScene.ts`
 - 목표: 배속 토글 버튼 (1x↔2x↔skip), 타이밍 상수에 배율 적용
-- P2-5 이후가 이상적 (타이밍 상수가 있어야 배율 곱하기 가능)
+- 완료: `src/systems/BattleSpeed.ts` 추가, 1x↔2x↔skip 순환 및 타이밍 배율 적용
 
 ### P2-7: 턴 인디케이터 갱신
 - 스펙: combat-spec.md §4
@@ -67,7 +68,7 @@ P2-5 → P2-6 (의존) → P2-7, P2-8 (독립)
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- battle-tempo battle-scene-turnorder engine-integration hero-button-state`
+  - `npm test -- battle-speed battle-tempo battle-scene-turnorder engine-integration hero-button-state`
   - `npx tsc --noEmit`
 
 ## Notes

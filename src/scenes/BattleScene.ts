@@ -29,6 +29,12 @@ import {
   RESULT_DELAY_MS,
   getAnimationFrameRateForDuration,
 } from '../systems/BattleTempo';
+import {
+  BattleSpeed,
+  getBattleSpeedConfig,
+  getNextBattleSpeed,
+  shouldAnimateAtBattleSpeed,
+} from '../systems/BattleSpeed';
 import { UIFloatingText } from '../ui/UIFloatingText';
 import { processDefeat } from '../core/RunManager';
 import { calculateBattleLayout } from '../systems/UnitLayoutCalculator';
@@ -140,6 +146,8 @@ export class BattleScene extends Phaser.Scene {
   private wasAutoPlaying: boolean = false;
   private tickSnapshots: TickSnapshot[] = [];
   private animating: boolean = false;
+  private battleSpeed: BattleSpeed = BattleSpeed.X1;
+  private speedBtn!: UIButton;
 
   constructor() {
     super({ key: 'BattleScene' });
@@ -154,6 +162,7 @@ export class BattleScene extends Phaser.Scene {
     this.pendingAbility = undefined;
     this.interventionPaused = false;
     this.wasAutoPlaying = false;
+    this.battleSpeed = BattleSpeed.X1;
 
     this.drawBackground();
     this.drawTopBar();
@@ -649,6 +658,20 @@ export class BattleScene extends Phaser.Scene {
         }
       },
     });
+
+    this.speedBtn = new UIButton(this, {
+      x: GAME_WIDTH - 126,
+      y: GAME_HEIGHT - 64,
+      width: 110,
+      height: 48,
+      label: '1x',
+      style: 'secondary',
+      onClick: () => {
+        if (this.introPlaying) return;
+        this.battleSpeed = getNextBattleSpeed(this.battleSpeed);
+        this.speedBtn.setLabel(getBattleSpeedConfig(this.battleSpeed).label);
+      },
+    });
   }
 
   // === 전투 진행 ===
@@ -671,6 +694,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.battleState.isFinished || this.animating) return;
 
     const prevEventCount = this.battleState.events.length;
+    const speedConfig = getBattleSpeedConfig(this.battleSpeed);
 
     // 한 유닛이 행동할 때까지 엔진 진행
     let safety = 0;
@@ -699,7 +723,12 @@ export class BattleScene extends Phaser.Scene {
     const actorSprite = this.getUnitSprite(actorId);
     const actorSpriteInfo = actorUnit ? CLASS_SPRITE_MAP[actorUnit.characterClass] : undefined;
 
-    if (actorSprite && actorSpriteInfo && this.anims.exists(actorSpriteInfo.attackAnim)) {
+    if (
+      shouldAnimateAtBattleSpeed(this.battleSpeed) &&
+      actorSprite &&
+      actorSpriteInfo &&
+      this.anims.exists(actorSpriteInfo.attackAnim)
+    ) {
       this.animating = true;
       let hitApplied = false;
 
@@ -725,7 +754,8 @@ export class BattleScene extends Phaser.Scene {
 
       // 공격 애니메이션 재생
       const anim = this.anims.get(actorSpriteInfo.attackAnim);
-      const frameRate = getAnimationFrameRateForDuration(anim?.frames.length ?? 0, ACTION_ANIMATION_DURATION_MS);
+      const animDuration = Math.max(1, Math.round(ACTION_ANIMATION_DURATION_MS * speedConfig.timingScale));
+      const frameRate = getAnimationFrameRateForDuration(anim?.frames.length ?? 0, animDuration);
       actorSprite.play({ key: actorSpriteInfo.attackAnim, frameRate });
       actorSprite.once('animationcomplete', () => {
         this.resetSpriteToIdle(actorSprite, actorId);
@@ -734,7 +764,8 @@ export class BattleScene extends Phaser.Scene {
           this.processEvents(newEvents);
           this.updateAllUnitVisuals();
         }
-        this.time.delayedCall(RESULT_DELAY_MS, () => {
+        const resultDelay = Math.max(0, Math.round(RESULT_DELAY_MS * speedConfig.timingScale));
+        this.time.delayedCall(resultDelay, () => {
           this.animating = false;
           this.onStepComplete();
         });
@@ -765,7 +796,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** 다음 doStep을 딜레이 후 예약 */
   private scheduleNextStep(): void {
-    this.time.delayedCall(NEXT_ACTION_DELAY_MS, () => {
+    const delay = Math.max(0, Math.round(NEXT_ACTION_DELAY_MS * getBattleSpeedConfig(this.battleSpeed).timingScale));
+    this.time.delayedCall(delay, () => {
       if (this.autoPlaying && !this.battleState.isFinished && !this.animating) {
         this.doStep();
       }

@@ -325,8 +325,8 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 ### UI 연출
 - [ ] 행동 후 즉시 턴 인디케이터 갱신
 - [ ] 히어로 개입 UI 상태 (READY/QUEUED/USED) 렌더링
-- [ ] 전투 템포 (액션 0.6~0.8s, 결과 0.2s, 다음 액션 0.4~0.6s)
-- [ ] 배속 조절 (1x / 2x / 스킵)
+- [x] 전투 템포 (액션 0.6~0.8s, 결과 0.2s, 다음 액션 0.4~0.6s, Codex, 2026-03-30)
+- [x] 배속 조절 (1x / 2x / 스킵, Codex, 2026-03-30)
 
 ### 데이터 정합성
 - [x] 적 편성 시스템 (enemy-encounter-spec.md 기반)
