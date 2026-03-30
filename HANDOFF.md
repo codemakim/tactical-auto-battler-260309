@@ -13,12 +13,13 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: 세이브 UX 마감, P3-11 편성 프리셋, P3-10 훈련소 UI
+- 최근 완료: FormationScene 오버레이 분리 + 존 스프라이트 표시
+- 다음 작업 미정
 
 ## Source Specs
 
-- primary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md) (§2 Title)
-- secondary: [docs/combat-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-spec.md)
+- primary: [docs/formation-scene-rework-plan.md](/Users/jhkim/Project/tactical-auto-battler/docs/formation-scene-rework-plan.md)
+- secondary: [docs/formation-card-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/formation-card-ui-spec.md)
 - checklist: [docs/combat-impl-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-impl-checklist.md)
 
 ## Done
@@ -36,6 +37,7 @@
 - P3-11 편성 프리셋 완료 (Codex)
 - P3-12 타이틀 세이브 분기 완료 (Codex)
 - 세이브 삭제/손상 세이브 안내 완료 (Codex)
+- FormationScene 메인 정리, 카드 편집/프리셋 오버레이, 존 스프라이트 표시 완료 (Codex)
 
 ## Next
 
@@ -78,7 +80,8 @@
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test -- save-system title-menu`
+  - `npm test`
+  - `npm run format`
   - `npx tsc --noEmit`
 
 ## Notes
