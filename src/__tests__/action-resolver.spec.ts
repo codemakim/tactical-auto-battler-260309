@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { evaluateCondition, selectAction } from '../systems/ActionResolver';
+import { evaluateCondition, selectAction, executeAction } from '../systems/ActionResolver';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { CharacterClass, Team, Position, BattlePhase, Target } from '../types';
 import type { BattleState, ActionSlot } from '../types';
@@ -211,5 +211,37 @@ describe('액션 해석 시스템', () => {
     // 실드가 있으면 true
     unit.shield = 15;
     expect(evaluateCondition(slot, unit, state)).toBe(true);
+  });
+
+  it('source가 사망하면 후속 SELF 효과를 스킵한다', () => {
+    const unit = createUnit(createCharacterDef('W', CharacterClass.WARRIOR), Team.PLAYER, Position.FRONT);
+    const enemy = createUnit(createCharacterDef('E', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
+
+    // HP를 1로 낮춰서 SELF DAMAGE로 사망하게 만듦
+    unit.stats.hp = 1;
+
+    const slot: ActionSlot = {
+      condition: { type: 'ALWAYS' },
+      action: {
+        id: 'self_harm_heal',
+        name: 'SelfHarmHeal',
+        description: '',
+        effects: [
+          { type: 'DAMAGE', value: 1.0, target: Target.SELF }, // 자해 → 사망
+          { type: 'HEAL', value: 999, target: Target.SELF }, // 사망 후 힐 → 스킵되어야 함
+        ],
+      },
+    };
+
+    const state = makeBattleState({ units: [unit, enemy] });
+    const result = executeAction(unit, slot, state);
+
+    const source = result.units.find((u) => u.id === unit.id)!;
+    expect(source.isAlive).toBe(false);
+    expect(source.stats.hp).toBe(0);
+
+    // HEAL_APPLIED 이벤트가 없어야 한다
+    const healEvents = result.events.filter((e) => e.type === 'HEAL_APPLIED');
+    expect(healEvents).toHaveLength(0);
   });
 });

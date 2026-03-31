@@ -40,7 +40,11 @@ export function recordSnapshot(state: BattleState): ReplaySnapshot {
     eventIndex: state.events.length,
     round: state.round,
     turn: state.turn,
-    units: state.units.map((u) => ({ ...u, stats: { ...u.stats } })),
+    units: state.units.map((u) => ({
+      ...u,
+      stats: { ...u.stats },
+      buffs: u.buffs.map((b) => ({ ...b })),
+    })),
   };
 }
 

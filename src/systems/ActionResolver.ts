@@ -121,6 +121,9 @@ export function executeAction(
   });
 
   for (const effect of slot.action.effects) {
+    // source가 사망하면 후속 효과 스킵
+    if (!source.isAlive) break;
+
     if (effect.type === 'DELAY_TURN' || effect.type === 'ADVANCE_TURN') {
       // 턴 순서 변경 효과는 별도 처리
       const targetType = effect.target ?? Target.ENEMY_FRONT;

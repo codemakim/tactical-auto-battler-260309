@@ -77,8 +77,7 @@ function selectByStrategy(candidates: BattleUnit[], select: string, state?: Batt
         return candidates.sort((a, b) => b.stats.agi - a.stats.agi)[0] ?? null;
       }
       const order = state.turnOrder;
-      const currentTurnIndex = state.turn - 1; // turn은 1-based
-      // 아직 행동 안 한 유닛 중 turnOrder 인덱스가 가장 작은 유닛
+      // turnOrder 인덱스가 가장 작은 유닛 (가장 빨리 행동할 유닛)
       const sorted = candidates.sort((a, b) => {
         const ai = order.indexOf(a.id);
         const bi = order.indexOf(b.id);
