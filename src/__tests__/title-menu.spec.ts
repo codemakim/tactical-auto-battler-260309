@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getTitleMenuButtons, getTitleMenuMessage } from '../systems/TitleMenu';
+import { getContinueTargetScene, getTitleMenuButtons, getTitleMenuMessage } from '../systems/TitleMenu';
 
 describe('TitleMenu', () => {
   it('세이브가 없으면 START 버튼만 노출한다', () => {
@@ -25,5 +25,10 @@ describe('TitleMenu', () => {
     expect(getTitleMenuMessage('empty')).toBeNull();
     expect(getTitleMenuMessage('valid')).toBe('Saved progress detected');
     expect(getTitleMenuMessage('corrupted')).toBe('Save data is corrupted. Start fresh or delete it.');
+  });
+
+  it('CONTINUE는 저장된 런이 있으면 RunMapScene으로 복귀한다', () => {
+    expect(getContinueTargetScene(false)).toBe('TownScene');
+    expect(getContinueTargetScene(true)).toBe('RunMapScene');
   });
 });

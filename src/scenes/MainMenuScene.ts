@@ -3,7 +3,12 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UIButton } from '../ui/UIButton';
 import { UITheme } from '../ui/UITheme';
-import { getTitleMenuButtons, getTitleMenuMessage, type TitleMenuAction } from '../systems/TitleMenu';
+import {
+  getContinueTargetScene,
+  getTitleMenuButtons,
+  getTitleMenuMessage,
+  type TitleMenuAction,
+} from '../systems/TitleMenu';
 import { UIModal } from '../ui/UIModal';
 
 export class MainMenuScene extends Phaser.Scene {
@@ -80,6 +85,11 @@ export class MainMenuScene extends Phaser.Scene {
 
     if (action === 'start' || action === 'new_game') {
       gameState.reset();
+    }
+
+    if (action === 'continue') {
+      this.scene.start(getContinueTargetScene(!!gameState.runState));
+      return;
     }
 
     this.scene.start('TownScene');

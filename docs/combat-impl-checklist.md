@@ -335,7 +335,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] LocalStorage/IndexedDB 저장/불러오기 (LocalStorage MVP, Codex, 2026-03-30)
 - [x] 골드 영속 저장 (Codex, 2026-03-30)
 - [x] 캐릭터 로스터 영속 저장 (Codex, 2026-03-30)
-- [ ] 전장 진행도 영속 저장
+- [x] 전장 진행도 영속 저장 (`runState` 저장/로드 + CONTINUE→RunMap 복귀, Codex, 2026-03-31)
 
 ---
 
@@ -355,4 +355,4 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 ## 테스트 현황
 
-- 67개 테스트 파일, 744개 테스트 전체 통과 (2026-03-31 기준)
+- 67개 테스트 파일, 745개 테스트 전체 통과 (2026-03-31 기준)

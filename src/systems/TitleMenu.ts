@@ -32,3 +32,7 @@ export function getTitleMenuMessage(saveStatus: SaveDataStatus): string | null {
   if (saveStatus === 'corrupted') return 'Save data is corrupted. Start fresh or delete it.';
   return null;
 }
+
+export function getContinueTargetScene(hasActiveRun: boolean): 'TownScene' | 'RunMapScene' {
+  return hasActiveRun ? 'RunMapScene' : 'TownScene';
+}

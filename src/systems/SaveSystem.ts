@@ -1,5 +1,5 @@
 import type { GameStateData, FormationData, FormationPreset } from '../core/GameState';
-import type { CharacterDefinition } from '../types';
+import type { Action, CardInstance, CharacterDefinition, RunState } from '../types';
 
 export const SAVE_STORAGE_KEY = 'tactical-auto-battler.save.v1';
 export const SAVE_DATA_VERSION = 1 as const;
@@ -19,6 +19,18 @@ export interface SaveData {
   maxCharacterSlots: number;
   formation: FormationData;
   presets: FormationPreset[];
+  runState?: RunState;
+}
+
+function cloneAction(action: Action): Action {
+  return {
+    ...action,
+    effects: action.effects.map((effect) => ({
+      ...effect,
+      target: effect.target ? { ...effect.target } : undefined,
+      swapTarget: effect.swapTarget ? { ...effect.swapTarget } : undefined,
+    })),
+  };
 }
 
 function cloneCharacter(char: CharacterDefinition): CharacterDefinition {
@@ -27,11 +39,30 @@ function cloneCharacter(char: CharacterDefinition): CharacterDefinition {
     baseStats: { ...char.baseStats },
     baseActionSlots: char.baseActionSlots.map((slot) => ({
       condition: { ...slot.condition },
-      action: {
-        ...slot.action,
-        effects: slot.action.effects.map((effect) => ({ ...effect })),
-      },
+      action: cloneAction(slot.action),
     })),
+  };
+}
+
+function cloneCardInstance(card: CardInstance): CardInstance {
+  return {
+    ...card,
+    action: cloneAction(card.action),
+  };
+}
+
+function cloneRunState(runState: RunState): RunState {
+  return {
+    ...runState,
+    party: runState.party.map(cloneCharacter),
+    cardInventory: runState.cardInventory.map(cloneCardInstance),
+    equippedCards: Object.fromEntries(
+      Object.entries(runState.equippedCards).map(([characterId, slots]) => [
+        characterId,
+        Object.fromEntries(Object.entries(slots).map(([slotIndex, instanceId]) => [Number(slotIndex), instanceId])),
+      ]),
+    ),
+    preRunPartySnapshot: runState.preRunPartySnapshot.map(cloneCharacter),
   };
 }
 
@@ -57,6 +88,7 @@ export function extractSaveData(state: GameStateData): SaveData {
     maxCharacterSlots: state.maxCharacterSlots,
     formation: cloneFormation(state.formation),
     presets: clonePresets(state.presets),
+    runState: state.runState ? cloneRunState(state.runState) : undefined,
   };
 }
 
@@ -67,6 +99,7 @@ export function createGameStateDataFromSave(saveData: SaveData): GameStateData {
     maxCharacterSlots: saveData.maxCharacterSlots,
     formation: cloneFormation(saveData.formation),
     presets: clonePresets(saveData.presets),
+    runState: saveData.runState ? cloneRunState(saveData.runState) : undefined,
     battleReplays: [],
   };
 }

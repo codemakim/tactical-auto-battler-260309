@@ -45,7 +45,7 @@ describe('SaveSystem', () => {
     storage = createMemoryStorage();
   });
 
-  it('SaveData에는 영속 상태만 포함되고 runState/battleReplays는 제외된다', () => {
+  it('SaveData에는 런 진행도까지 포함되고 battleReplays는 제외된다', () => {
     gameState.setGold(777);
     gameState.setHeroType(HeroType.MAGE);
     gameState.setRunState({
@@ -65,11 +65,18 @@ describe('SaveSystem', () => {
 
     expect(saveData.gold).toBe(777);
     expect(saveData.formation.heroType).toBe(HeroType.MAGE);
-    expect('runState' in saveData).toBe(false);
+    expect(saveData.runState).toMatchObject({
+      currentStage: 2,
+      maxStages: 5,
+      seed: 99,
+      gold: 50,
+      retryAvailable: true,
+      status: RunStatus.IN_PROGRESS,
+    });
     expect('battleReplays' in saveData).toBe(false);
   });
 
-  it('저장 후 로드하면 영속 상태가 복원된다', () => {
+  it('저장 후 로드하면 런 진행도를 포함한 영속 상태가 복원된다', () => {
     const extra = createCharacterDef('Guest', CharacterClass.GUARDIAN, 1, 4);
     gameState.addGold(123);
     gameState.addCharacter(extra);
@@ -81,6 +88,37 @@ describe('SaveSystem', () => {
       heroType: HeroType.SUPPORT,
     });
     gameState.savePreset('alpha');
+    gameState.setRunState({
+      currentStage: 3,
+      maxStages: 5,
+      seed: 777,
+      party: gameState.characters.slice(0, 4),
+      cardInventory: [
+        {
+          instanceId: 'card-1',
+          templateId: 'temp-1',
+          action: {
+            id: 'action-1',
+            name: 'Test Action',
+            description: 'desc',
+            effects: [
+              {
+                type: 'DAMAGE',
+                value: 1.2,
+                stat: 'atk',
+                target: { side: 'ENEMY', position: 'FRONT', select: 'FIRST' },
+              },
+            ],
+          },
+          rarity: 'COMMON',
+        },
+      ],
+      equippedCards: { [gameState.characters[0].id]: { 0: 'card-1' } },
+      gold: 45,
+      retryAvailable: false,
+      status: RunStatus.IN_PROGRESS,
+      preRunPartySnapshot: gameState.characters.slice(0, 4),
+    });
 
     saveSaveDataToStorage(extractSaveData(gameState.getState()), storage);
 
@@ -94,7 +132,7 @@ describe('SaveSystem', () => {
     expect(restored.characters.map((c) => c.id)).toEqual(gameState.characters.map((c) => c.id));
     expect(restored.formation).toEqual(gameState.formation);
     expect(restored.presets).toEqual(gameState.presets);
-    expect(restored.runState).toBeUndefined();
+    expect(restored.runState).toEqual(gameState.runState);
     expect(restored.battleReplays).toEqual([]);
   });
 
@@ -111,6 +149,18 @@ describe('SaveSystem', () => {
     gameState.setGold(888);
     gameState.setHeroType(HeroType.SUPPORT);
     gameState.savePreset('roundtrip');
+    gameState.setRunState({
+      currentStage: 2,
+      maxStages: 5,
+      seed: 444,
+      party: gameState.characters.slice(0, 4),
+      cardInventory: [],
+      equippedCards: {},
+      gold: 12,
+      retryAvailable: true,
+      status: RunStatus.IN_PROGRESS,
+      preRunPartySnapshot: gameState.characters.slice(0, 4),
+    });
 
     expect(gameState.saveToStorage(storage)).toBe(true);
 
@@ -119,6 +169,12 @@ describe('SaveSystem', () => {
     expect(restored.gold).toBe(888);
     expect(restored.formation.heroType).toBe(HeroType.SUPPORT);
     expect(restored.presets.map((p) => p.name)).toContain('roundtrip');
+    expect(restored.runState).toMatchObject({
+      currentStage: 2,
+      seed: 444,
+      gold: 12,
+      status: RunStatus.IN_PROGRESS,
+    });
   });
 
   it('같은 이름으로 저장하면 프리셋을 덮어쓴다', () => {

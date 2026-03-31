@@ -284,9 +284,11 @@ interface SaveData {
   // 편성 프리셋
   presets: FormationPreset[];      // 저장된 편성 목록
 
-  // MVP 제외
-  // runState, battleReplays 같은 런타임 상태는 저장하지 않음
-  // battlefieldProgress는 후속 작업에서 추가
+  // 진행 중인 런 (MVP 확장)
+  runState?: RunState;             // RunMap / Reward / 편성 복귀용 진행 상태 저장
+
+  // 제외
+  // battleReplays는 저장하지 않음
   // (향후) 마을 건물 레벨 / 업적 / 설정
 }
 
