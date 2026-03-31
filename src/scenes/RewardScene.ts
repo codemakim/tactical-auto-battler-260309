@@ -15,12 +15,14 @@ import { UICardVisual } from '../ui/UICardVisual';
 import { gameState } from '../core/GameState';
 import { calculateRewardPhase, applyRewardSelections } from '../systems/RewardCalculator';
 import { getRewardProceedTarget } from '../systems/RewardFlow';
+import { drawRoundedFrame } from '../ui/FormationGraphics';
+import { getRewardActionLabels, getRewardEmptyStateCopy, getRewardHeaderCopy } from '../systems/RewardPresentation';
 import type { RunState, BattleState, RewardPhaseData } from '../types';
 
 // 카드 표시 상수
-const CARD_W = 150;
-const CARD_H = 200;
-const CARD_GAP = 16;
+const CARD_W = 168;
+const CARD_H = 232;
+const CARD_GAP = 18;
 
 interface SceneData {
   runState: RunState;
@@ -39,6 +41,7 @@ export class RewardScene extends Phaser.Scene {
   // UI 참조
   private cardVisuals: UICardVisual[] = [];
   private confirmBtn!: UIButton;
+  private proceedLabel!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'RewardScene' });
@@ -68,29 +71,51 @@ export class RewardScene extends Phaser.Scene {
     bg.fillStyle(UITheme.colors.bgDark);
     bg.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // 상단 장식선
-    bg.lineStyle(1, UITheme.colors.border);
-    bg.lineBetween(0, 50, GAME_WIDTH, 50);
+    drawRoundedFrame(bg, 36, 36, GAME_WIDTH - 72, GAME_HEIGHT - 72, 18, {
+      backgroundColor: 0x121828,
+      borderColor: 0x2d4266,
+      borderWidth: 2,
+      alpha: 0.98,
+    });
+    bg.fillStyle(0x18243a, 0.45);
+    bg.fillRoundedRect(54, 54, GAME_WIDTH - 108, 120, 12);
+    bg.lineStyle(1, 0x36527d, 0.5);
+    bg.lineBetween(72, 186, GAME_WIDTH - 72, 186);
   }
 
   // ── 골드 + 스테이지 ──
 
   private drawGoldSection(): void {
     const cx = GAME_WIDTH / 2;
+    const header = getRewardHeaderCopy({
+      currentStage: this.rewardData.currentStage,
+      maxStages: this.rewardData.maxStages,
+      goldEarned: this.rewardData.goldEarned,
+    });
 
     this.add
-      .text(cx, 24, `Stage ${this.rewardData.currentStage} 클리어`, {
-        ...UITheme.font.label,
-        color: '#8899aa',
+      .text(cx, 72, header.stageLabel, {
+        fontSize: '14px',
+        fontFamily: UITheme.font.family,
+        color: '#7c95bf',
+        fontStyle: 'bold',
       })
       .setOrigin(0.5);
 
     this.add
-      .text(cx, 76, `+${this.rewardData.goldEarned} Gold`, {
-        fontSize: '24px',
+      .text(cx, 96, header.title, {
+        fontSize: '38px',
         fontFamily: UITheme.font.family,
         fontStyle: 'bold',
         color: '#ffcc00',
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(cx, 138, header.subtitle, {
+        fontSize: '13px',
+        fontFamily: UITheme.font.family,
+        color: '#b8c8df',
       })
       .setOrigin(0.5);
   }
@@ -102,9 +127,11 @@ export class RewardScene extends Phaser.Scene {
 
     if (cards.length === 0) {
       this.add
-        .text(GAME_WIDTH / 2, 220, '획득 가능한 카드가 없습니다', {
+        .text(GAME_WIDTH / 2, 278, getRewardEmptyStateCopy(this.rewardData.isLastStage), {
           ...UITheme.font.body,
           color: '#666677',
+          wordWrap: { width: 520 },
+          align: 'center',
         })
         .setOrigin(0.5);
       this.cardDecided = true;
@@ -113,16 +140,26 @@ export class RewardScene extends Phaser.Scene {
     }
 
     this.add
-      .text(GAME_WIDTH / 2, 110, '카드를 선택하세요 (1장)', {
-        ...UITheme.font.body,
-        color: '#ccccdd',
+      .text(GAME_WIDTH / 2, 212, 'CHOOSE ONE TACTIC', {
+        fontSize: '16px',
+        fontFamily: UITheme.font.family,
+        color: '#d7deee',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(GAME_WIDTH / 2, 236, 'Recovered after victory. Secure one card before moving on.', {
+        fontSize: '12px',
+        fontFamily: UITheme.font.family,
+        color: '#8a9cbb',
       })
       .setOrigin(0.5);
 
     // 카드 배치
     const totalW = cards.length * (CARD_W + CARD_GAP) - CARD_GAP;
     const startX = (GAME_WIDTH - totalW) / 2;
-    const cardY = 140;
+    const cardY = 270;
 
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
@@ -145,25 +182,35 @@ export class RewardScene extends Phaser.Scene {
     }
 
     // 버튼 영역
-    const btnY = cardY + CARD_H + 16;
+    const btnY = cardY + CARD_H + 24;
+    const actionLabels = getRewardActionLabels({ isLastStage: this.rewardData.isLastStage });
+
+    this.proceedLabel = this.add
+      .text(GAME_WIDTH / 2, btnY - 34, actionLabels.proceed, {
+        fontSize: '12px',
+        fontFamily: UITheme.font.family,
+        color: '#7a90b6',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
 
     this.confirmBtn = new UIButton(this, {
       x: GAME_WIDTH / 2 - 170,
       y: btnY,
-      width: 150,
-      height: 40,
-      label: '카드 획득',
+      width: 180,
+      height: 44,
+      label: actionLabels.confirm,
       style: 'primary',
       disabled: true,
       onClick: () => this.onConfirmCard(),
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH / 2 + 20,
+      x: GAME_WIDTH / 2 + 30,
       y: btnY,
-      width: 150,
-      height: 40,
-      label: '건너뛰기',
+      width: 140,
+      height: 44,
+      label: actionLabels.skip,
       style: 'secondary',
       onClick: () => this.onSkipCard(),
     });
@@ -177,7 +224,12 @@ export class RewardScene extends Phaser.Scene {
     }
 
     this.confirmBtn.setDisabled(false);
-    this.confirmBtn.setLabel(`${this.rewardData.cardOptions[index].action.name} 획득`);
+    this.confirmBtn.setLabel(
+      getRewardActionLabels({
+        selectedCardName: this.rewardData.cardOptions[index].action.name,
+        isLastStage: this.rewardData.isLastStage,
+      }).confirm,
+    );
   }
 
   private onConfirmCard(): void {

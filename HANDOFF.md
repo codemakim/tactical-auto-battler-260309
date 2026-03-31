@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: Reward → Formation → RunMap 다음 스테이지 루프 정리
+- 최근 완료: RewardScene 브리핑형 UI 리디자인
 - 다음 작업 미정
 
 ## Source Specs
@@ -50,12 +50,13 @@
 - Formation HUD를 우측 상태 패널로 이동, 버튼 행 Y 보정, 빈 슬롯 마커를 남은 칸에만 표시하도록 수정 (Codex)
 - SaveData에 `runState`를 포함하고, CONTINUE가 활성 런이면 RunMapScene으로 복귀하도록 수정 (Codex)
 - RewardScene 다음 진행을 순수 전이 헬퍼로 분리하고, 다음 스테이지는 FormationScene을 거쳐 RunMap으로 복귀하도록 수정 (Codex)
+- RewardScene 헤더/버튼/빈 상태 카피를 게임형 브리핑 표현으로 재구성 (Codex)
 
 ## Next
 
 다음 작업 미정.
 
-- 추천 후속: RewardScene UI 자체를 더 게임답게 리디자인하거나, RunMap/Reward 저장 UX 보강
+- 추천 후속: RunMap/Reward 저장 상태 안내를 더 밀거나 RewardScene 카드 배치 비주얼 조정
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1
