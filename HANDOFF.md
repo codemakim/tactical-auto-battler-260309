@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: FormationScene 구조 정리 4차 (RosterView / HudView 분리)
+- 최근 완료: Formation 레이아웃 보정 (우측 상태 패널, 버튼 행 위치, 빈 슬롯 마커)
 - 다음 작업 미정
 
 ## Source Specs
@@ -47,6 +47,7 @@
 - FormationSceneOverlays 분리로 COMMAND / PRESET / CARD EDITOR 오버레이를 Scene 밖으로 이동 (Codex)
 - FormationBoardView / FormationBoardState 분리로 보드 렌더링과 존 캐릭터 계산을 Scene 밖으로 이동 (Codex)
 - FormationRosterView / FormationHudView / FormationRosterState / FormationHudState 분리로 로스터/HUD 책임을 Scene 밖으로 이동 (Codex)
+- Formation HUD를 우측 상태 패널로 이동, 버튼 행 Y 보정, 빈 슬롯 마커를 남은 칸에만 표시하도록 수정 (Codex)
 
 ## Next
 

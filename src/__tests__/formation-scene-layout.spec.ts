@@ -33,4 +33,14 @@ describe('FormationSceneLayout', () => {
     expect(FORMATION_SPRITE_MAP.ARCHER).toMatchObject({ texture: 'archer-attack', idleFrame: 27 });
     expect(FORMATION_SPRITE_MAP.CONTROLLER).toMatchObject({ texture: 'controller-attack', idleFrame: 0 });
   });
+
+  it('우측 HUD와 하단 버튼은 게임 화면 안쪽에 배치된다', () => {
+    const gameWidth = 1280;
+    const gameHeight = 720;
+
+    expect(FORMATION_LAYOUT.hud.x).toBeGreaterThan(FORMATION_LAYOUT.boardFrame.x + FORMATION_LAYOUT.boardFrame.width);
+    expect(FORMATION_LAYOUT.hud.x + FORMATION_LAYOUT.hud.width).toBeLessThanOrEqual(gameWidth);
+    expect(FORMATION_LAYOUT.hud.y + FORMATION_LAYOUT.hud.height).toBeLessThanOrEqual(gameHeight - 120);
+    expect(FORMATION_LAYOUT.bottomButtons.y).toBeLessThanOrEqual(gameHeight - 68);
+  });
 });

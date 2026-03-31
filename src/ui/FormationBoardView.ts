@@ -11,6 +11,7 @@ import {
 import { getUnitCardVisualState } from '../systems/FormationSceneStyles';
 import { drawHorizontalDivider, drawRoundedFrame } from './FormationGraphics';
 import type { CharacterDefinition } from '../types';
+import { getBoardSlotMarkerStates } from '../systems/FormationBoardState';
 
 const ZONES = getFormationZones();
 
@@ -66,7 +67,10 @@ export class FormationBoardView {
       if (!container) continue;
 
       const emptyText = container.getData('emptyText') as Phaser.GameObjects.Text;
+      const slotMarkers = container.getData('slotMarkers') as Phaser.GameObjects.Graphics[];
       const charsInZone = this.deps.getCharactersInZone(zone.key);
+      const markerStates = getBoardSlotMarkerStates(zone.maxUnits, charsInZone.length);
+      slotMarkers.forEach((marker, index) => marker.setVisible(markerStates[index]));
       emptyText.setVisible(charsInZone.length === 0);
       if (charsInZone.length === 0) continue;
 
@@ -100,6 +104,7 @@ export class FormationBoardView {
     drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.06);
     container.add(bg);
 
+    const slotMarkers: Phaser.GameObjects.Graphics[] = [];
     for (let i = 0; i < zone.maxUnits; i++) {
       const slotX = 28 + i * ((zone.width - 56) / (zone.maxUnits - 1));
       const marker = this.scene.add.graphics();
@@ -110,7 +115,9 @@ export class FormationBoardView {
         alpha: 0.34,
       });
       container.add(marker);
+      slotMarkers.push(marker);
     }
+    container.setData('slotMarkers', slotMarkers);
 
     container.add(
       this.scene.add

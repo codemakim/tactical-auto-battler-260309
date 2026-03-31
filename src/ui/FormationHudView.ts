@@ -42,17 +42,18 @@ export class FormationHudView {
       color: UITheme.colors.textPrimary,
     });
 
-    this.scene.add.text(hud.x + 18, hud.y + 72, labels.unit, {
+    this.scene.add.text(hud.x + 18, hud.y + 116, labels.unit, {
       ...UITheme.font.label,
       color: '#7f95bd',
     });
 
-    this.unitMeta = this.scene.add.text(hud.x + 96, hud.y + 72, '', {
+    this.unitMeta = this.scene.add.text(hud.x + 18, hud.y + 144, '', {
       ...UITheme.font.small,
       color: UITheme.colors.textPrimary,
+      wordWrap: { width: hud.width - 36 },
     });
 
-    this.unitTactics = this.scene.add.text(hud.x + 18, hud.y + 96, '', {
+    this.unitTactics = this.scene.add.text(hud.x + 18, hud.y + 250, '', {
       ...UITheme.font.small,
       color: '#9fb3d8',
       wordWrap: { width: hud.width - 36 },
