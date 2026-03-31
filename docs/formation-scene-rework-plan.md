@@ -274,6 +274,16 @@
 - 클래스별 idle sprite 매핑 추가
 - 존 유닛 비주얼을 텍스트 박스에서 스프라이트형으로 교체
 
+### Step 6. 구조 리팩터링 1차
+
+- `FormationSceneLayout.ts`로 레이아웃 좌표/오버레이 크기/스프라이트 매핑 추출
+- `FormationSceneStyles.ts`로 로스터/유닛/COMMAND 카드 상태 스타일 추출
+- `FormationGraphics.ts`로 반복되는 rounded frame 렌더링 헬퍼 추출
+- `FormationScene`는 상태 연결과 이벤트 처리 중심으로 축소
+
+이 단계에서는 Scene 분할까지는 하지 않고,
+다음 패스에서 `Roster / Board / HUD / Overlay` 뷰 클래스로 나누는 것을 목표로 한다.
+
 ### Step 5. 마감
 
 - 선택 상태, hover, remove 버튼 정리

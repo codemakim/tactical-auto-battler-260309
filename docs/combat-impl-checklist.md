@@ -300,6 +300,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] Formation 존 가로 스트립 레이아웃 보정 (5슬롯 대응 UI, Codex, 2026-03-30)
 - [x] Formation 화면 게임 UI 톤 리디자인 (전술 보드/짧은 라벨, Codex, 2026-03-30)
 - [x] Formation 우측 패널 제거 + COMMAND 오버레이/보드 HUD 중심 재구성 (Codex, 2026-03-30)
+- [x] FormationScene 구조 정리 1차 (레이아웃 상수/스타일/그래픽 헬퍼 분리, Codex, 2026-03-31)
 
 ### §5. Sortie Select (SortieScene)
 

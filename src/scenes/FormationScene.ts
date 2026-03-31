@@ -18,7 +18,7 @@ import { UIButton } from '../ui/UIButton';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
 import { UICardVisual } from '../ui/UICardVisual';
-import { HeroType, Position, RunStatus } from '../types';
+import { Position, RunStatus } from '../types';
 import type { CharacterDefinition, SlotDisplayData, CardInstance, RunState } from '../types';
 import { HERO_DEFINITIONS } from '../data/HeroDefinitions';
 import { getSlotDisplayData, swapBaseActionSlots, swapRunActionSlots } from '../systems/FormationCardCalculator';
@@ -35,66 +35,21 @@ import { validateFormation, canAddToZone } from '../systems/FormationValidator';
 import { formatSlotsSummary } from '../utils/actionText';
 import { getFormationPresetSlots, getFormationPresetSlotName } from '../systems/FormationPresetSlots';
 import { getFormationLanePresentation, getFormationPanelLabels } from '../systems/FormationPresentation';
+import {
+  FORMATION_LAYOUT,
+  FORMATION_SPRITE_MAP,
+  HERO_TYPES,
+  getFormationZones,
+  type ZoneDef,
+} from '../systems/FormationSceneLayout';
+import {
+  getCommandCardVisualState,
+  getRosterItemVisualState,
+  getUnitCardVisualState,
+} from '../systems/FormationSceneStyles';
+import { drawHorizontalDivider, drawRoundedFrame } from '../ui/FormationGraphics';
 
-// 영역 정의
-interface ZoneDef {
-  key: 'BACK' | 'FRONT';
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label: string;
-  position: Position;
-  maxUnits: number;
-}
-
-// 영역 레이아웃 상수
-const ZONE_X = 300;
-const ZONE_Y = 110;
-const ZONE_HEIGHT = 160;
-const ZONE_WIDTH = 520;
-const ZONE_GAP = 24;
-const BACK_ZONE_X = ZONE_X;
-const FRONT_ZONE_X = ZONE_X;
-const FRONT_ZONE_Y = ZONE_Y + ZONE_HEIGHT + ZONE_GAP;
-const ZONES: ZoneDef[] = [
-  {
-    key: 'BACK',
-    x: BACK_ZONE_X,
-    y: ZONE_Y,
-    width: ZONE_WIDTH,
-    height: ZONE_HEIGHT,
-    label: 'BACK (후열)',
-    position: Position.BACK,
-    maxUnits: 5,
-  },
-  {
-    key: 'FRONT',
-    x: FRONT_ZONE_X,
-    y: FRONT_ZONE_Y,
-    width: ZONE_WIDTH,
-    height: ZONE_HEIGHT,
-    label: 'FRONT (전열)',
-    position: Position.FRONT,
-    maxUnits: 5,
-  },
-];
-
-const HERO_TYPES = [HeroType.COMMANDER, HeroType.MAGE, HeroType.SUPPORT] as const;
-
-interface FormationSpriteConfig {
-  texture: string;
-  idleFrame: number;
-  scale: number;
-}
-
-const FORMATION_SPRITE_MAP: Record<string, FormationSpriteConfig> = {
-  WARRIOR: { texture: 'warrior-attack', idleFrame: 0, scale: 0.16 },
-  ASSASSIN: { texture: 'assassin-attack', idleFrame: 0, scale: 0.16 },
-  ARCHER: { texture: 'archer-attack', idleFrame: 27, scale: 0.17 },
-  GUARDIAN: { texture: 'guardian-attack', idleFrame: 0, scale: 0.18 },
-  CONTROLLER: { texture: 'controller-attack', idleFrame: 0, scale: 0.17 },
-};
+const ZONES = getFormationZones();
 
 export class FormationScene extends Phaser.Scene {
   private rosterPanel!: UIPanel;
@@ -162,20 +117,36 @@ export class FormationScene extends Phaser.Scene {
     gfx.fillStyle(0x0f0f1a, 1);
     gfx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    gfx.fillStyle(0x14172a, 0.88);
-    gfx.fillRoundedRect(284, 78, 552, 410, 14);
-    gfx.lineStyle(2, 0x324768, 0.9);
-    gfx.strokeRoundedRect(284, 78, 552, 410, 14);
+    drawRoundedFrame(
+      gfx,
+      FORMATION_LAYOUT.boardFrame.x,
+      FORMATION_LAYOUT.boardFrame.y,
+      FORMATION_LAYOUT.boardFrame.width,
+      FORMATION_LAYOUT.boardFrame.height,
+      FORMATION_LAYOUT.boardFrame.radius,
+      { backgroundColor: 0x14172a, borderColor: 0x324768, borderWidth: 2, alpha: 0.88 },
+    );
 
     gfx.fillStyle(0x192033, 0.92);
-    gfx.fillRoundedRect(294, 88, 532, 390, 12);
+    gfx.fillRoundedRect(
+      FORMATION_LAYOUT.boardInner.x,
+      FORMATION_LAYOUT.boardInner.y,
+      FORMATION_LAYOUT.boardInner.width,
+      FORMATION_LAYOUT.boardInner.height,
+      FORMATION_LAYOUT.boardInner.radius,
+    );
 
     gfx.lineStyle(1, 0x22324f, 0.75);
-    for (let i = 0; i < 6; i++) {
-      const x = 334 + i * 96;
-      gfx.lineBetween(x, 102, x, 464);
+    for (let i = 0; i < FORMATION_LAYOUT.boardGrid.columns; i++) {
+      const x = FORMATION_LAYOUT.boardGrid.startX + i * FORMATION_LAYOUT.boardGrid.gap;
+      gfx.lineBetween(x, FORMATION_LAYOUT.boardGrid.startY, x, FORMATION_LAYOUT.boardGrid.endY);
     }
-    gfx.lineBetween(306, 284, 814, 284);
+    gfx.lineBetween(
+      FORMATION_LAYOUT.boardGrid.midlineStartX,
+      FORMATION_LAYOUT.boardGrid.midlineY,
+      FORMATION_LAYOUT.boardGrid.midlineEndX,
+      FORMATION_LAYOUT.boardGrid.midlineY,
+    );
   }
 
   private drawTopBar(): void {
@@ -250,9 +221,9 @@ export class FormationScene extends Phaser.Scene {
   private createRosterPanel(): void {
     const labels = getFormationPanelLabels();
     this.rosterPanel = new UIPanel(this, {
-      x: 20,
-      y: 65,
-      width: 240,
+      x: FORMATION_LAYOUT.rosterPanel.x,
+      y: FORMATION_LAYOUT.rosterPanel.y,
+      width: FORMATION_LAYOUT.rosterPanel.width,
       height: GAME_HEIGHT - 130,
       title: labels.roster,
       bgColor: 0x171a2b,
@@ -269,14 +240,20 @@ export class FormationScene extends Phaser.Scene {
 
     const characters = gameState.characters;
     const formationIds = new Set(gameState.getFormationCharacterIds());
-    const startY = this.rosterPanel.contentY + 8;
-    const itemH = 52;
+    const startY = this.rosterPanel.contentY + FORMATION_LAYOUT.rosterItem.startY;
+    const itemH = FORMATION_LAYOUT.rosterItem.rowGap;
 
     for (let i = 0; i < characters.length; i++) {
       const char = characters[i];
       const isAssigned = formationIds.has(char.id);
       const isSelected = char.id === this.selectedRosterCharId;
-      const item = this.createRosterItem(char, isAssigned, isSelected, 8, startY + i * itemH);
+      const item = this.createRosterItem(
+        char,
+        isAssigned,
+        isSelected,
+        FORMATION_LAYOUT.rosterItem.startX,
+        startY + i * itemH,
+      );
       this.rosterPanel.add(item);
       this.rosterItems.push(item);
     }
@@ -290,17 +267,12 @@ export class FormationScene extends Phaser.Scene {
     y: number,
   ): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
-    const w = 224;
-    const h = 46;
+    const w = FORMATION_LAYOUT.rosterItem.width;
+    const h = FORMATION_LAYOUT.rosterItem.height;
 
     const bg = this.add.graphics();
-    const bgColor = isSelected ? 0x2a3a4a : isAssigned ? 0x1a2a3a : 0x1a1a2e;
-    const borderColor = isSelected ? 0xffcc00 : isAssigned ? 0x3b82f6 : UITheme.colors.border;
-    const borderWidth = isSelected ? 2 : 1;
-    bg.fillStyle(bgColor, 0.9);
-    bg.fillRoundedRect(0, 0, w, h, 4);
-    bg.lineStyle(borderWidth, borderColor);
-    bg.strokeRoundedRect(0, 0, w, h, 4);
+    const baseState = getRosterItemVisualState({ isSelected, isAssigned });
+    drawRoundedFrame(bg, 0, 0, w, h, FORMATION_LAYOUT.rosterItem.radius, baseState);
     container.add(bg);
 
     const classShort = char.characterClass.substring(0, 3);
@@ -335,19 +307,16 @@ export class FormationScene extends Phaser.Scene {
     container.add(hitArea);
 
     hitArea.on('pointerover', () => {
-      bg.clear();
-      bg.fillStyle(0x2a2a4a, 0.95);
-      bg.fillRoundedRect(0, 0, w, h, 4);
-      bg.lineStyle(1, UITheme.colors.borderHighlight);
-      bg.strokeRoundedRect(0, 0, w, h, 4);
+      drawRoundedFrame(bg, 0, 0, w, h, FORMATION_LAYOUT.rosterItem.radius, {
+        backgroundColor: 0x2a2a4a,
+        borderColor: UITheme.colors.borderHighlight,
+        borderWidth: 1,
+        alpha: 0.95,
+      });
     });
 
     hitArea.on('pointerout', () => {
-      bg.clear();
-      bg.fillStyle(bgColor, 0.9);
-      bg.fillRoundedRect(0, 0, w, h, 4);
-      bg.lineStyle(borderWidth, borderColor);
-      bg.strokeRoundedRect(0, 0, w, h, 4);
+      drawRoundedFrame(bg, 0, 0, w, h, FORMATION_LAYOUT.rosterItem.radius, baseState);
     });
 
     hitArea.on('pointerdown', () => {
@@ -379,10 +348,15 @@ export class FormationScene extends Phaser.Scene {
   private createZones(): void {
     // 방향 안내
     this.add
-      .text(BACK_ZONE_X + ZONE_WIDTH / 2, ZONE_Y - 34, 'TACTICAL BOARD', {
-        ...UITheme.font.small,
-        color: '#6d7fa5',
-      })
+      .text(
+        FORMATION_LAYOUT.board.x + FORMATION_LAYOUT.board.width / 2,
+        FORMATION_LAYOUT.board.y - 34,
+        'TACTICAL BOARD',
+        {
+          ...UITheme.font.small,
+          color: '#6d7fa5',
+        },
+      )
       .setOrigin(0.5)
       .setFontSize(12);
 
@@ -397,21 +371,24 @@ export class FormationScene extends Phaser.Scene {
 
     // 영역 배경: 전술 스트립
     const bg = this.add.graphics();
-    bg.fillStyle(lane.glowColor, 0.45);
-    bg.fillRoundedRect(0, 0, zone.width, zone.height, 12);
-    bg.lineStyle(2, lane.accentColor, 0.9);
-    bg.strokeRoundedRect(0, 0, zone.width, zone.height, 12);
-    bg.lineStyle(1, 0xffffff, 0.06);
-    bg.lineBetween(14, 44, zone.width - 14, 44);
+    drawRoundedFrame(bg, 0, 0, zone.width, zone.height, 12, {
+      backgroundColor: lane.glowColor,
+      borderColor: lane.accentColor,
+      borderWidth: 2,
+      alpha: 0.45,
+    });
+    drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.06);
     container.add(bg);
 
     for (let i = 0; i < zone.maxUnits; i++) {
       const slotX = 28 + i * ((zone.width - 56) / (zone.maxUnits - 1));
       const marker = this.add.graphics();
-      marker.fillStyle(0x101522, 0.34);
-      marker.fillRoundedRect(slotX - 36, 56, 72, 88, 10);
-      marker.lineStyle(1, lane.accentColor, 0.18);
-      marker.strokeRoundedRect(slotX - 36, 56, 72, 88, 10);
+      drawRoundedFrame(marker, slotX - 36, 56, 72, 88, 10, {
+        backgroundColor: 0x101522,
+        borderColor: lane.accentColor,
+        borderWidth: 1,
+        alpha: 0.34,
+      });
       container.add(marker);
     }
 
@@ -453,23 +430,23 @@ export class FormationScene extends Phaser.Scene {
     container.add(hitArea);
 
     hitArea.on('pointerover', () => {
-      bg.clear();
-      bg.fillStyle(lane.glowColor, 0.62);
-      bg.fillRoundedRect(0, 0, zone.width, zone.height, 12);
-      bg.lineStyle(2, lane.accentColor, 1);
-      bg.strokeRoundedRect(0, 0, zone.width, zone.height, 12);
-      bg.lineStyle(1, 0xffffff, 0.08);
-      bg.lineBetween(14, 44, zone.width - 14, 44);
+      drawRoundedFrame(bg, 0, 0, zone.width, zone.height, 12, {
+        backgroundColor: lane.glowColor,
+        borderColor: lane.accentColor,
+        borderWidth: 2,
+        alpha: 0.62,
+      });
+      drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.08);
     });
 
     hitArea.on('pointerout', () => {
-      bg.clear();
-      bg.fillStyle(lane.glowColor, 0.45);
-      bg.fillRoundedRect(0, 0, zone.width, zone.height, 12);
-      bg.lineStyle(2, lane.accentColor, 0.9);
-      bg.strokeRoundedRect(0, 0, zone.width, zone.height, 12);
-      bg.lineStyle(1, 0xffffff, 0.06);
-      bg.lineBetween(14, 44, zone.width - 14, 44);
+      drawRoundedFrame(bg, 0, 0, zone.width, zone.height, 12, {
+        backgroundColor: lane.glowColor,
+        borderColor: lane.accentColor,
+        borderWidth: 2,
+        alpha: 0.45,
+      });
+      drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.06);
     });
 
     hitArea.on('pointerdown', () => {
@@ -581,15 +558,12 @@ export class FormationScene extends Phaser.Scene {
     zone: ZoneDef,
   ): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
-    const w = 88;
-    const h = 102;
+    const w = FORMATION_LAYOUT.unitCard.width;
+    const h = FORMATION_LAYOUT.unitCard.height;
 
     // 유닛 박스 배경
     const bg = this.add.graphics();
-    bg.fillStyle(0x1e2844, 0.9);
-    bg.fillRoundedRect(-w / 2, -h / 2, w, h, 6);
-    bg.lineStyle(1, UITheme.colors.border);
-    bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 6);
+    drawRoundedFrame(bg, -w / 2, -h / 2, w, h, FORMATION_LAYOUT.unitCard.radius, getUnitCardVisualState(false));
     container.add(bg);
 
     // 클래스
@@ -606,7 +580,7 @@ export class FormationScene extends Phaser.Scene {
     if (spriteInfo) {
       const sprite = this.add
         .sprite(0, -8, spriteInfo.texture, spriteInfo.idleFrame)
-        .setScale(spriteInfo.scale * 0.82)
+        .setScale(spriteInfo.scale * FORMATION_LAYOUT.unitCard.spriteScaleMultiplier)
         .setOrigin(0.5, 0.5);
       container.add(sprite);
     }
@@ -662,19 +636,11 @@ export class FormationScene extends Phaser.Scene {
     });
 
     hitArea.on('pointerover', () => {
-      bg.clear();
-      bg.fillStyle(0x2a3a5a, 0.95);
-      bg.fillRoundedRect(-w / 2, -h / 2, w, h, 6);
-      bg.lineStyle(2, 0xffcc00);
-      bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 6);
+      drawRoundedFrame(bg, -w / 2, -h / 2, w, h, FORMATION_LAYOUT.unitCard.radius, getUnitCardVisualState(true));
     });
 
     hitArea.on('pointerout', () => {
-      bg.clear();
-      bg.fillStyle(0x1e2844, 0.9);
-      bg.fillRoundedRect(-w / 2, -h / 2, w, h, 6);
-      bg.lineStyle(1, UITheme.colors.border);
-      bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 6);
+      drawRoundedFrame(bg, -w / 2, -h / 2, w, h, FORMATION_LAYOUT.unitCard.radius, getUnitCardVisualState(false));
     });
 
     return container;
@@ -695,16 +661,18 @@ export class FormationScene extends Phaser.Scene {
 
   private createBoardHud(): void {
     const labels = getFormationPanelLabels();
-    const boardX = 300;
-    const boardY = 505;
-    const boardWidth = 520;
-    const boardHeight = 132;
+    const boardX = FORMATION_LAYOUT.hud.x;
+    const boardY = FORMATION_LAYOUT.hud.y;
+    const boardWidth = FORMATION_LAYOUT.hud.width;
+    const boardHeight = FORMATION_LAYOUT.hud.height;
 
     const bg = this.add.graphics();
-    bg.fillStyle(0x14192a, 0.96);
-    bg.fillRoundedRect(boardX, boardY, boardWidth, boardHeight, 14);
-    bg.lineStyle(2, 0x33486a, 0.9);
-    bg.strokeRoundedRect(boardX, boardY, boardWidth, boardHeight, 14);
+    drawRoundedFrame(bg, boardX, boardY, boardWidth, boardHeight, FORMATION_LAYOUT.hud.radius, {
+      backgroundColor: 0x14192a,
+      borderColor: 0x33486a,
+      borderWidth: 2,
+      alpha: 0.96,
+    });
 
     this.add
       .text(boardX + 18, boardY + 14, labels.command, {
@@ -822,8 +790,8 @@ export class FormationScene extends Phaser.Scene {
     const labels = getFormationPanelLabels();
     const backWidth = backConfig.label.includes('포기') ? 160 : 140;
     new UIButton(this, {
-      x: 20,
-      y: GAME_HEIGHT - 55,
+      x: FORMATION_LAYOUT.bottomButtons.backX,
+      y: FORMATION_LAYOUT.bottomButtons.y,
       width: backWidth,
       height: 44,
       label: backConfig.label,
@@ -847,8 +815,8 @@ export class FormationScene extends Phaser.Scene {
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH / 2 - 245,
-      y: GAME_HEIGHT - 55,
+      x: FORMATION_LAYOUT.bottomButtons.commandX,
+      y: FORMATION_LAYOUT.bottomButtons.y,
       width: 140,
       height: 44,
       label: labels.command,
@@ -857,8 +825,8 @@ export class FormationScene extends Phaser.Scene {
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH / 2 - 95,
-      y: GAME_HEIGHT - 55,
+      x: FORMATION_LAYOUT.bottomButtons.presetsX,
+      y: FORMATION_LAYOUT.bottomButtons.y,
       width: 140,
       height: 44,
       label: labels.presets,
@@ -867,8 +835,8 @@ export class FormationScene extends Phaser.Scene {
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH / 2 + 55,
-      y: GAME_HEIGHT - 55,
+      x: FORMATION_LAYOUT.bottomButtons.cardsX,
+      y: FORMATION_LAYOUT.bottomButtons.y,
       width: 140,
       height: 44,
       label: labels.cards,
@@ -884,8 +852,8 @@ export class FormationScene extends Phaser.Scene {
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH - 200,
-      y: GAME_HEIGHT - 55,
+      x: FORMATION_LAYOUT.bottomButtons.deployX,
+      y: FORMATION_LAYOUT.bottomButtons.y,
       width: 180,
       height: 44,
       label: actionConfig.targetScene === 'TownScene' ? labels.deploy : actionConfig.label,
@@ -954,7 +922,11 @@ export class FormationScene extends Phaser.Scene {
 
   private openCommandOverlay(): void {
     const labels = getFormationPanelLabels();
-    const contentY = this.createOverlay(labels.command, 640, 280);
+    const contentY = this.createOverlay(
+      labels.command,
+      FORMATION_LAYOUT.overlays.command.width,
+      FORMATION_LAYOUT.overlays.command.height,
+    );
     const panel = this.overlayPanel;
     if (!panel) return;
 
@@ -973,10 +945,7 @@ export class FormationScene extends Phaser.Scene {
       const y = startY;
 
       const bg = this.add.graphics();
-      bg.fillStyle(isSelected ? 0x203d31 : 0x181d2d, 0.96);
-      bg.fillRoundedRect(x, y, cardWidth, 122, 10);
-      bg.lineStyle(2, isSelected ? 0x10b981 : 0x344866, 1);
-      bg.strokeRoundedRect(x, y, cardWidth, 122, 10);
+      drawRoundedFrame(bg, x, y, cardWidth, 122, 10, getCommandCardVisualState(isSelected));
       panel.add(bg);
       this.overlayDynamic.push(bg);
 
@@ -1042,8 +1011,8 @@ export class FormationScene extends Phaser.Scene {
     this.overlayDynamic.push(hint);
 
     const closeBtn = new UIButton(this, {
-      x: 640 - 136,
-      y: 280 - 72,
+      x: FORMATION_LAYOUT.overlays.command.width - 136,
+      y: FORMATION_LAYOUT.overlays.command.height - 72,
       width: 120,
       height: 42,
       label: '닫기',
@@ -1056,7 +1025,11 @@ export class FormationScene extends Phaser.Scene {
 
   private openPresetOverlay(): void {
     this.overlayMode = 'preset';
-    const contentY = this.createOverlay('편성 프리셋', 560, 240);
+    const contentY = this.createOverlay(
+      '편성 프리셋',
+      FORMATION_LAYOUT.overlays.preset.width,
+      FORMATION_LAYOUT.overlays.preset.height,
+    );
     const panel = this.overlayPanel;
     if (!panel) return;
 
@@ -1150,8 +1123,8 @@ export class FormationScene extends Phaser.Scene {
 
   private openCardEditorOverlay(char: CharacterDefinition): void {
     this.overlayMode = 'card';
-    const overlayWidth = 1080;
-    const overlayHeight = 670;
+    const overlayWidth = FORMATION_LAYOUT.overlays.cardEditor.width;
+    const overlayHeight = FORMATION_LAYOUT.overlays.cardEditor.height;
     const contentY = this.createOverlay('카드 편집', overlayWidth, overlayHeight);
     const panel = this.overlayPanel;
     if (!panel) return;
