@@ -83,15 +83,6 @@ export class RewardScene extends Phaser.Scene {
     bg.fillRoundedRect(54, 54, GAME_WIDTH - 108, 120, 12);
     bg.lineStyle(1, 0x36527d, 0.5);
     bg.lineBetween(72, 186, GAME_WIDTH - 72, 186);
-
-    drawRoundedFrame(bg, 86, 528, GAME_WIDTH - 172, 96, 16, {
-      backgroundColor: 0x161f33,
-      borderColor: 0x31486f,
-      borderWidth: 2,
-      alpha: 0.94,
-    });
-    bg.fillStyle(0x22304d, 0.16);
-    bg.fillRoundedRect(102, 540, GAME_WIDTH - 204, 20, 8);
   }
 
   // ── 골드 + 스테이지 ──

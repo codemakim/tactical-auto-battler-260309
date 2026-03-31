@@ -11,7 +11,9 @@ export interface RewardFooterLayout {
   proceedLabelY: number;
 }
 
-const CARD_SPREAD_X = 158;
+const CARD_WIDTH = 168;
+const CARD_GAP = 18;
+const CARD_SPREAD_X = CARD_WIDTH + CARD_GAP;
 
 export function getRewardCardSlots(cardCount: number, centerX: number, baseY: number): RewardCardSlotLayout[] {
   if (cardCount <= 0) {

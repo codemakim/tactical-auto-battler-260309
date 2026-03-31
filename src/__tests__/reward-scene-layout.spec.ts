@@ -12,6 +12,10 @@ describe('RewardSceneLayout', () => {
     expect(slots[3].x).toBeLessThan(slots[4].x);
 
     expect(slots[2].x).toBe(640);
+    expect(slots[1].x - slots[0].x).toBe(186);
+    expect(slots[2].x - slots[1].x).toBe(186);
+    expect(slots[3].x - slots[2].x).toBe(186);
+    expect(slots[4].x - slots[3].x).toBe(186);
     expect(slots.every((slot) => slot.y === 270)).toBe(true);
     expect(slots.every((slot) => slot.rotation === 0)).toBe(true);
   });
