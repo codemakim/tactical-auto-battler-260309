@@ -284,6 +284,20 @@
 이 단계에서는 Scene 분할까지는 하지 않고,
 다음 패스에서 `Roster / Board / HUD / Overlay` 뷰 클래스로 나누는 것을 목표로 한다.
 
+### Step 7. 구조 리팩터링 2차
+
+- `FormationSceneOverlays.ts`로 `COMMAND / PRESET / CARD EDITOR` 오버레이 수명주기와 렌더링 이동
+- `FormationScene`는 오버레이 상세 구현 대신 콜백과 상태 연결만 담당
+- 오버레이 크기/카드 배치 값은 `FormationSceneLayout.ts`의 `overlays` 아래로 정리
+
+다음 패스의 목표:
+
+- `FormationRosterView`
+- `FormationBoardView`
+- `FormationHudView`
+
+즉 메인 장면은 `view orchestration`만 남기는 것.
+
 ### Step 5. 마감
 
 - 선택 상태, hover, remove 버튼 정리

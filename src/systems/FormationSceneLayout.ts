@@ -84,9 +84,9 @@ export const FORMATION_LAYOUT = {
     deployX: 1080,
   },
   overlays: {
-    command: { width: 640, height: 280 },
-    preset: { width: 560, height: 240 },
-    cardEditor: { width: 1080, height: 670 },
+    command: { width: 640, height: 280, cardWidth: 182, cardGap: 18 },
+    preset: { width: 560, height: 240, slotButtonWidth: 150 },
+    cardEditor: { width: 1080, height: 670, cardWidth: 188, cardHeight: 246, cardGap: 26 },
   },
 } as const;
 
