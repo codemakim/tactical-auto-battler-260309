@@ -11,11 +11,13 @@ describe('RewardSceneLayout', () => {
     expect(slots[2].x).toBeLessThan(slots[3].x);
     expect(slots[3].x).toBeLessThan(slots[4].x);
 
-    expect(slots[2].x).toBe(640);
+    expect(slots[0].x).toBe(184);
+    expect(slots[4].x).toBe(928);
     expect(slots[1].x - slots[0].x).toBe(186);
     expect(slots[2].x - slots[1].x).toBe(186);
     expect(slots[3].x - slots[2].x).toBe(186);
     expect(slots[4].x - slots[3].x).toBe(186);
+    expect(slots[0].x).toBe(1280 - (slots[4].x + 168));
     expect(slots.every((slot) => slot.y === 270)).toBe(true);
     expect(slots.every((slot) => slot.rotation === 0)).toBe(true);
   });
@@ -23,7 +25,7 @@ describe('RewardSceneLayout', () => {
   it('1장일 때는 중앙에 수평 배치한다', () => {
     const slots = getRewardCardSlots(1, 640, 270);
 
-    expect(slots).toEqual([{ x: 640, y: 270, rotation: 0 }]);
+    expect(slots).toEqual([{ x: 556, y: 270, rotation: 0 }]);
   });
 
   it('푸터 버튼이 중앙 프레임 안쪽 정렬을 유지한다', () => {

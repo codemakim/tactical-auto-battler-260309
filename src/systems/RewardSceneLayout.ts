@@ -20,12 +20,12 @@ export function getRewardCardSlots(cardCount: number, centerX: number, baseY: nu
     return [];
   }
 
-  const middleIndex = (cardCount - 1) / 2;
+  const totalWidth = cardCount * CARD_WIDTH + (cardCount - 1) * CARD_GAP;
+  const startX = Math.round(centerX - totalWidth / 2);
 
   return Array.from({ length: cardCount }, (_, index) => {
-    const offset = index - middleIndex;
     return {
-      x: centerX + offset * CARD_SPREAD_X,
+      x: startX + index * CARD_SPREAD_X,
       y: baseY,
       rotation: 0,
     };

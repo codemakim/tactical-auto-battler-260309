@@ -322,6 +322,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] Reward→Formation→RunMap 다음 스테이지 루프 정리 (Codex, 2026-03-31)
 - [x] RewardScene 브리핑형 UI 리디자인 (Codex, 2026-03-31)
 - [x] RewardScene 카드 평면 레이아웃 + 풋터 패널 정리 (Codex, 2026-03-31)
+- [x] RewardScene 카드열 중심축/좌우 마진 정렬 보정 (Codex, 2026-03-31)
 - [x] 배속 조절 (1x / 2x / 스킵, Codex, 2026-03-30)
 - [x] 리트라이 흐름 (패배 → 리트라이 → 편성 복귀, Claude/Codex, 2026-03-30)
 

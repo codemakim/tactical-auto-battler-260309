@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: RewardScene 카드 평면 레이아웃/풋터 정리
+- 최근 완료: RewardScene 카드열 중심축 정렬 보정
 - 다음 작업 미정
 
 ## Source Specs
@@ -51,7 +51,7 @@
 - SaveData에 `runState`를 포함하고, CONTINUE가 활성 런이면 RunMapScene으로 복귀하도록 수정 (Codex)
 - RewardScene 다음 진행을 순수 전이 헬퍼로 분리하고, 다음 스테이지는 FormationScene을 거쳐 RunMap으로 복귀하도록 수정 (Codex)
 - RewardScene 헤더/버튼/빈 상태 카피를 게임형 브리핑 표현으로 재구성 (Codex)
-- RewardScene 카드를 평면 카드열로 정렬하고, 선택 풋터 패널을 프레임 안쪽으로 정리 (Codex)
+- RewardScene 카드열 외곽 좌우 마진을 대칭으로 보정하고, 하단 버튼을 같은 중심축으로 정렬 (Codex)
 
 ## Next
 
