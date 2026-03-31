@@ -225,12 +225,21 @@
 - 1차 완료: `FormationSceneLayout`, `FormationSceneStyles`, `FormationGraphics` 추출
 - 2차 완료: `FormationSceneOverlays` 추출로 `COMMAND / PRESET / CARD EDITOR` 오버레이 분리
 - 3차 완료: `FormationBoardView`, `FormationBoardState` 추출로 보드 렌더링/존 캐릭터 계산을 Scene 밖으로 이동
+- 4차 완료: `FormationRosterView`, `FormationHudView`, `FormationRosterState`, `FormationHudState` 추출로 좌측 리스트/HUD 표시 책임 분리
 
 ### 3차 정리 범위
 
 - `TACTICAL BOARD` 타이틀, 라인 스트립, 빈 슬롯 마커 렌더링을 `FormationBoardView`로 이동
 - 존별 배치 캐릭터 계산을 `FormationBoardState.getCharactersInBoardZone()`로 이동
 - `FormationScene`은 보드 클릭/선택/제거 이벤트 연결과 전체 refresh orchestration만 담당
+
+### 4차 정리 범위
+
+- 로스터 아이템 렌더링과 hover/select 처리를 `FormationRosterView`로 이동
+- HUD 텍스트 렌더링을 `FormationHudView`로 이동
+- 선택/편성 여부 계산을 `buildFormationRosterEntries()`로 이동
+- 영웅 HUD/선택 유닛 HUD 문구 조합을 `FormationHudState`로 이동
+- `FormationScene` 본문을 612줄 → 461줄로 축소
 
 ### 다음 분리 후보
 

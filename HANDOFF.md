@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: FormationScene 구조 정리 3차 (BoardView / BoardState 분리)
+- 최근 완료: FormationScene 구조 정리 4차 (RosterView / HudView 분리)
 - 다음 작업 미정
 
 ## Source Specs
@@ -46,12 +46,13 @@
 - FormationSceneLayout / FormationSceneStyles / FormationGraphics 분리로 Scene 구조 정리 1차 완료 (Codex)
 - FormationSceneOverlays 분리로 COMMAND / PRESET / CARD EDITOR 오버레이를 Scene 밖으로 이동 (Codex)
 - FormationBoardView / FormationBoardState 분리로 보드 렌더링과 존 캐릭터 계산을 Scene 밖으로 이동 (Codex)
+- FormationRosterView / FormationHudView / FormationRosterState / FormationHudState 분리로 로스터/HUD 책임을 Scene 밖으로 이동 (Codex)
 
 ## Next
 
 다음 작업 미정.
 
-- 추천 후속: `FormationRosterView` 또는 `FormationHudView` 분리로 FormationScene 메인 뷰 3분할 마무리
+- 추천 후속: FormationScene 리팩터링은 여기서 멈춰도 됨. 다음은 실제 기능 우선순위로 복귀
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1

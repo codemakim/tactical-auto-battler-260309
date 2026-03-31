@@ -12,7 +12,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/GameConfig';
 import { UITheme } from '../ui/UITheme';
-import { UIPanel } from '../ui/UIPanel';
 import { UIToast } from '../ui/UIToast';
 import { UIButton } from '../ui/UIButton';
 import { UIModal } from '../ui/UIModal';
@@ -32,24 +31,21 @@ import {
 import { canAddToZone, validateFormation } from '../systems/FormationValidator';
 import { getFormationPanelLabels } from '../systems/FormationPresentation';
 import { FORMATION_LAYOUT } from '../systems/FormationSceneLayout';
-import { getRosterItemVisualState } from '../systems/FormationSceneStyles';
 import { drawRoundedFrame } from '../ui/FormationGraphics';
 import { FormationSceneOverlays } from '../systems/FormationSceneOverlays';
 import { getCharactersInBoardZone } from '../systems/FormationBoardState';
 import { FormationBoardView } from '../ui/FormationBoardView';
+import { FormationRosterView } from '../ui/FormationRosterView';
+import { FormationHudView } from '../ui/FormationHudView';
 
 export class FormationScene extends Phaser.Scene {
-  private rosterPanel!: UIPanel;
-  private rosterItems: Phaser.GameObjects.Container[] = [];
   private selectedActionSlot: number | null = null;
   private selectedRosterCharId: string | null = null;
   private toast!: UIToast;
-  private currentHeroText!: Phaser.GameObjects.Text;
-  private selectedUnitTitle!: Phaser.GameObjects.Text;
-  private selectedUnitMeta!: Phaser.GameObjects.Text;
-  private selectedUnitTactics!: Phaser.GameObjects.Text;
   private overlays!: FormationSceneOverlays;
   private boardView!: FormationBoardView;
+  private rosterView!: FormationRosterView;
+  private hudView!: FormationHudView;
 
   private isRetry = false;
   private flowContext: FormationFlowContext = 'TOWN';
@@ -62,7 +58,6 @@ export class FormationScene extends Phaser.Scene {
   create(data?: FormationSceneData): void {
     this.selectedRosterCharId = null;
     this.selectedActionSlot = null;
-    this.rosterItems = [];
     this.isRetry = data?.isRetry ?? false;
     this.defeatedByEnemies = data?.defeatedByEnemies ?? [];
     this.flowContext = resolveFormationFlowContext({
@@ -74,10 +69,21 @@ export class FormationScene extends Phaser.Scene {
     this.drawBackground();
     this.drawTopBar();
     if (this.isRetry) this.drawRetryBanner();
-    this.createRosterPanel();
-    this.createBoardHud();
+
+    this.rosterView = new FormationRosterView(this, {
+      getCharacters: () => gameState.characters,
+      getFormationIds: () => new Set(gameState.getFormationCharacterIds()),
+      getSelectedCharacterId: () => this.selectedRosterCharId,
+      onSelect: (char) => this.onRosterClick(char),
+    });
+    this.rosterView.create();
+
+    this.hudView = new FormationHudView(this);
+    this.hudView.create();
+
     this.createBottomButtons();
     this.toast = new UIToast(this, { y: GAME_HEIGHT - 110, duration: 2500 });
+
     this.overlays = new FormationSceneOverlays(this, {
       getSelectedActionSlot: () => this.selectedActionSlot,
       showToast: (message) => this.toast.show(message),
@@ -87,6 +93,7 @@ export class FormationScene extends Phaser.Scene {
       onSwapSlots: (char, indexA, indexB) => this.onSwapSlots(char, indexA, indexB),
       onInventoryCardClick: (char, card) => this.onInventoryCardClick(char, card),
     });
+
     this.boardView = new FormationBoardView(this, {
       getCharactersInZone: (zoneKey) => this.getCharactersInZone(zoneKey),
       onZoneClick: (zone) => this.onZoneClick(zone),
@@ -196,109 +203,8 @@ export class FormationScene extends Phaser.Scene {
     });
   }
 
-  private createRosterPanel(): void {
-    const labels = getFormationPanelLabels();
-    this.rosterPanel = new UIPanel(this, {
-      x: FORMATION_LAYOUT.rosterPanel.x,
-      y: FORMATION_LAYOUT.rosterPanel.y,
-      width: FORMATION_LAYOUT.rosterPanel.width,
-      height: GAME_HEIGHT - 130,
-      title: labels.roster,
-      bgColor: 0x171a2b,
-      borderColor: 0x3b4f74,
-      bgAlpha: 0.98,
-    });
-  }
-
   private refreshRoster(): void {
-    for (const item of this.rosterItems) item.destroy();
-    this.rosterItems = [];
-
-    const characters = gameState.characters;
-    const formationIds = new Set(gameState.getFormationCharacterIds());
-    const startY = this.rosterPanel.contentY + FORMATION_LAYOUT.rosterItem.startY;
-    const itemH = FORMATION_LAYOUT.rosterItem.rowGap;
-
-    for (let i = 0; i < characters.length; i++) {
-      const char = characters[i];
-      const isAssigned = formationIds.has(char.id);
-      const isSelected = char.id === this.selectedRosterCharId;
-      const item = this.createRosterItem(
-        char,
-        isAssigned,
-        isSelected,
-        FORMATION_LAYOUT.rosterItem.startX,
-        startY + i * itemH,
-      );
-      this.rosterPanel.add(item);
-      this.rosterItems.push(item);
-    }
-  }
-
-  private createRosterItem(
-    char: CharacterDefinition,
-    isAssigned: boolean,
-    isSelected: boolean,
-    x: number,
-    y: number,
-  ): Phaser.GameObjects.Container {
-    const container = this.add.container(x, y);
-    const w = FORMATION_LAYOUT.rosterItem.width;
-    const h = FORMATION_LAYOUT.rosterItem.height;
-
-    const bg = this.add.graphics();
-    const baseState = getRosterItemVisualState({ isSelected, isAssigned });
-    drawRoundedFrame(bg, 0, 0, w, h, FORMATION_LAYOUT.rosterItem.radius, baseState);
-    container.add(bg);
-
-    const classShort = char.characterClass.substring(0, 3);
-    container.add(this.add.text(8, 6, classShort, { ...UITheme.font.small, color: '#6688aa' }).setFontSize(11));
-
-    container.add(
-      this.add.text(8, 22, char.name, {
-        ...UITheme.font.label,
-        color: isAssigned ? UITheme.colors.textAccent : UITheme.colors.textPrimary,
-      }),
-    );
-
-    const stats = char.baseStats;
-    container.add(
-      this.add
-        .text(w - 8, 14, `HP${stats.hp} A${stats.atk} G${stats.grd} S${stats.agi}`, {
-          ...UITheme.font.small,
-          color: '#666688',
-        })
-        .setOrigin(1, 0)
-        .setFontSize(10),
-    );
-
-    if (isAssigned) {
-      container.add(
-        this.add
-          .text(w - 8, 32, '편성됨', { ...UITheme.font.small, color: '#4488cc' })
-          .setOrigin(1, 0)
-          .setFontSize(10),
-      );
-    }
-
-    const hitArea = this.add.rectangle(w / 2, h / 2, w, h, 0x000000, 0).setInteractive({ useHandCursor: true });
-    container.add(hitArea);
-
-    hitArea.on('pointerover', () => {
-      drawRoundedFrame(bg, 0, 0, w, h, FORMATION_LAYOUT.rosterItem.radius, {
-        backgroundColor: 0x2a2a4a,
-        borderColor: UITheme.colors.borderHighlight,
-        borderWidth: 1,
-        alpha: 0.95,
-      });
-    });
-
-    hitArea.on('pointerout', () => {
-      drawRoundedFrame(bg, 0, 0, w, h, FORMATION_LAYOUT.rosterItem.radius, baseState);
-    });
-
-    hitArea.on('pointerdown', () => this.onRosterClick(char));
-    return container;
+    this.rosterView.refresh();
   }
 
   private onRosterClick(char: CharacterDefinition): void {
@@ -347,7 +253,7 @@ export class FormationScene extends Phaser.Scene {
       return;
     }
 
-    let newSlots = formation.slots.filter((s) => s.characterId !== characterId);
+    const newSlots = formation.slots.filter((slot) => slot.characterId !== characterId);
     newSlots.push({ characterId, position: targetPosition });
 
     gameState.setFormation({
@@ -371,7 +277,7 @@ export class FormationScene extends Phaser.Scene {
 
   private removeFromFormation(characterId: string): void {
     const formation = gameState.formation;
-    const newSlots = formation.slots.filter((s) => s.characterId !== characterId);
+    const newSlots = formation.slots.filter((slot) => slot.characterId !== characterId);
     gameState.setFormation({
       slots: newSlots,
       heroType: formation.heroType,
@@ -382,80 +288,23 @@ export class FormationScene extends Phaser.Scene {
     this.refreshAll();
   }
 
-  private createBoardHud(): void {
-    const labels = getFormationPanelLabels();
-    const boardX = FORMATION_LAYOUT.hud.x;
-    const boardY = FORMATION_LAYOUT.hud.y;
-    const boardWidth = FORMATION_LAYOUT.hud.width;
-    const boardHeight = FORMATION_LAYOUT.hud.height;
-
-    const bg = this.add.graphics();
-    drawRoundedFrame(bg, boardX, boardY, boardWidth, boardHeight, FORMATION_LAYOUT.hud.radius, {
-      backgroundColor: 0x14192a,
-      borderColor: 0x33486a,
-      borderWidth: 2,
-      alpha: 0.96,
-    });
-
-    this.add
-      .text(boardX + 18, boardY + 14, labels.command, {
-        fontSize: '11px',
-        fontFamily: UITheme.font.family,
-        color: '#7f95bd',
-      })
-      .setOrigin(0, 0);
-
-    this.currentHeroText = this.add.text(boardX + 18, boardY + 34, '', {
-      fontSize: '18px',
-      fontFamily: UITheme.font.family,
-      color: UITheme.colors.textPrimary,
-    });
-
-    this.selectedUnitTitle = this.add.text(boardX + 18, boardY + 72, 'UNIT', {
-      ...UITheme.font.label,
-      color: '#7f95bd',
-    });
-
-    this.selectedUnitMeta = this.add.text(boardX + 96, boardY + 72, '', {
-      ...UITheme.font.small,
-      color: UITheme.colors.textPrimary,
-    });
-
-    this.selectedUnitTactics = this.add.text(boardX + 18, boardY + 96, '', {
-      ...UITheme.font.small,
-      color: '#9fb3d8',
-      wordWrap: { width: boardWidth - 36 },
-    });
-  }
-
   private refreshCommandHud(): void {
     const heroType = gameState.formation.heroType;
     const hero = HERO_DEFINITIONS[heroType];
-    if (!hero) {
-      this.currentHeroText.setText('');
-      return;
-    }
-
-    const lockTag = gameState.runState ? '  [LOCKED]' : '';
-    this.currentHeroText.setText(`${hero.name}${lockTag}`);
+    this.hudView.refreshHero(hero?.name ?? null, !!gameState.runState);
   }
 
   private updateSelectionHud(char?: CharacterDefinition): void {
-    if (!char) {
-      this.selectedUnitMeta.setText('선택한 유닛 없음');
-      this.selectedUnitTactics.setText('로스터나 보드에서 유닛을 선택한 뒤 TACTICS에서 행동 카드를 조정하세요.');
-      return;
-    }
+    const zoneLabel = char
+      ? (gameState.formation.slots.find((slot) => slot.characterId === char.id)?.position ?? 'UNASSIGNED')
+      : undefined;
+    const slotData = char ? getSlotDisplayData(char, gameState.runState) : [];
 
-    const stats = char.baseStats;
-    const zoneLabel = gameState.formation.slots.find((slot) => slot.characterId === char.id)?.position ?? 'UNASSIGNED';
-    const slotData = getSlotDisplayData(char, gameState.runState);
-    const actions = slotData.map((slot, index) => `${index + 1}. ${slot.action.name}`).join('   ');
-
-    this.selectedUnitMeta.setText(
-      `${char.name} / ${char.characterClass}  HP ${stats.hp}  ATK ${stats.atk}  GRD ${stats.grd}  AGI ${stats.agi}  LINE ${zoneLabel}`,
-    );
-    this.selectedUnitTactics.setText(actions);
+    this.hudView.refreshSelection({
+      character: char,
+      zoneLabel,
+      actionNames: slotData.map((slot) => slot.action.name),
+    });
   }
 
   private onActionSlotClick(char: CharacterDefinition, slot: SlotDisplayData): void {
@@ -481,7 +330,7 @@ export class FormationScene extends Phaser.Scene {
     if (runState) {
       const newRunState = swapRunActionSlots(runState, char.id, indexA, indexB);
       gameState.setRunState(newRunState);
-      const updatedChar = newRunState.party.find((c) => c.id === char.id) ?? char;
+      const updatedChar = newRunState.party.find((character) => character.id === char.id) ?? char;
       this.updateSelectionHud(updatedChar);
       this.overlays.openCardEditorOverlay(updatedChar);
     } else {

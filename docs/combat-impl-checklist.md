@@ -303,6 +303,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] FormationScene 구조 정리 1차 (레이아웃 상수/스타일/그래픽 헬퍼 분리, Codex, 2026-03-31)
 - [x] FormationScene 구조 정리 2차 (COMMAND/PRESET/CARD EDITOR 오버레이 컨트롤러 분리, Codex, 2026-03-31)
 - [x] FormationScene 구조 정리 3차 (BoardView/BoardState 분리, Codex, 2026-03-31)
+- [x] FormationScene 구조 정리 4차 (RosterView/HudView + 상태 계산 분리, Codex, 2026-03-31)
 
 ### §5. Sortie Select (SortieScene)
 
