@@ -302,6 +302,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] Formation 우측 패널 제거 + COMMAND 오버레이/보드 HUD 중심 재구성 (Codex, 2026-03-30)
 - [x] FormationScene 구조 정리 1차 (레이아웃 상수/스타일/그래픽 헬퍼 분리, Codex, 2026-03-31)
 - [x] FormationScene 구조 정리 2차 (COMMAND/PRESET/CARD EDITOR 오버레이 컨트롤러 분리, Codex, 2026-03-31)
+- [x] FormationScene 구조 정리 3차 (BoardView/BoardState 분리, Codex, 2026-03-31)
 
 ### §5. Sortie Select (SortieScene)
 

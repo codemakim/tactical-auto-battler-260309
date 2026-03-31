@@ -29,20 +29,14 @@ import {
   getFormationTopBarTitle,
   resolveFormationFlowContext,
 } from '../systems/FormationFlow';
-import { calculateRowLayout } from '../systems/UnitLayoutCalculator';
 import { canAddToZone, validateFormation } from '../systems/FormationValidator';
-import { getFormationLanePresentation, getFormationPanelLabels } from '../systems/FormationPresentation';
-import {
-  FORMATION_LAYOUT,
-  FORMATION_SPRITE_MAP,
-  getFormationZones,
-  type ZoneDef,
-} from '../systems/FormationSceneLayout';
-import { getRosterItemVisualState, getUnitCardVisualState } from '../systems/FormationSceneStyles';
-import { drawHorizontalDivider, drawRoundedFrame } from '../ui/FormationGraphics';
+import { getFormationPanelLabels } from '../systems/FormationPresentation';
+import { FORMATION_LAYOUT } from '../systems/FormationSceneLayout';
+import { getRosterItemVisualState } from '../systems/FormationSceneStyles';
+import { drawRoundedFrame } from '../ui/FormationGraphics';
 import { FormationSceneOverlays } from '../systems/FormationSceneOverlays';
-
-const ZONES = getFormationZones();
+import { getCharactersInBoardZone } from '../systems/FormationBoardState';
+import { FormationBoardView } from '../ui/FormationBoardView';
 
 export class FormationScene extends Phaser.Scene {
   private rosterPanel!: UIPanel;
@@ -55,9 +49,7 @@ export class FormationScene extends Phaser.Scene {
   private selectedUnitMeta!: Phaser.GameObjects.Text;
   private selectedUnitTactics!: Phaser.GameObjects.Text;
   private overlays!: FormationSceneOverlays;
-
-  private zoneContainers: Map<string, Phaser.GameObjects.Container> = new Map();
-  private zoneUnitVisuals: Phaser.GameObjects.Container[] = [];
+  private boardView!: FormationBoardView;
 
   private isRetry = false;
   private flowContext: FormationFlowContext = 'TOWN';
@@ -71,8 +63,6 @@ export class FormationScene extends Phaser.Scene {
     this.selectedRosterCharId = null;
     this.selectedActionSlot = null;
     this.rosterItems = [];
-    this.zoneContainers = new Map();
-    this.zoneUnitVisuals = [];
     this.isRetry = data?.isRetry ?? false;
     this.defeatedByEnemies = data?.defeatedByEnemies ?? [];
     this.flowContext = resolveFormationFlowContext({
@@ -85,7 +75,6 @@ export class FormationScene extends Phaser.Scene {
     this.drawTopBar();
     if (this.isRetry) this.drawRetryBanner();
     this.createRosterPanel();
-    this.createZones();
     this.createBoardHud();
     this.createBottomButtons();
     this.toast = new UIToast(this, { y: GAME_HEIGHT - 110, duration: 2500 });
@@ -98,6 +87,13 @@ export class FormationScene extends Phaser.Scene {
       onSwapSlots: (char, indexA, indexB) => this.onSwapSlots(char, indexA, indexB),
       onInventoryCardClick: (char, card) => this.onInventoryCardClick(char, card),
     });
+    this.boardView = new FormationBoardView(this, {
+      getCharactersInZone: (zoneKey) => this.getCharactersInZone(zoneKey),
+      onZoneClick: (zone) => this.onZoneClick(zone),
+      onUnitSelect: (char) => this.onBoardUnitSelect(char),
+      onRemoveUnit: (charId) => this.removeFromFormation(charId),
+    });
+    this.boardView.create();
     this.refreshAll();
   }
 
@@ -321,109 +317,7 @@ export class FormationScene extends Phaser.Scene {
     this.toast.show(`${char.name} 선택됨 — 영역을 클릭해 배치하세요`);
   }
 
-  private createZones(): void {
-    this.add
-      .text(
-        FORMATION_LAYOUT.board.x + FORMATION_LAYOUT.board.width / 2,
-        FORMATION_LAYOUT.board.y - 34,
-        'TACTICAL BOARD',
-        {
-          ...UITheme.font.small,
-          color: '#6d7fa5',
-        },
-      )
-      .setOrigin(0.5)
-      .setFontSize(12);
-
-    for (const zone of ZONES) {
-      this.createZoneVisual(zone);
-    }
-  }
-
-  private createZoneVisual(zone: ZoneDef): void {
-    const container = this.add.container(zone.x, zone.y);
-    const lane = getFormationLanePresentation(zone.key);
-
-    const bg = this.add.graphics();
-    drawRoundedFrame(bg, 0, 0, zone.width, zone.height, 12, {
-      backgroundColor: lane.glowColor,
-      borderColor: lane.accentColor,
-      borderWidth: 2,
-      alpha: 0.45,
-    });
-    drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.06);
-    container.add(bg);
-
-    for (let i = 0; i < zone.maxUnits; i++) {
-      const slotX = 28 + i * ((zone.width - 56) / (zone.maxUnits - 1));
-      const marker = this.add.graphics();
-      drawRoundedFrame(marker, slotX - 36, 56, 72, 88, 10, {
-        backgroundColor: 0x101522,
-        borderColor: lane.accentColor,
-        borderWidth: 1,
-        alpha: 0.34,
-      });
-      container.add(marker);
-    }
-
-    container.add(
-      this.add
-        .text(18, 14, lane.title, {
-          fontSize: '18px',
-          fontFamily: UITheme.font.family,
-          color: `#${lane.accentColor.toString(16).padStart(6, '0')}`,
-        })
-        .setOrigin(0, 0),
-    );
-
-    container.add(
-      this.add
-        .text(zone.width - 18, 18, lane.caption, { ...UITheme.font.small, color: '#7d8fb0' })
-        .setOrigin(1, 0)
-        .setFontSize(10),
-    );
-
-    const emptyText = this.add
-      .text(zone.width / 2, zone.height / 2 + 6, 'EMPTY', {
-        ...UITheme.font.small,
-        color: '#334455',
-        align: 'center',
-      })
-      .setOrigin(0.5)
-      .setFontSize(12);
-    container.add(emptyText);
-    container.setData('emptyText', emptyText);
-
-    const hitArea = this.add
-      .rectangle(zone.width / 2, zone.height / 2, zone.width, zone.height, 0x000000, 0)
-      .setInteractive({ useHandCursor: true });
-    container.add(hitArea);
-
-    hitArea.on('pointerover', () => {
-      drawRoundedFrame(bg, 0, 0, zone.width, zone.height, 12, {
-        backgroundColor: lane.glowColor,
-        borderColor: lane.accentColor,
-        borderWidth: 2,
-        alpha: 0.62,
-      });
-      drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.08);
-    });
-
-    hitArea.on('pointerout', () => {
-      drawRoundedFrame(bg, 0, 0, zone.width, zone.height, 12, {
-        backgroundColor: lane.glowColor,
-        borderColor: lane.accentColor,
-        borderWidth: 2,
-        alpha: 0.45,
-      });
-      drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.06);
-    });
-
-    hitArea.on('pointerdown', () => this.onZoneClick(zone));
-    this.zoneContainers.set(zone.key, container);
-  }
-
-  private onZoneClick(zone: ZoneDef): void {
+  private onZoneClick(zone: { key: 'FRONT' | 'BACK' }): void {
     if (!this.selectedRosterCharId) {
       const charsInZone = this.getCharactersInZone(zone.key);
       if (charsInZone.length > 0) {
@@ -441,12 +335,7 @@ export class FormationScene extends Phaser.Scene {
   }
 
   private getCharactersInZone(zoneKey: string): CharacterDefinition[] {
-    const formation = gameState.formation;
-    const position = zoneKey === 'FRONT' ? Position.FRONT : Position.BACK;
-    return formation.slots
-      .filter((s) => s.characterId && s.position === position)
-      .map((s) => gameState.getCharacter(s.characterId))
-      .filter((c): c is CharacterDefinition => !!c);
+    return getCharactersInBoardZone(gameState.formation, gameState.characters, zoneKey as 'FRONT' | 'BACK');
   }
 
   private assignToZone(zoneKey: 'FRONT' | 'BACK', characterId: string): void {
@@ -472,121 +361,12 @@ export class FormationScene extends Phaser.Scene {
     this.toast.show(`${charName} → ${zoneKey} 배치 완료!`);
   }
 
-  private refreshZones(): void {
-    for (const visual of this.zoneUnitVisuals) visual.destroy();
-    this.zoneUnitVisuals = [];
-
-    for (const zone of ZONES) {
-      const container = this.zoneContainers.get(zone.key);
-      if (!container) continue;
-
-      const emptyText = container.getData('emptyText') as Phaser.GameObjects.Text;
-      const charsInZone = this.getCharactersInZone(zone.key);
-      emptyText.setVisible(charsInZone.length === 0);
-      if (charsInZone.length === 0) continue;
-
-      const unitIds = charsInZone.map((c) => c.id);
-      const positions = calculateRowLayout(unitIds, {
-        xMin: 56,
-        xMax: zone.width - 56,
-        rowY: zone.height / 2 + 6,
-        maxSlots: zone.maxUnits,
-      });
-
-      for (let i = 0; i < charsInZone.length; i++) {
-        const unitVisual = this.createUnitInZone(charsInZone[i], positions[i].x, positions[i].y, zone);
-        container.add(unitVisual);
-        this.zoneUnitVisuals.push(unitVisual);
-      }
-    }
-  }
-
-  private createUnitInZone(
-    char: CharacterDefinition,
-    x: number,
-    y: number,
-    zone: ZoneDef,
-  ): Phaser.GameObjects.Container {
-    const container = this.add.container(x, y);
-    const w = FORMATION_LAYOUT.unitCard.width;
-    const h = FORMATION_LAYOUT.unitCard.height;
-
-    const bg = this.add.graphics();
-    drawRoundedFrame(bg, -w / 2, -h / 2, w, h, FORMATION_LAYOUT.unitCard.radius, getUnitCardVisualState(false));
-    container.add(bg);
-
-    container.add(
-      this.add
-        .text(-w / 2 + 10, -h / 2 + 10, char.characterClass.substring(0, 3), {
-          ...UITheme.font.small,
-          color: '#6688aa',
-        })
-        .setOrigin(0, 0)
-        .setFontSize(9),
-    );
-
-    const spriteInfo = FORMATION_SPRITE_MAP[char.characterClass];
-    if (spriteInfo) {
-      container.add(
-        this.add
-          .sprite(0, -8, spriteInfo.texture, spriteInfo.idleFrame)
-          .setScale(spriteInfo.scale * FORMATION_LAYOUT.unitCard.spriteScaleMultiplier)
-          .setOrigin(0.5, 0.5),
-      );
-    }
-
-    const nameText = this.add
-      .text(0, 20, char.name, { ...UITheme.font.label, color: UITheme.colors.textPrimary })
-      .setOrigin(0.5);
-    nameText.setFontSize(10);
-    container.add(nameText);
-
-    const s = char.baseStats;
-    container.add(
-      this.add
-        .text(0, 35, `HP${s.hp} A${s.atk}`, { ...UITheme.font.small, color: '#666688' })
-        .setOrigin(0.5)
-        .setFontSize(8),
-    );
-
-    const removeBtn = this.add
-      .text(w / 2 - 4, -h / 2 + 4, '×', {
-        fontSize: '12px',
-        fontFamily: UITheme.font.family,
-        color: '#aa4444',
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true });
-    container.add(removeBtn);
-
-    removeBtn.on('pointerover', () => removeBtn.setColor('#ff6666'));
-    removeBtn.on('pointerout', () => removeBtn.setColor('#aa4444'));
-    removeBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      pointer.event.stopPropagation();
-      this.removeFromFormation(char.id);
-    });
-
-    const hitArea = this.add.rectangle(0, 0, w, h, 0x000000, 0).setInteractive({ useHandCursor: true });
-    container.add(hitArea);
-
-    hitArea.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      pointer.event.stopPropagation();
-      this.selectedRosterCharId = char.id;
-      this.selectedActionSlot = null;
-      this.refreshRoster();
-      this.updateSelectionHud(char);
-      this.toast.show(`${char.name} 선택됨 — 다른 영역을 클릭해 이동하세요`);
-    });
-
-    hitArea.on('pointerover', () => {
-      drawRoundedFrame(bg, -w / 2, -h / 2, w, h, FORMATION_LAYOUT.unitCard.radius, getUnitCardVisualState(true));
-    });
-
-    hitArea.on('pointerout', () => {
-      drawRoundedFrame(bg, -w / 2, -h / 2, w, h, FORMATION_LAYOUT.unitCard.radius, getUnitCardVisualState(false));
-    });
-
-    return container;
+  private onBoardUnitSelect(char: CharacterDefinition): void {
+    this.selectedRosterCharId = char.id;
+    this.selectedActionSlot = null;
+    this.refreshRoster();
+    this.updateSelectionHud(char);
+    this.toast.show(`${char.name} 선택됨 — 다른 영역을 클릭해 이동하세요`);
   }
 
   private removeFromFormation(characterId: string): void {
@@ -825,7 +605,7 @@ export class FormationScene extends Phaser.Scene {
 
   private refreshAll(): void {
     this.refreshRoster();
-    this.refreshZones();
+    this.boardView.refresh();
     this.refreshCommandHud();
     this.updateSelectionHud(this.getSelectedCharacter() ?? undefined);
   }

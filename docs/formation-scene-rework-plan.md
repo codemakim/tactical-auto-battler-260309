@@ -220,6 +220,25 @@
 
 ---
 
+## 6. 구조 정리 진행 상태
+
+- 1차 완료: `FormationSceneLayout`, `FormationSceneStyles`, `FormationGraphics` 추출
+- 2차 완료: `FormationSceneOverlays` 추출로 `COMMAND / PRESET / CARD EDITOR` 오버레이 분리
+- 3차 완료: `FormationBoardView`, `FormationBoardState` 추출로 보드 렌더링/존 캐릭터 계산을 Scene 밖으로 이동
+
+### 3차 정리 범위
+
+- `TACTICAL BOARD` 타이틀, 라인 스트립, 빈 슬롯 마커 렌더링을 `FormationBoardView`로 이동
+- 존별 배치 캐릭터 계산을 `FormationBoardState.getCharactersInBoardZone()`로 이동
+- `FormationScene`은 보드 클릭/선택/제거 이벤트 연결과 전체 refresh orchestration만 담당
+
+### 다음 분리 후보
+
+- `FormationRosterView`
+- `FormationHudView`
+
+---
+
 ## 6. 영웅 선택 확장 대비
 
 사용자 요구:
