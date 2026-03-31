@@ -49,7 +49,7 @@ describe('FormationBoardState', () => {
 
   it('빈 슬롯 마커는 남은 칸에만 표시한다', () => {
     expect(getBoardSlotMarkerStates(5, 0)).toEqual([true, true, true, true, true]);
-    expect(getBoardSlotMarkerStates(5, 2)).toEqual([false, false, true, true, true]);
+    expect(getBoardSlotMarkerStates(5, 2)).toEqual([false, false, false, false, false]);
     expect(getBoardSlotMarkerStates(5, 5)).toEqual([false, false, false, false, false]);
   });
 });

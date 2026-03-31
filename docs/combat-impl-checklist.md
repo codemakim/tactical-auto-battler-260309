@@ -283,7 +283,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] 출격 게이트 (Sortie Gate) → 출격 선택 이동
 - [x] 골드 표시 (상단, Codex, 2026-03-30)
 - [x] 영웅 정보 표시 (상단, Codex, 2026-03-30)
-- [ ] 세이브/로드
+- [x] 세이브/로드 (LocalStorage MVP + 타이틀 분기/삭제 UX, Codex, 2026-03-30)
 
 ### §4. Formation (FormationScene)
 
@@ -319,8 +319,8 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] BattleScene — 전투 엔진 시각화, 턴 큐, HP바, 영웅 개입 버튼
 - [x] RewardScene — 카드 5장 선택, 골드 표시, 객원 수락/거절
 - [x] 런 중 편성 조정 (RunMap→Formation→RunMap 왕복 확인, Codex, 2026-03-30)
-- [ ] 배속 조절 (1x / 2x / 스킵)
-- [ ] 리트라이 흐름 (패배 → 리트라이 → 편성 복귀)
+- [x] 배속 조절 (1x / 2x / 스킵, Codex, 2026-03-30)
+- [x] 리트라이 흐름 (패배 → 리트라이 → 편성 복귀, Claude/Codex, 2026-03-30)
 
 ### §7. Run Result (RunResultScene)
 
@@ -342,8 +342,8 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 ## 교차 관심사 (Cross-Cutting)
 
 ### UI 연출
-- [ ] 행동 후 즉시 턴 인디케이터 갱신
-- [ ] 히어로 개입 UI 상태 (READY/QUEUED/USED) 렌더링
+- [x] 행동 후 즉시 턴 인디케이터 갱신 (Codex, 2026-03-30)
+- [x] 히어로 개입 UI 상태 (READY/QUEUED/USED) 렌더링 (Codex, 2026-03-30)
 - [x] 전투 템포 (액션 0.6~0.8s, 결과 0.2s, 다음 액션 0.4~0.6s, Codex, 2026-03-30)
 - [x] 배속 조절 (1x / 2x / 스킵, Codex, 2026-03-30)
 
@@ -355,4 +355,4 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 ## 테스트 현황
 
-- 48개 테스트 파일, 690개 테스트 전체 통과 (2026-03-30 기준)
+- 67개 테스트 파일, 744개 테스트 전체 통과 (2026-03-31 기준)

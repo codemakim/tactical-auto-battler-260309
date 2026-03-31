@@ -17,5 +17,5 @@ export function getCharactersInBoardZone(
 }
 
 export function getBoardSlotMarkerStates(maxSlots: number, occupiedCount: number): boolean[] {
-  return Array.from({ length: maxSlots }, (_, index) => index >= occupiedCount);
+  return Array.from({ length: maxSlots }, () => occupiedCount === 0);
 }
