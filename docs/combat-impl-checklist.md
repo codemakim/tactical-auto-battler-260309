@@ -319,6 +319,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] BattleScene — 전투 엔진 시각화, 턴 큐, HP바, 영웅 개입 버튼
 - [x] RewardScene — 카드 5장 선택, 골드 표시, 객원 수락/거절
 - [x] 런 중 편성 조정 (RunMap→Formation→RunMap 왕복 확인, Codex, 2026-03-30)
+- [x] Reward→Formation→RunMap 다음 스테이지 루프 정리 (Codex, 2026-03-31)
 - [x] 배속 조절 (1x / 2x / 스킵, Codex, 2026-03-30)
 - [x] 리트라이 흐름 (패배 → 리트라이 → 편성 복귀, Claude/Codex, 2026-03-30)
 
@@ -355,4 +356,4 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 ## 테스트 현황
 
-- 67개 테스트 파일, 745개 테스트 전체 통과 (2026-03-31 기준)
+- 68개 테스트 파일, 748개 테스트 전체 통과 (2026-03-31 기준)

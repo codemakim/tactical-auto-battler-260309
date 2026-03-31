@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: 런 진행도 영속 저장 (`runState` 저장/로드, CONTINUE→RunMap)
+- 최근 완료: Reward → Formation → RunMap 다음 스테이지 루프 정리
 - 다음 작업 미정
 
 ## Source Specs
@@ -49,12 +49,13 @@
 - FormationRosterView / FormationHudView / FormationRosterState / FormationHudState 분리로 로스터/HUD 책임을 Scene 밖으로 이동 (Codex)
 - Formation HUD를 우측 상태 패널로 이동, 버튼 행 Y 보정, 빈 슬롯 마커를 남은 칸에만 표시하도록 수정 (Codex)
 - SaveData에 `runState`를 포함하고, CONTINUE가 활성 런이면 RunMapScene으로 복귀하도록 수정 (Codex)
+- RewardScene 다음 진행을 순수 전이 헬퍼로 분리하고, 다음 스테이지는 FormationScene을 거쳐 RunMap으로 복귀하도록 수정 (Codex)
 
 ## Next
 
 다음 작업 미정.
 
-- 추천 후속: RewardScene → 다음 스테이지/편성/RunMap 루프 점검 또는 HeroAI 작업
+- 추천 후속: RewardScene UI 자체를 더 게임답게 리디자인하거나, RunMap/Reward 저장 UX 보강
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1

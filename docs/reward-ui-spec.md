@@ -104,8 +104,8 @@ interface RewardPhaseData {
 
 | 조건 | 버튼 | 전이 대상 |
 |------|------|-----------|
-| Stage < maxStages | "다음 스테이지" | FormationScene (다음 스테이지 편성) |
-| Stage = maxStages | "런 완료!" | TownScene (RunResultScene 미구현 시) |
+| Stage < maxStages | "다음 스테이지" | FormationScene (`returnScene: RunMapScene` 전달 후 편성 완료 시 RunMap 복귀) |
+| Stage = maxStages | "런 완료!" | RunResultScene |
 
 ---
 

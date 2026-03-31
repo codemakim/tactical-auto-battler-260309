@@ -14,6 +14,7 @@ import { UIToast } from '../ui/UIToast';
 import { UICardVisual } from '../ui/UICardVisual';
 import { gameState } from '../core/GameState';
 import { calculateRewardPhase, applyRewardSelections } from '../systems/RewardCalculator';
+import { getRewardProceedTarget } from '../systems/RewardFlow';
 import type { RunState, BattleState, RewardPhaseData } from '../types';
 
 // 카드 표시 상수
@@ -204,10 +205,7 @@ export class RewardScene extends Phaser.Scene {
 
     gameState.setRunState(finalRunState);
 
-    if (this.rewardData.isLastStage) {
-      this.scene.start('RunResultScene', { runState: finalRunState });
-    } else {
-      this.scene.start('RunMapScene');
-    }
+    const proceedTarget = getRewardProceedTarget(this.rewardData.isLastStage, finalRunState);
+    this.scene.start(proceedTarget.scene, proceedTarget.data);
   }
 }
