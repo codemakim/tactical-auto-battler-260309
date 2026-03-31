@@ -10,10 +10,11 @@
 declare const process: { env: Record<string, string | undefined> };
 
 import { createCharacterDef, createUnit, resetUnitCounter } from './entities/UnitFactory';
-import { createBattleState, stepBattle, restorePreBattleActions } from './core/BattleEngine';
-import { CharacterClass, RunStatus, Team, Position } from './types';
+import { createBattleState, stepBattle, restorePreBattleActions, queueIntervention } from './core/BattleEngine';
+import { CharacterClass, RunStatus, Team, Position, HeroType as HeroTypeEnum, BattlePhase } from './types';
 import type { RunState, CardInstance, BattleState, BattleEvent, BattleUnit, HeroType } from './types';
 import { formatEffects } from './utils/actionText';
+import { heroDecide } from './systems/HeroAI';
 import {
   createRunState,
   processVictory,
@@ -31,6 +32,10 @@ import { resetCardInstanceCounter } from './systems/BattleRewardSystem';
 // ═══════════════════════════════════════════
 
 const seed = Number(process.env.SIM_SEED) || Math.floor(Math.random() * 100000);
+const heroEnv = process.env.SIM_HERO?.toUpperCase() as HeroType | undefined;
+const heroType: HeroType | undefined = heroEnv && Object.values(HeroTypeEnum).includes(heroEnv) ? heroEnv : undefined;
+const multiSeeds = Number(process.env.SIM_SEEDS) || 0; // 0 = 단일 시드, N = N개 시드 통계 모드
+const verbose = multiSeeds === 0; // 통계 모드에서는 상세 로그 비출력
 
 // 초기 파티 구성
 const PARTY_CLASSES = [CharacterClass.WARRIOR, CharacterClass.ARCHER, CharacterClass.GUARDIAN, CharacterClass.ASSASSIN];
@@ -306,29 +311,53 @@ function executeStageBattleWithLog(runState: RunState, heroType?: HeroType): Bat
   const allInitialUnits = [...current.units].map((u) => ({ ...u }));
 
   // 적 정보 출력
-  const enemyNames = current.units
-    .filter((u) => u.team === Team.ENEMY)
-    .map((u) => `${u.name}(HP:${u.stats.maxHp} ATK:${u.stats.atk} ${posTag(u.position)})`);
-  log(`  적: ${enemyNames.join(', ')}`);
+  if (verbose) {
+    const enemyNames = current.units
+      .filter((u) => u.team === Team.ENEMY)
+      .map((u) => `${u.name}(HP:${u.stats.maxHp} ATK:${u.stats.atk} ${posTag(u.position)})`);
+    log(`  적: ${enemyNames.join(', ')}`);
+  }
 
   // step-by-step 실행
   let processedEvents = 0;
   let steps = 0;
   const maxSteps = 500;
+  let heroUsedThisRound = false;
+  let lastRound = current.round;
 
   while (!current.isFinished && steps < maxSteps) {
+    // 히어로 AI: TURN_START/TURN_END 단계에서 개입 결정
+    if (
+      heroType &&
+      !heroUsedThisRound &&
+      (current.phase === BattlePhase.TURN_START || current.phase === BattlePhase.TURN_END)
+    ) {
+      const decision = heroDecide(current);
+      if (decision) {
+        current = queueIntervention(current, decision.ability, decision.targetId);
+        heroUsedThisRound = true;
+      }
+    }
+
+    // 라운드 변경 시 플래그 리셋
+    if (current.round !== lastRound) {
+      heroUsedThisRound = false;
+      lastRound = current.round;
+    }
+
     const preStepUnits = current.units.map((u) => ({ ...u, stats: { ...u.stats } }));
     const result = stepBattle(current);
     current = result.state;
     steps++;
 
-    // 새 이벤트만 출력
-    const newEvents = current.events.slice(processedEvents);
-    processedEvents = current.events.length;
-
-    for (const ev of newEvents) {
-      logBattleEvent(ev, current, allInitialUnits, preStepUnits);
+    // 새 이벤트만 출력 (verbose 모드)
+    if (verbose) {
+      const newEvents = current.events.slice(processedEvents);
+      for (const ev of newEvents) {
+        logBattleEvent(ev, current, allInitialUnits, preStepUnits);
+      }
     }
+    processedEvents = current.events.length;
   }
 
   current = restorePreBattleActions(current);
@@ -376,81 +405,97 @@ function autoEquipCards(run: RunState): RunState {
 }
 
 // ═══════════════════════════════════════════
-// 메인 실행
+// 단일 런 실행
 // ═══════════════════════════════════════════
 
-function main() {
+interface RunResult {
+  status: string;
+  maxStageReached: number;
+  gold: number;
+  cards: number;
+}
+
+function executeRun(runSeed: number, hero?: HeroType): RunResult {
   resetUnitCounter();
   resetCardInstanceCounter();
 
-  logHeader(`런 시뮬레이션 (Seed: ${seed})`);
+  if (verbose) {
+    logHeader(`런 시뮬레이션 (Seed: ${runSeed}${hero ? `, Hero: ${hero}` : ', Hero: 없음'})`);
+  }
 
   const party = PARTY_CLASSES.map((cls, i) => createCharacterDef(`${cls}_${i}`, cls));
-  let run = createRunState(party, seed);
-  logParty(run);
+  let run = createRunState(party, runSeed);
+  if (verbose) logParty(run);
 
-  // ── 스테이지 루프 ──
   while (run.status === RunStatus.IN_PROGRESS && run.currentStage <= run.maxStages) {
     const stage = run.currentStage;
-    logHeader(`Stage ${stage} / ${run.maxStages}`);
+    if (verbose) logHeader(`Stage ${stage} / ${run.maxStages}`);
 
     run = autoEquipCards(run);
 
-    // 전투 실행 (상세 로그 포함)
-    log('');
+    if (verbose) log('');
     resetUnitCounter();
-    const { battleState, victory } = executeStageBattleWithLog(run);
+    const { battleState, victory } = executeStageBattleWithLog(run, hero);
 
-    // 결과 요약
-    logSection(`Stage ${stage} 결과: ${victory ? '승리' : '패배'}`);
-    const survivors = battleState.units.filter((u) => u.team === Team.PLAYER && u.isAlive);
-    const dead = battleState.units.filter((u) => u.team === Team.PLAYER && !u.isAlive);
-    log(`  생존: ${survivors.map((u) => `${u.name}(HP:${u.stats.hp}/${u.stats.maxHp})`).join(', ')}`);
-    if (dead.length > 0) {
-      log(`  전사: ${dead.map((u) => u.name).join(', ')}`);
+    if (verbose) {
+      logSection(`Stage ${stage} 결과: ${victory ? '승리' : '패배'}`);
+      const survivors = battleState.units.filter((u) => u.team === Team.PLAYER && u.isAlive);
+      const dead = battleState.units.filter((u) => u.team === Team.PLAYER && !u.isAlive);
+      log(`  생존: ${survivors.map((u) => `${u.name}(HP:${u.stats.hp}/${u.stats.maxHp})`).join(', ')}`);
+      if (dead.length > 0) {
+        log(`  전사: ${dead.map((u) => u.name).join(', ')}`);
+      }
     }
 
     if (victory) {
-      logSection('보상');
+      if (verbose) logSection('보상');
       const { runState, reward } = processVictory(run, battleState);
       run = runState;
 
-      log(`  골드: +${reward.gold} (총 ${run.gold})`);
+      if (verbose) {
+        log(`  골드: +${reward.gold} (총 ${run.gold})`);
 
-      if (reward.cardOptions.length > 0) {
-        log(`  카드 옵션 (${reward.cardOptions.length}개):`);
-        logCardOptions(reward.cardOptions);
-
-        const selected = reward.cardOptions[0];
-        run = selectCardReward(run, selected);
-        const cls = selected.classRestriction ? `[${selected.classRestriction}]` : '[공용]';
-        log(`  → 선택: ${cls} ${selected.action.name}`);
+        if (reward.cardOptions.length > 0) {
+          log(`  카드 옵션 (${reward.cardOptions.length}개):`);
+          logCardOptions(reward.cardOptions);
+        }
       }
 
-      logInventory(run);
+      if (reward.cardOptions.length > 0) {
+        const selected = reward.cardOptions[0];
+        run = selectCardReward(run, selected);
+        if (verbose) {
+          const cls = selected.classRestriction ? `[${selected.classRestriction}]` : '[공용]';
+          log(`  → 선택: ${cls} ${selected.action.name}`);
+        }
+      }
+
+      if (verbose) logInventory(run);
       run = advanceStage(run);
     } else {
       run = processDefeat(run);
 
       if (run.status === RunStatus.IN_PROGRESS) {
-        log('  → 재도전 가능! 편성 조정 후 재도전...');
-        log('');
+        if (verbose) {
+          log('  → 재도전 가능! 편성 조정 후 재도전...');
+          log('');
+        }
 
         resetUnitCounter();
         run = autoEquipCards(run);
-        const retry = executeStageBattleWithLog(run);
+        const retry = executeStageBattleWithLog(run, hero);
 
-        logSection(`재도전 결과: ${retry.victory ? '승리' : '패배'}`);
+        if (verbose) logSection(`재도전 결과: ${retry.victory ? '승리' : '패배'}`);
 
         if (retry.victory) {
           const { runState, reward } = processVictory(run, retry.battleState);
           run = runState;
 
-          log(`  골드: +${reward.gold} (총 ${run.gold})`);
+          if (verbose) log(`  골드: +${reward.gold} (총 ${run.gold})`);
           if (reward.cardOptions.length > 0) {
             const selected = reward.cardOptions[0];
             run = selectCardReward(run, selected);
-            log(`  → 선택: ${selected.action.name}`);
+            if (verbose) log(`  → 선택: ${selected.action.name}`);
           }
 
           run = advanceStage(run);
@@ -460,18 +505,73 @@ function main() {
       }
 
       if (run.status === RunStatus.DEFEAT) {
-        log('  → 런 실패!');
+        if (verbose) log('  → 런 실패!');
       }
     }
   }
 
-  // ── 런 결과 ──
-  logHeader('런 결과');
-  log(`  상태: ${run.status}`);
-  log(`  도달 스테이지: ${run.currentStage}`);
-  log(`  총 골드: ${run.gold}`);
-  log(`  보유 카드: ${run.cardInventory.length}장`);
-  log('');
+  if (verbose) {
+    logHeader('런 결과');
+    log(`  상태: ${run.status}`);
+    log(`  도달 스테이지: ${run.currentStage}`);
+    log(`  총 골드: ${run.gold}`);
+    log(`  보유 카드: ${run.cardInventory.length}장`);
+    log('');
+  }
+
+  return {
+    status: run.status,
+    maxStageReached: run.currentStage,
+    gold: run.gold,
+    cards: run.cardInventory.length,
+  };
+}
+
+// ═══════════════════════════════════════════
+// 메인 실행
+// ═══════════════════════════════════════════
+
+function main() {
+  if (multiSeeds > 0) {
+    // ── 다중 시드 통계 모드 ──
+    const heroTypes: (HeroType | undefined)[] = heroType
+      ? [undefined, heroType]
+      : [undefined, HeroTypeEnum.COMMANDER, HeroTypeEnum.MAGE, HeroTypeEnum.SUPPORT];
+
+    const stats: Record<string, { wins: number; totalStages: number; totalGold: number }> = {};
+
+    for (const ht of heroTypes) {
+      const label = ht ?? 'NONE';
+      stats[label] = { wins: 0, totalStages: 0, totalGold: 0 };
+
+      for (let i = 0; i < multiSeeds; i++) {
+        const s = seed + i;
+        const result = executeRun(s, ht);
+        if (result.status === RunStatus.VICTORY) stats[label].wins++;
+        stats[label].totalStages += result.maxStageReached;
+        stats[label].totalGold += result.gold;
+      }
+    }
+
+    // ── 통계 출력 ──
+    logHeader(`밸런스 통계 (${multiSeeds}시드, 시작 Seed: ${seed})`);
+    log('');
+    log('  Hero         | 승률       | 평균 도달 스테이지 | 평균 골드');
+    log('  ' + '─'.repeat(65));
+
+    for (const [label, s] of Object.entries(stats)) {
+      const winRate = ((s.wins / multiSeeds) * 100).toFixed(1);
+      const avgStage = (s.totalStages / multiSeeds).toFixed(1);
+      const avgGold = (s.totalGold / multiSeeds).toFixed(0);
+      log(
+        `  ${label.padEnd(13)} | ${`${s.wins}/${multiSeeds}`.padEnd(4)} (${winRate.padStart(5)}%) | ${avgStage.padStart(18)} | ${avgGold.padStart(9)}`,
+      );
+    }
+    log('');
+  } else {
+    // ── 단일 런 모드 ──
+    executeRun(seed, heroType);
+  }
 }
 
 main();
