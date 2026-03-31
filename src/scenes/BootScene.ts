@@ -136,10 +136,10 @@ export class BootScene extends Phaser.Scene {
       repeat: 0,
     });
 
-    // 컨트롤러 피격 애니메이션 (프레임 0~15, 4x4 시트)
+    // 컨트롤러 피격 애니메이션 (프레임 0~28, 마지막 줄 3칸 빈 프레임)
     this.anims.create({
       key: 'controller-hit-anim',
-      frames: this.anims.generateFrameNumbers('controller-hit', { start: 0, end: 15 }),
+      frames: this.anims.generateFrameNumbers('controller-hit', { start: 0, end: 28 }),
       frameRate: 20,
       repeat: 0,
     });

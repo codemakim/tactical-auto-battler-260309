@@ -109,7 +109,7 @@ const CLASS_SPRITE_MAP: Record<string, ClassSpriteConfig> = {
     attack: 'controller-attack',
     attackAnim: 'controller-attack-anim',
     idleFrame: 0,
-    hitFrame: 8,
+    hitFrame: 10,
     scale: 3.8,
     hit: 'controller-hit',
     hitAnim: 'controller-hit-anim',
