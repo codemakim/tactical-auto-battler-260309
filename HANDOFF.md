@@ -58,7 +58,7 @@
 
 다음 작업 미정.
 
-- 추천 후속: RunResultScene 작전 보고서 UI 리디자인 또는 SortieScene 전장 카드 카피 정리
+- 추천 후속: [docs/run-result-ui-rework-plan.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-result-ui-rework-plan.md) 기준으로 RunResultScene 리디자인 검토
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1
