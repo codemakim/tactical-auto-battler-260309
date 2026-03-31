@@ -74,7 +74,8 @@ interface RewardPhaseData {
 - 서브카피: `TACTICAL SPOILS SECURED` / `FINAL CLEAR`
 
 ### §3.2 카드 선택 영역 (중앙)
-- 5장 카드를 가로로 배치
+- 5장 카드를 중앙 기준 팬 형태로 배치
+- 가운데 카드가 가장 높고, 좌우 카드가 완만하게 퍼지는 전리품 선택 연출
 - 상단 카피: `CHOOSE ONE TACTIC`
 - 보조 카피: 전투 후 회수한 전술 카드라는 맥락 안내
 - 각 카드 표시:
@@ -93,6 +94,7 @@ interface RewardPhaseData {
 - 거절 시 벤치에서 제거
 
 ### §3.4 하단 버튼
+- 카드 아래 별도 브리핑 풋터 패널 안에 배치
 - 카드 선택 + 게스트 결정 완료 후:
   - 마지막 스테이지가 아니면: "다음 스테이지 →"
   - 마지막 스테이지면: "런 완료!" → RunResultScene (미구현 시 TownScene)

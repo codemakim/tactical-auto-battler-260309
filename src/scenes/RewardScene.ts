@@ -17,12 +17,12 @@ import { calculateRewardPhase, applyRewardSelections } from '../systems/RewardCa
 import { getRewardProceedTarget } from '../systems/RewardFlow';
 import { drawRoundedFrame } from '../ui/FormationGraphics';
 import { getRewardActionLabels, getRewardEmptyStateCopy, getRewardHeaderCopy } from '../systems/RewardPresentation';
+import { getRewardCardSlots, getRewardFooterLayout } from '../systems/RewardSceneLayout';
 import type { RunState, BattleState, RewardPhaseData } from '../types';
 
 // 카드 표시 상수
 const CARD_W = 168;
 const CARD_H = 232;
-const CARD_GAP = 18;
 
 interface SceneData {
   runState: RunState;
@@ -40,6 +40,7 @@ export class RewardScene extends Phaser.Scene {
 
   // UI 참조
   private cardVisuals: UICardVisual[] = [];
+  private cardBaseLayouts: Array<{ y: number; depth: number }> = [];
   private confirmBtn!: UIButton;
   private proceedLabel!: Phaser.GameObjects.Text;
 
@@ -51,6 +52,7 @@ export class RewardScene extends Phaser.Scene {
     this.selectedCardIndex = null;
     this.cardDecided = false;
     this.cardVisuals = [];
+    this.cardBaseLayouts = [];
 
     // 보상 데이터 계산
     const result = calculateRewardPhase(data.runState, data.battleState);
@@ -81,6 +83,15 @@ export class RewardScene extends Phaser.Scene {
     bg.fillRoundedRect(54, 54, GAME_WIDTH - 108, 120, 12);
     bg.lineStyle(1, 0x36527d, 0.5);
     bg.lineBetween(72, 186, GAME_WIDTH - 72, 186);
+
+    drawRoundedFrame(bg, 86, 528, GAME_WIDTH - 172, 96, 16, {
+      backgroundColor: 0x161f33,
+      borderColor: 0x31486f,
+      borderWidth: 2,
+      alpha: 0.94,
+    });
+    bg.fillStyle(0x22304d, 0.16);
+    bg.fillRoundedRect(102, 540, GAME_WIDTH - 204, 20, 8);
   }
 
   // ── 골드 + 스테이지 ──
@@ -156,18 +167,16 @@ export class RewardScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 카드 배치
-    const totalW = cards.length * (CARD_W + CARD_GAP) - CARD_GAP;
-    const startX = (GAME_WIDTH - totalW) / 2;
     const cardY = 270;
+    const cardLayouts = getRewardCardSlots(cards.length, GAME_WIDTH / 2, cardY);
 
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
-      const x = startX + i * (CARD_W + CARD_GAP);
+      const layout = cardLayouts[i];
       const idx = i;
       const cv = new UICardVisual(this, {
-        x,
-        y: cardY,
+        x: layout.x,
+        y: layout.y,
         width: CARD_W,
         height: CARD_H,
         action: card.action,
@@ -178,15 +187,18 @@ export class RewardScene extends Phaser.Scene {
           if (!this.cardDecided) this.selectCard(idx);
         },
       });
+      cv.container.setAngle(layout.rotation);
+      cv.container.setDepth(10 + i);
       this.cardVisuals.push(cv);
+      this.cardBaseLayouts.push({ y: layout.y, depth: 10 + i });
     }
 
     // 버튼 영역
-    const btnY = cardY + CARD_H + 24;
+    const footer = getRewardFooterLayout(GAME_WIDTH / 2, 566);
     const actionLabels = getRewardActionLabels({ isLastStage: this.rewardData.isLastStage });
 
     this.proceedLabel = this.add
-      .text(GAME_WIDTH / 2, btnY - 34, actionLabels.proceed, {
+      .text(GAME_WIDTH / 2, footer.proceedLabelY, actionLabels.proceed, {
         fontSize: '12px',
         fontFamily: UITheme.font.family,
         color: '#7a90b6',
@@ -195,8 +207,8 @@ export class RewardScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.confirmBtn = new UIButton(this, {
-      x: GAME_WIDTH / 2 - 170,
-      y: btnY,
+      x: footer.confirmX,
+      y: footer.y,
       width: 180,
       height: 44,
       label: actionLabels.confirm,
@@ -206,8 +218,8 @@ export class RewardScene extends Phaser.Scene {
     });
 
     new UIButton(this, {
-      x: GAME_WIDTH / 2 + 30,
-      y: btnY,
+      x: footer.skipX,
+      y: footer.y,
       width: 140,
       height: 44,
       label: actionLabels.skip,
@@ -220,7 +232,11 @@ export class RewardScene extends Phaser.Scene {
     this.selectedCardIndex = index;
 
     for (let i = 0; i < this.cardVisuals.length; i++) {
-      this.cardVisuals[i].setSelected(i === index);
+      const isSelected = i === index;
+      this.cardVisuals[i].setSelected(isSelected);
+      this.cardVisuals[i].container.setY(this.cardBaseLayouts[i].y - (isSelected ? 10 : 0));
+      this.cardVisuals[i].container.setAlpha(isSelected ? 1 : 0.88);
+      this.cardVisuals[i].container.setDepth(isSelected ? 30 : this.cardBaseLayouts[i].depth);
     }
 
     this.confirmBtn.setDisabled(false);

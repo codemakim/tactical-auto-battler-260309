@@ -13,13 +13,13 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: RewardScene 브리핑형 UI 리디자인
+- 최근 완료: RewardScene 카드 팬 레이아웃/풋터 정리
 - 다음 작업 미정
 
 ## Source Specs
 
-- primary: [docs/formation-scene-rework-plan.md](/Users/jhkim/Project/tactical-auto-battler/docs/formation-scene-rework-plan.md)
-- secondary: [docs/formation-card-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/formation-card-ui-spec.md)
+- primary: [docs/reward-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/reward-ui-spec.md)
+- secondary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md)
 - checklist: [docs/combat-impl-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-impl-checklist.md)
 
 ## Done
@@ -51,12 +51,13 @@
 - SaveData에 `runState`를 포함하고, CONTINUE가 활성 런이면 RunMapScene으로 복귀하도록 수정 (Codex)
 - RewardScene 다음 진행을 순수 전이 헬퍼로 분리하고, 다음 스테이지는 FormationScene을 거쳐 RunMap으로 복귀하도록 수정 (Codex)
 - RewardScene 헤더/버튼/빈 상태 카피를 게임형 브리핑 표현으로 재구성 (Codex)
+- RewardScene 카드를 팬 형태 전리품 배치로 재정렬하고, 선택 풋터 패널을 프레임 안쪽으로 정리 (Codex)
 
 ## Next
 
 다음 작업 미정.
 
-- 추천 후속: RunMap/Reward 저장 상태 안내를 더 밀거나 RewardScene 카드 배치 비주얼 조정
+- 추천 후속: RunMap/Reward 저장 상태 안내를 더 밀거나 RewardScene 선택 연출(선택 카드 확대/광택) 추가
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1
