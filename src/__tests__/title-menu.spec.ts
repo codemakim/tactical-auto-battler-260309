@@ -80,4 +80,21 @@ describe('TitleMenu', () => {
       accentColor: '#4a9eff',
     });
   });
+
+  it('런 종료 후에는 일반 저장 상태로 취급한다', () => {
+    expect(getTitleMenuButtons('valid', false)[0].label).toBe('CONTINUE');
+    expect(getContinueTargetScene(false)).toBe('TownScene');
+    expect(
+      getTitleMenuStatusPanel('valid', {
+        hasActiveRun: false,
+        gold: 620,
+        rosterSize: 4,
+      }),
+    ).toEqual({
+      title: 'ARCHIVE READY',
+      body: '620 GOLD  ·  Roster 4',
+      footer: 'Continue returns to Town.',
+      accentColor: '#4a9eff',
+    });
+  });
 });

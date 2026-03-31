@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: RunResult/Sortie 임시 보상 표기 정리
+- 최근 완료: 런 종료 후 저장/타이틀 상태 정합성 테스트 보강
 - 다음 작업 미정
 
 ## Source Specs
@@ -53,12 +53,13 @@
 - RewardScene 헤더/버튼/빈 상태 카피를 게임형 브리핑 표현으로 재구성 (Codex)
 - RewardScene 카드열 외곽 좌우 마진을 대칭으로 보정하고, 하단 버튼을 같은 중심축으로 정렬 (Codex)
 - RunResultScene 결과 요약에서 임시 런 카드 수 표시 제거, SortieScene 보상 예고 문구 제거 (Codex)
+- finalizeRun 이후 저장 데이터와 타이틀 상태가 활성 런 없는 일반 저장으로 돌아가는 계약 테스트 추가 (Codex)
 
 ## Next
 
 다음 작업 미정.
 
-- 추천 후속: [docs/run-result-ui-rework-plan.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-result-ui-rework-plan.md) 기준으로 RunResultScene 리디자인 검토
+- 추천 후속: 실제 런 완주/실패 플레이 기준으로 Town 복귀 UX와 RunResultScene 표현 우선순위 재평가
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1

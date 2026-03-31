@@ -8,6 +8,7 @@ import {
   saveSaveDataToStorage,
   SAVE_STORAGE_KEY,
 } from '../systems/SaveSystem';
+import { finalizeRun } from '../systems/RunResultCalculator';
 import { CharacterClass, HeroType, Position, RunStatus } from '../types';
 import { createCharacterDef } from '../entities/UnitFactory';
 
@@ -223,5 +224,31 @@ describe('SaveSystem', () => {
 
     storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({ version: 999 }));
     expect(getSaveDataStatus(storage)).toBe('corrupted');
+  });
+
+  it('런 종료 정산 후 저장 데이터에는 활성 runState가 남지 않는다', () => {
+    gameState.setGold(500);
+    const runState = {
+      currentStage: 5,
+      maxStages: 5,
+      seed: 900,
+      party: gameState.characters.slice(0, 4),
+      cardInventory: [],
+      equippedCards: {},
+      gold: 120,
+      retryAvailable: false,
+      status: RunStatus.VICTORY,
+      preRunPartySnapshot: gameState.characters.slice(0, 4),
+    };
+    gameState.setRunState(runState);
+
+    finalizeRun(runState, gameState);
+    expect(gameState.runState).toBeUndefined();
+    expect(gameState.gold).toBe(620);
+
+    expect(gameState.saveToStorage(storage)).toBe(true);
+    const saved = loadSaveDataFromStorage(storage);
+    expect(saved?.runState).toBeUndefined();
+    expect(saved?.gold).toBe(620);
   });
 });
