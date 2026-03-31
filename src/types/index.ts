@@ -546,7 +546,6 @@ export interface RunResultData {
   stagesCleared: number;
   maxStages: number;
   goldEarned: number;
-  cardsAcquired: number;
 }
 
 // === Run Map (노드맵) ===

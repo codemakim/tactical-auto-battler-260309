@@ -13,13 +13,13 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: RewardScene 카드열 중심축 정렬 보정
+- 최근 완료: RunResult/Sortie 임시 보상 표기 정리
 - 다음 작업 미정
 
 ## Source Specs
 
-- primary: [docs/reward-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/reward-ui-spec.md)
-- secondary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md)
+- primary: [docs/run-result-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-result-ui-spec.md)
+- secondary: [docs/sortie-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/sortie-ui-spec.md)
 - checklist: [docs/combat-impl-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-impl-checklist.md)
 
 ## Done
@@ -52,12 +52,13 @@
 - RewardScene 다음 진행을 순수 전이 헬퍼로 분리하고, 다음 스테이지는 FormationScene을 거쳐 RunMap으로 복귀하도록 수정 (Codex)
 - RewardScene 헤더/버튼/빈 상태 카피를 게임형 브리핑 표현으로 재구성 (Codex)
 - RewardScene 카드열 외곽 좌우 마진을 대칭으로 보정하고, 하단 버튼을 같은 중심축으로 정렬 (Codex)
+- RunResultScene 결과 요약에서 임시 런 카드 수 표시 제거, SortieScene 보상 예고 문구 제거 (Codex)
 
 ## Next
 
 다음 작업 미정.
 
-- 추천 후속: RunMap/Reward 저장 상태 안내를 더 밀거나 RewardScene 선택 상태 강조만 미세 조정
+- 추천 후속: RunResultScene 작전 보고서 UI 리디자인 또는 SortieScene 전장 카드 카피 정리
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1

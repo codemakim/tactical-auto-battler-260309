@@ -192,7 +192,7 @@ function calculateStageNodes(runState: RunState): StageNodeState[]
 ### 기존 유지:
 - 영웅 개입 UI (이전 작업에서 완료)
 - BattleScene 전투 로직 (엔진 그대로)
-- RewardScene 카드/게스트 선택 (그대로)
+- RewardScene 카드 선택 (그대로)
 
 ### 향후:
 - 완료 노드 클릭 → 리플레이

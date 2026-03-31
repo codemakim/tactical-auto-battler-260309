@@ -312,12 +312,13 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] 전장별 적 미리보기
 - [x] 잠금/해금 상태
 - [x] 런 상태 생성 (createRunState)
+- [x] 보상 예고 문구 제거 (임시 런 자원/객원 멤버 미표시, Codex, 2026-04-01)
 
 ### §6. Run 루프
 
 - [x] RunMapScene — 5스테이지 노드맵, 진행 상태 추적
 - [x] BattleScene — 전투 엔진 시각화, 턴 큐, HP바, 영웅 개입 버튼
-- [x] RewardScene — 카드 5장 선택, 골드 표시, 객원 수락/거절
+- [x] RewardScene — 카드 5장 선택, 골드 표시
 - [x] 런 중 편성 조정 (RunMap→Formation→RunMap 왕복 확인, Codex, 2026-03-30)
 - [x] Reward→Formation→RunMap 다음 스테이지 루프 정리 (Codex, 2026-03-31)
 - [x] RewardScene 브리핑형 UI 리디자인 (Codex, 2026-03-31)
@@ -332,6 +333,7 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 - [x] 런 결과 계산 (calculateRunResult)
 - [x] 런 종료 처리 (finalizeRun)
 - [x] Town 복귀 버튼
+- [x] 런 결과 화면에서 임시 카드/객원 보상 미표시 (Codex, 2026-04-01)
 
 ### 세이브/로드 시스템
 
@@ -359,4 +361,4 @@ ActionPool.ts UNIVERSAL_CARD_TEMPLATES 기준:
 
 ## 테스트 현황
 
-- 70개 테스트 파일, 754개 테스트 전체 통과 (2026-03-31 기준)
+- 70개 테스트 파일, 753개 테스트 전체 통과 (2026-04-01 기준)

@@ -25,7 +25,6 @@ export function calculateRunResult(runState: RunState): RunResultData {
     stagesCleared,
     maxStages: runState.maxStages,
     goldEarned: runState.gold,
-    cardsAcquired: runState.cardInventory.length,
   };
 }
 

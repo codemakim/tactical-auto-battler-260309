@@ -195,12 +195,6 @@ export class SortieScene extends Phaser.Scene {
         color: '#7788aa',
       });
       container.add(stageText);
-
-      const rewardText = this.add.text(24, 294, '보상: 골드 + 액션 카드 + 게스트 멤버', {
-        ...UITheme.font.small,
-        color: '#668866',
-      });
-      container.add(rewardText);
     }
 
     // 잠금 표시

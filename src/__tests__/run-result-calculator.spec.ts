@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { calculateRunResult, finalizeRun } from '../systems/RunResultCalculator';
-import type { RunState, CardInstance, CharacterDefinition } from '../types';
+import type { RunState, CharacterDefinition } from '../types';
 import { RunStatus, Target } from '../types';
 import type { GameStateManager } from '../core/GameState';
 
@@ -31,21 +31,6 @@ function createMockCharDef(id: string): CharacterDefinition {
     ],
     trainingsUsed: 0,
     trainingPotential: 3,
-  };
-}
-
-function createMockCard(instanceId: string): CardInstance {
-  return {
-    instanceId,
-    templateId: `tmpl-${instanceId}`,
-    action: {
-      id: `action-${instanceId}`,
-      name: `Card-${instanceId}`,
-      description: 'Test card',
-      effects: [{ type: 'DAMAGE', target: Target.ENEMY_FRONT, value: 1.0 }],
-    },
-    rarity: 'COMMON',
-    classRestriction: undefined,
   };
 }
 
@@ -75,7 +60,7 @@ describe('calculateRunResult', () => {
       currentStage: 5,
       maxStages: 5,
       gold: 300,
-      cardInventory: [createMockCard('c1'), createMockCard('c2')],
+      cardInventory: [],
     });
 
     const result = calculateRunResult(runState);
@@ -84,7 +69,6 @@ describe('calculateRunResult', () => {
     expect(result.stagesCleared).toBe(5);
     expect(result.maxStages).toBe(5);
     expect(result.goldEarned).toBe(300);
-    expect(result.cardsAcquired).toBe(2);
   });
 
   it('패배 시 현재 스테이지 - 1 클리어', () => {
@@ -93,7 +77,7 @@ describe('calculateRunResult', () => {
       currentStage: 3,
       maxStages: 5,
       gold: 150,
-      cardInventory: [createMockCard('c1')],
+      cardInventory: [],
     });
 
     const result = calculateRunResult(runState);
@@ -102,7 +86,6 @@ describe('calculateRunResult', () => {
     expect(result.stagesCleared).toBe(2);
     expect(result.maxStages).toBe(5);
     expect(result.goldEarned).toBe(150);
-    expect(result.cardsAcquired).toBe(1);
   });
 
   it('1스테이지에서 패배 시 클리어 0', () => {
@@ -119,7 +102,6 @@ describe('calculateRunResult', () => {
     expect(result.victory).toBe(false);
     expect(result.stagesCleared).toBe(0);
     expect(result.goldEarned).toBe(50);
-    expect(result.cardsAcquired).toBe(0);
   });
 
   it('골드 0, 카드 0인 경우 정상 처리', () => {
@@ -133,21 +115,6 @@ describe('calculateRunResult', () => {
 
     expect(result.victory).toBe(true);
     expect(result.goldEarned).toBe(0);
-    expect(result.cardsAcquired).toBe(0);
-  });
-
-  it('카드 여러 장 획득 카운트 정확', () => {
-    const cards = Array.from({ length: 7 }, (_, i) => createMockCard(`card-${i}`));
-    const runState = createRunState({
-      status: RunStatus.DEFEAT,
-      currentStage: 4,
-      cardInventory: cards,
-    });
-
-    const result = calculateRunResult(runState);
-
-    expect(result.cardsAcquired).toBe(7);
-    expect(result.stagesCleared).toBe(3);
   });
 });
 

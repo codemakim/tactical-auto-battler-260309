@@ -60,7 +60,7 @@ export class RunResultScene extends Phaser.Scene {
 
     // 패널 배경
     const panelW = 500;
-    const panelH = 240;
+    const panelH = 180;
     this.add
       .rectangle(cx, startY + panelH / 2 - 30, panelW, panelH, UITheme.colors.bgPanel)
       .setStrokeStyle(UITheme.panel.borderWidth, UITheme.colors.border);
@@ -77,14 +77,6 @@ export class RunResultScene extends Phaser.Scene {
       .text(cx, startY + lineGap, `+${result.goldEarned} Gold`, {
         ...UITheme.font.heading,
         color: UITheme.colors.textGold,
-      })
-      .setOrigin(0.5);
-
-    // 획득 카드
-    this.add
-      .text(cx, startY + lineGap * 2, `${result.cardsAcquired}장 획득`, {
-        ...UITheme.font.heading,
-        color: UITheme.colors.textAccent,
       })
       .setOrigin(0.5);
   }
