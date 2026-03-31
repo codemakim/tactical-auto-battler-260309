@@ -7,9 +7,13 @@ import {
   getContinueTargetScene,
   getTitleMenuButtons,
   getTitleMenuMessage,
+  getTitleMenuStatusPanel,
   type TitleMenuAction,
+  type TitleMenuSavePreview,
 } from '../systems/TitleMenu';
 import { UIModal } from '../ui/UIModal';
+import { loadSaveDataFromStorage } from '../systems/SaveSystem';
+import { drawRoundedFrame } from '../ui/FormationGraphics';
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
@@ -18,8 +22,10 @@ export class MainMenuScene extends Phaser.Scene {
 
   create(): void {
     const saveStatus = gameState.getSaveStatus();
-    const menuButtons = getTitleMenuButtons(saveStatus);
-    const message = getTitleMenuMessage(saveStatus);
+    const savePreview = this.getSavePreview();
+    const menuButtons = getTitleMenuButtons(saveStatus, !!savePreview?.hasActiveRun);
+    const message = getTitleMenuMessage(saveStatus, savePreview ?? undefined);
+    const statusPanel = getTitleMenuStatusPanel(saveStatus, savePreview ?? undefined);
 
     // 타이틀
     this.add
@@ -33,9 +39,9 @@ export class MainMenuScene extends Phaser.Scene {
 
     if (message) {
       this.add
-        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, message, {
-          fontSize: '16px',
-          color: saveStatus === 'corrupted' ? UITheme.colors.textWarning : UITheme.colors.textSecondary,
+        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 24, message, {
+          fontSize: '14px',
+          color: saveStatus === 'corrupted' ? UITheme.colors.textWarning : UITheme.colors.textAccent,
           fontFamily: UITheme.font.family,
           align: 'center',
           wordWrap: { width: 460 },
@@ -43,7 +49,11 @@ export class MainMenuScene extends Phaser.Scene {
         .setOrigin(0.5);
     }
 
-    const startY = message ? GAME_HEIGHT / 2 + 48 : GAME_HEIGHT / 2 + 60;
+    if (statusPanel) {
+      this.renderStatusPanel(statusPanel);
+    }
+
+    const startY = statusPanel ? 500 : message ? GAME_HEIGHT / 2 + 48 : GAME_HEIGHT / 2 + 60;
     menuButtons.forEach((button, index) => {
       new UIButton(this, {
         x: GAME_WIDTH / 2 - 110,
@@ -64,6 +74,58 @@ export class MainMenuScene extends Phaser.Scene {
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);
+  }
+
+  private getSavePreview(): TitleMenuSavePreview | null {
+    const saveData = loadSaveDataFromStorage();
+    if (!saveData) return null;
+
+    return {
+      hasActiveRun: !!saveData.runState,
+      currentStage: saveData.runState?.currentStage,
+      maxStages: saveData.runState?.maxStages,
+      gold: saveData.gold + (saveData.runState?.gold ?? 0),
+      rosterSize: saveData.characters.length,
+    };
+  }
+
+  private renderStatusPanel(panel: { title: string; body: string; footer: string; accentColor: string }): void {
+    const x = GAME_WIDTH / 2 - 230;
+    const y = 285;
+    const width = 460;
+    const height = 128;
+    const accent = parseInt(panel.accentColor.replace('#', ''), 16);
+
+    const gfx = this.add.graphics();
+    drawRoundedFrame(gfx, x, y, width, height, 10, {
+      backgroundColor: 0x161b2b,
+      borderColor: accent,
+      borderWidth: 2,
+      alpha: 0.96,
+    });
+    gfx.fillStyle(accent, 0.18);
+    gfx.fillRoundedRect(x + 10, y + 10, width - 20, 24, 6);
+
+    this.add.text(x + 20, y + 14, panel.title, {
+      fontSize: '12px',
+      color: panel.accentColor,
+      fontFamily: UITheme.font.family,
+      fontStyle: 'bold',
+    });
+
+    this.add.text(x + 20, y + 50, panel.body, {
+      fontSize: '22px',
+      color: UITheme.colors.textPrimary,
+      fontFamily: UITheme.font.family,
+      fontStyle: 'bold',
+    });
+
+    this.add.text(x + 20, y + 90, panel.footer, {
+      fontSize: '13px',
+      color: '#8ea3c9',
+      fontFamily: UITheme.font.family,
+      wordWrap: { width: width - 40 },
+    });
   }
 
   private onMenuAction(action: TitleMenuAction): void {
