@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getRewardCardSlots, getRewardFooterLayout } from '../systems/RewardSceneLayout';
 
 describe('RewardSceneLayout', () => {
-  it('5장 보상 카드를 중앙 기준 팬 형태로 배치한다', () => {
+  it('5장 보상 카드를 중앙 기준 평면 카드열로 배치한다', () => {
     const slots = getRewardCardSlots(5, 640, 270);
 
     expect(slots).toHaveLength(5);
@@ -12,10 +12,8 @@ describe('RewardSceneLayout', () => {
     expect(slots[3].x).toBeLessThan(slots[4].x);
 
     expect(slots[2].x).toBe(640);
-    expect(slots[2].y).toBeLessThan(slots[1].y);
-    expect(slots[2].y).toBeLessThan(slots[3].y);
-    expect(slots[0].rotation).toBeLessThan(0);
-    expect(slots[4].rotation).toBeGreaterThan(0);
+    expect(slots.every((slot) => slot.y === 270)).toBe(true);
+    expect(slots.every((slot) => slot.rotation === 0)).toBe(true);
   });
 
   it('1장일 때는 중앙에 수평 배치한다', () => {

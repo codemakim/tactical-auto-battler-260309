@@ -187,7 +187,6 @@ export class RewardScene extends Phaser.Scene {
           if (!this.cardDecided) this.selectCard(idx);
         },
       });
-      cv.container.setAngle(layout.rotation);
       cv.container.setDepth(10 + i);
       this.cardVisuals.push(cv);
       this.cardBaseLayouts.push({ y: layout.y, depth: 10 + i });
@@ -234,7 +233,6 @@ export class RewardScene extends Phaser.Scene {
     for (let i = 0; i < this.cardVisuals.length; i++) {
       const isSelected = i === index;
       this.cardVisuals[i].setSelected(isSelected);
-      this.cardVisuals[i].container.setY(this.cardBaseLayouts[i].y - (isSelected ? 10 : 0));
       this.cardVisuals[i].container.setAlpha(isSelected ? 1 : 0.88);
       this.cardVisuals[i].container.setDepth(isSelected ? 30 : this.cardBaseLayouts[i].depth);
     }

@@ -12,8 +12,6 @@ export interface RewardFooterLayout {
 }
 
 const CARD_SPREAD_X = 158;
-const CARD_FAN_Y_STEP = 14;
-const CARD_ROTATION_STEP = 3.5;
 
 export function getRewardCardSlots(cardCount: number, centerX: number, baseY: number): RewardCardSlotLayout[] {
   if (cardCount <= 0) {
@@ -26,8 +24,8 @@ export function getRewardCardSlots(cardCount: number, centerX: number, baseY: nu
     const offset = index - middleIndex;
     return {
       x: centerX + offset * CARD_SPREAD_X,
-      y: baseY + Math.abs(offset) * CARD_FAN_Y_STEP,
-      rotation: offset * CARD_ROTATION_STEP,
+      y: baseY,
+      rotation: 0,
     };
   });
 }
