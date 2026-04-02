@@ -29,6 +29,7 @@ export class BootScene extends Phaser.Scene {
 
     // 배경 이미지
     this.load.image('town-bg', 'src/assets/backgrounds/town-bg.png');
+    this.load.image('battle-bg-plains', 'src/assets/backgrounds/plains-battle-bg.png');
 
     // 스프라이트시트
     this.load.spritesheet('warrior-attack', 'src/assets/sprites/warrior-attack.png', {

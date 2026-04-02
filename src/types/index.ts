@@ -41,6 +41,13 @@ export const Difficulty = {
 } as const;
 export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
 
+export const BattlefieldId = {
+  PLAINS: 'plains',
+  DARK_FOREST: 'dark_forest',
+  RUINED_FORTRESS: 'ruined_fortress',
+} as const;
+export type BattlefieldId = (typeof BattlefieldId)[keyof typeof BattlefieldId];
+
 // === Buff Types ===
 
 export const BuffType = {
@@ -477,6 +484,7 @@ export const RunStatus = {
 export type RunStatus = (typeof RunStatus)[keyof typeof RunStatus];
 
 export interface RunState {
+  battlefieldId?: BattlefieldId;
   currentStage: number;
   maxStages: number; // 5 (4 normal + 1 boss)
   seed: number;

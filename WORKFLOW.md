@@ -11,7 +11,7 @@
 3. 스펙 기반 테스트 작성 또는 기존 테스트 보강
 4. 테스트를 만족하도록 구현
 5. 테스트 재검증
-6. [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 기준으로 독립 리뷰 에이전트 1회 점검
+6. staged diff 기준으로 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 독립 리뷰 에이전트 1회 점검
 7. 리뷰 반영 및 필요 시 리팩터링
 8. `prettier` / `tsc` 확인
 9. 관련 문서와 체크리스트 반영
@@ -91,6 +91,8 @@
 3. 리뷰는 칭찬보다 버그, 회귀, 테스트 누락, 스펙 드리프트를 우선 본다.
 4. 리뷰 결과가 없으면 `명시적으로 no findings`를 남긴다.
 5. 리뷰 반영 후에만 `format` / `tsc` / 커밋 단계로 간다.
+6. 리뷰 범위는 `git diff --cached` 기준으로 제한한다.
+7. staged diff 밖의 제안은 리뷰가 아니라 리팩터링 후속으로 분리한다.
 
 리뷰 에이전트 실행 시 주의:
 
@@ -103,6 +105,7 @@
   - implementation summary is forbidden
   - if none, start with `No actionable findings.`
   - review only the provided scope
+  - review the staged diff only
   - return quickly; do not do broad repo exploration
 
 ## 7. Current Mapping

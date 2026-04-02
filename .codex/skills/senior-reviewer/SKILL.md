@@ -1,6 +1,6 @@
 ---
 name: senior-reviewer
-description: Perform an independent senior-level code review after implementation, prioritizing bugs, regressions, missing tests, risky assumptions, and refactor-worthy complexity. Use when Codex should review completed work from a separate perspective before final formatting, type checks, and commit.
+description: Perform an independent senior-level gate review on the staged diff only, prioritizing bugs, regressions, missing tests, and risky assumptions. Use when Codex should review completed work from a separate perspective before final formatting, type checks, and commit.
 ---
 
 # Senior Reviewer
@@ -23,32 +23,31 @@ The spawned agent should also be told to stay within the provided scope and retu
 - extracted helpers without direct tests
 - integration boundaries left unverified
 
-3. Risky complexity
-- scene god objects
-- repeated rendering patterns
-- magic numbers that should become layout/style tokens
-- mixed responsibilities that make the next change fragile
-
-4. Spec drift
+3. Spec drift
 - implementation contradicts source docs
 - deleted features still implied in UI or docs
 - persistence behavior not reflected in specs
 
+Refactor notes are out of scope for this review unless they directly explain a bug or regression.
+If the work outside the staged diff needs cleanup, that is a refactor follow-up, not a review finding.
+
 ## Scope Discipline
 
-- Read the primary spec, touched files, and nearest tests first.
-- Do not widen into a full-repo audit unless a finding requires it.
+- Review the staged diff only.
+- Read the primary spec, staged files, and nearest tests first.
+- Do not widen into unstaged files, unrelated worktree files, or a full-repo audit.
 - Prefer a fast gate over exhaustive exploration.
 - If there are no clear findings, stop and return `No actionable findings.`
 - Limit findings to the top 3 by severity.
+- If nothing is staged, do not perform a broad review. Return that the review scope is missing.
 
 ## Review Workflow
 
-1. Read the primary spec and the touched files.
-2. Read the closest tests and verification commands already run.
+1. Read the primary spec and the staged files only.
+2. Read the closest staged tests and verification commands already run.
 3. Produce findings first, ordered by severity.
 4. If no findings exist, say so explicitly and list any residual risk.
-5. Recommend refactors only when they materially reduce future risk.
+5. Do not turn unrelated cleanup into review findings.
 6. Stop once the gate decision is clear; do not continue exploring for filler comments.
 
 ## Output Shape
@@ -92,3 +91,4 @@ When another Codex instance spawns a review agent for this skill, the prompt sho
 5. no summary before findings
 6. review only the provided scope
 7. return quickly; do not do broad repo exploration
+8. review the staged diff only; anything else is refactor territory

@@ -43,6 +43,7 @@ import { captureTickSnapshot } from '../systems/ReplaySnapshotCollector';
 import type { TickSnapshot, ReplaySessionData } from '../types';
 import { getRemainingTurnOrder } from '../systems/TurnIndicator';
 import { getHeroButtonPresentation } from '../systems/HeroButtonPresentation';
+import { getBattlefieldBackgroundKey } from '../data/Battlefields';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -321,9 +322,25 @@ export class BattleScene extends Phaser.Scene {
   // === 배경/UI ===
 
   private drawBackground(): void {
+    const battlefieldId = gameState.runState?.battlefieldId ?? 'plains';
+    const backgroundKey = getBattlefieldBackgroundKey(battlefieldId);
+
+    if (backgroundKey && this.textures.exists(backgroundKey)) {
+      const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, backgroundKey);
+      const scale = Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height);
+      bg.setScale(scale);
+      bg.setAlpha(0.94);
+
+      const overlay = this.add.graphics();
+      overlay.fillStyle(0x08101a, 0.42);
+      overlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    } else {
+      const gfx = this.add.graphics();
+      gfx.fillStyle(0x0a0a16, 1);
+      gfx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    }
+
     const gfx = this.add.graphics();
-    gfx.fillStyle(0x0a0a16, 1);
-    gfx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     // 중앙 분리선
     gfx.lineStyle(1, 0x222244, 0.5);

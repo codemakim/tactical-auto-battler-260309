@@ -61,10 +61,18 @@ describe('RunManager', () => {
       expect(run.currentStage).toBe(1);
       expect(run.maxStages).toBe(5);
       expect(run.party).toHaveLength(4);
+      expect(run.battlefieldId).toBe('plains');
       expect(run.cardInventory).toHaveLength(0);
       expect(run.gold).toBe(0);
       expect(run.retryAvailable).toBe(true);
       expect(run.status).toBe(RunStatus.IN_PROGRESS);
+    });
+
+    it('선택한 전장 ID를 런 상태에 저장한다', () => {
+      const party = makeParty();
+      const run = createRunState(party, 42, 'dark_forest');
+
+      expect(run.battlefieldId).toBe('dark_forest');
     });
 
     it('4명이 아니면 에러를 던진다', () => {

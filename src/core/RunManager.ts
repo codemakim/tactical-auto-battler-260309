@@ -13,6 +13,7 @@ import type {
   BattleReward,
   HeroType,
   ActionSlot,
+  BattlefieldId,
 } from '../types';
 import { RunStatus, Team, Position } from '../types';
 import { createUnit, resetUnitCounter } from '../entities/UnitFactory';
@@ -29,12 +30,17 @@ import { DEFAULT_GAME_CONFIG } from '../types';
  * 새 런 생성
  * 파티 4명을 선택하여 런을 시작
  */
-export function createRunState(party: CharacterDefinition[], seed: number): RunState {
+export function createRunState(
+  party: CharacterDefinition[],
+  seed: number,
+  battlefieldId: BattlefieldId = 'plains',
+): RunState {
   if (party.length !== 4) {
     throw new Error(`파티는 4명이어야 합니다. 현재: ${party.length}명`);
   }
 
   return {
+    battlefieldId,
     currentStage: 1,
     maxStages: DEFAULT_GAME_CONFIG.runStages,
     seed,

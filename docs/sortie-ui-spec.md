@@ -70,6 +70,8 @@ SortieScene의 카피는 "전장 브리핑" 톤으로 유지한다.
 
 ### §4.2 출격
 - 선택된 전장 기준으로 `createRunState()` 호출
+- 선택한 전장 ID는 `RunState.battlefieldId`에 저장한다
+- 전투 진입 시 해당 전장 ID를 기준으로 전장 배경을 선택한다
 - 첫 진입은 `RunMapScene`으로 이동
 
 ### §4.3 뒤로 가기

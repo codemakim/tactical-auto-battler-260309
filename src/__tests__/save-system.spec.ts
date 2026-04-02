@@ -52,6 +52,7 @@ describe('SaveSystem', () => {
     gameState.setHeroType(HeroType.MAGE);
     gameState.setRecruitShopState(createRecruitShopState(gameState.characters));
     gameState.setRunState({
+      battlefieldId: 'plains',
       currentStage: 2,
       maxStages: 5,
       seed: 99,
@@ -70,6 +71,7 @@ describe('SaveSystem', () => {
     expect(saveData.formation.heroType).toBe(HeroType.MAGE);
     expect(saveData.recruitShopState?.offers).toHaveLength(3);
     expect(saveData.runState).toMatchObject({
+      battlefieldId: 'plains',
       currentStage: 2,
       maxStages: 5,
       seed: 99,
@@ -94,6 +96,7 @@ describe('SaveSystem', () => {
     gameState.savePreset('alpha');
     gameState.setRecruitShopState(createRecruitShopState(gameState.characters));
     gameState.setRunState({
+      battlefieldId: 'dark_forest',
       currentStage: 3,
       maxStages: 5,
       seed: 777,
@@ -139,6 +142,7 @@ describe('SaveSystem', () => {
     expect(restored.presets).toEqual(gameState.presets);
     expect(restored.recruitShopState).toEqual(gameState.recruitShopState);
     expect(restored.runState).toEqual(gameState.runState);
+    expect(restored.runState?.battlefieldId).toBe('dark_forest');
     expect(restored.battleReplays).toEqual([]);
   });
 
@@ -157,6 +161,7 @@ describe('SaveSystem', () => {
     gameState.savePreset('roundtrip');
     gameState.setRecruitShopState(createRecruitShopState(gameState.characters));
     gameState.setRunState({
+      battlefieldId: 'plains',
       currentStage: 2,
       maxStages: 5,
       seed: 444,
@@ -178,6 +183,7 @@ describe('SaveSystem', () => {
     expect(restored.presets.map((p) => p.name)).toContain('roundtrip');
     expect(restored.recruitShopState?.offers).toHaveLength(3);
     expect(restored.runState).toMatchObject({
+      battlefieldId: 'plains',
       currentStage: 2,
       seed: 444,
       gold: 12,

@@ -203,7 +203,8 @@
 - `senior-reviewer`
   구현이 끝난 뒤 커밋 전에 독립 리뷰 에이전트가 한 번 점검할 때 사용한다.
   단, 실제 스폰 계약은 `.codex/agents/senior-reviewer.md`를 기준으로 한다.
-  리뷰는 제공된 spec / 파일 / 검증 범위 안에서 빠르게 끝내야 하며, 저장소 전체를 넓게 훑지 않는다.
+  리뷰는 `git diff --cached`와 제공된 spec / 파일 / 검증 범위 안에서 빠르게 끝내야 한다.
+  staged diff 밖의 개선 의견은 리뷰가 아니라 리팩터링으로 분리한다.
 
 ## 12. Failure Routing
 
@@ -223,4 +224,5 @@
 - 독립 리뷰 에이전트 프로필: [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md)
 - 리뷰 에이전트는 구현 요약이 아니라 findings-first만 반환해야 한다.
 - `No actionable findings.` 형식을 강제한다.
-- 스폰 시 primary spec, 대상 파일, 실행한 검증 명령을 함께 넘긴다.
+- 스폰 시 primary spec, staged 대상 파일, 실행한 검증 명령을 함께 넘긴다.
+- 리뷰 범위는 `git diff --cached`로 고정한다.
