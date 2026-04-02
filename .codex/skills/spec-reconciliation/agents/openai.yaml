@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spec Reconciliation"
+  short_description: "Resolve stale or conflicting specs first."
+  default_prompt: "Use $spec-reconciliation to find the source of truth, resolve conflicting docs, and rewrite the spec boundary before coding."

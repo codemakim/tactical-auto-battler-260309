@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spec To Implementation"
+  short_description: "Run the spec-first dev loop end to end."
+  default_prompt: "Use $spec-to-implementation to drive this task from source spec through tests, implementation, verification, docs, and commit."

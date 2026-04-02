@@ -8,6 +8,8 @@
 - 기존 설계 기준은 먼저 [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md)를 읽는다.
 - 작업 절차와 핸드오프 규칙은 [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)를 따른다.
 - 실시간 작업 상태는 [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)에서 확인한다.
+- 프로젝트 전용 스킬은 [.codex/skills](/Users/jhkim/Project/tactical-auto-battler/.codex/skills)를 우선 사용한다.
+- 구현 완료 후에는 `senior-reviewer` 기준의 별도 리뷰 에이전트를 거친다.
 - 세부 규칙은 `docs/` 스펙 문서를 기준으로 판단한다.
 - 구현 전에는 관련 테스트와 현재 구현 파일을 함께 본다.
 - 변경은 가능한 한 작은 단위로 한다.
@@ -176,3 +178,40 @@
 - 루트 문서 역할 분리:
   - `CLAUDE.md`: 프로젝트 개요와 기본 규칙
   - `AGENTS.md`: 작업 진입용 인덱스와 운영 절차
+
+## 10. Local Skills
+
+- `spec-to-implementation`: 기본 구현 루프
+- `meta-loop-spec-writer`: 메타/상점/진행 구조 스펙 초안
+- `handoff-closeout`: 작업 마감과 인수인계 정리
+- `spec-reconciliation`: 충돌 문서 정리
+- `ui-polish-guardrail`: 게임답지 않은 UI 표현 감시
+- `feature-cut-mvp`: 큰 기능을 MVP로 자르기
+- `scene-boundary-refactor`: 비대해진 씬 구조 정리
+- `senior-reviewer`: 구현 후 독립 리뷰 기준
+
+## 11. Skill Routing
+
+- `meta-loop-spec-writer`
+  기능 규칙 자체가 아직 흐리고, 저장/진입점/UI 책임까지 새로 정리해야 할 때 사용한다.
+- `feature-cut-mvp`
+  방향은 정해졌지만 범위가 커져서 1차 구현 경계를 잘라야 할 때 사용한다.
+- `spec-reconciliation`
+  여러 문서나 코드와 문서가 충돌해서 source of truth를 먼저 정해야 할 때 사용한다.
+- `scene-boundary-refactor`
+  기능 변경보다 구조 리스크가 커져서 씬 책임 분리가 먼저 필요할 때 사용한다.
+- `senior-reviewer`
+  구현이 끝난 뒤 커밋 전에 독립 리뷰 에이전트가 한 번 점검할 때 사용한다.
+
+## 12. Failure Routing
+
+- 구현 전에 스펙이 비어 있거나 너무 약함
+  `meta-loop-spec-writer`
+- 구현 전에 문서끼리 충돌함
+  `spec-reconciliation`
+- 구현 범위가 작업 도중 불어남
+  `feature-cut-mvp`
+- 리뷰에서 씬 구조 리스크가 크게 드러남
+  `scene-boundary-refactor`
+- 리뷰에서 버그/회귀/테스트 누락이 발견됨
+  수정 후 `senior-reviewer`를 다시 거친다

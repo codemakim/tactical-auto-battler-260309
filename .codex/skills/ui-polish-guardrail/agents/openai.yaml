@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Polish Guardrail"
+  short_description: "Catch dev-tool UI drift before it spreads."
+  default_prompt: "Use $ui-polish-guardrail to review this game screen for tool-like copy, over-boxing, weak hierarchy, and other UI polish risks before implementing changes."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Meta Loop Spec Writer"
+  short_description: "Write MVP gameplay specs from loose ideas."
+  default_prompt: "Use $meta-loop-spec-writer to turn this underspecified gameplay or meta-loop idea into an MVP spec before implementation."

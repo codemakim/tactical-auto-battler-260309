@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Cut MVP"
+  short_description: "Trim feature scope to a shippable first version."
+  default_prompt: "Use $feature-cut-mvp to cut this idea down to a concrete MVP with explicit scope, risks, and implementation order."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scene Boundary Refactor"
+  short_description: "Split bulky scenes into stable boundaries."
+  default_prompt: "Use $scene-boundary-refactor to extract clear view, helper, and state boundaries from this scene without changing behavior."
