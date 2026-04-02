@@ -102,6 +102,8 @@
   - file references required
   - implementation summary is forbidden
   - if none, start with `No actionable findings.`
+  - review only the provided scope
+  - return quickly; do not do broad repo exploration
 
 ## 7. Current Mapping
 

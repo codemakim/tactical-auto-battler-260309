@@ -1,6 +1,7 @@
 import koData from '../locales/ko.json';
 import enData from '../locales/en.json';
 import type { ActionCondition, ActionEffect, ActionSlot, ActionTargetType, Position } from '../types';
+import { getMonoEffectIcon } from './actionIcons';
 
 // === Types ===
 
@@ -231,18 +232,18 @@ export interface StructuredEffectData {
 }
 
 const EFFECT_STYLE: Record<string, { icon: string; color: number }> = {
-  DAMAGE: { icon: '\u2694', color: 0xff4444 },
-  HEAL: { icon: '+', color: 0x44cc44 },
-  SHIELD: { icon: '\u25C6', color: 0x4a9eff },
-  MOVE: { icon: '>', color: 0xffcc00 },
-  PUSH: { icon: '>>', color: 0xff8844 },
-  BUFF: { icon: '\u25B2', color: 0x44cc44 },
-  DEBUFF: { icon: '\u25BC', color: 0xaa44ff },
-  DELAY_TURN: { icon: '\u25F7', color: 0x8888aa },
-  ADVANCE_TURN: { icon: '\u25F4', color: 0x4a9eff },
-  REPOSITION: { icon: '\u21C4', color: 0xff8844 },
-  DELAYED: { icon: '\u23F3', color: 0xffcc00 },
-  SWAP: { icon: '\u2194', color: 0xff8844 },
+  DAMAGE: { icon: getMonoEffectIcon('DAMAGE'), color: 0xff4444 },
+  HEAL: { icon: getMonoEffectIcon('HEAL'), color: 0x44cc44 },
+  SHIELD: { icon: getMonoEffectIcon('SHIELD'), color: 0x4a9eff },
+  MOVE: { icon: getMonoEffectIcon('MOVE'), color: 0xffcc00 },
+  PUSH: { icon: getMonoEffectIcon('PUSH'), color: 0xff8844 },
+  BUFF: { icon: getMonoEffectIcon('BUFF'), color: 0x44cc44 },
+  DEBUFF: { icon: getMonoEffectIcon('DEBUFF'), color: 0xaa44ff },
+  DELAY_TURN: { icon: getMonoEffectIcon('DELAY_TURN'), color: 0x8888aa },
+  ADVANCE_TURN: { icon: getMonoEffectIcon('ADVANCE_TURN'), color: 0x4a9eff },
+  REPOSITION: { icon: getMonoEffectIcon('REPOSITION'), color: 0xff8844 },
+  DELAYED: { icon: getMonoEffectIcon('DELAYED'), color: 0xffcc00 },
+  SWAP: { icon: getMonoEffectIcon('SWAP'), color: 0xff8844 },
 };
 
 function buildValueText(effect: ActionEffect, locale?: Locale): string {

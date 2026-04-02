@@ -3,52 +3,60 @@ import { buildActionCardBadgeModel } from '../utils/actionCardBadges';
 import { Target, type ActionCondition, type ActionEffect } from '../types';
 
 describe('buildActionCardBadgeModel', () => {
-  it('self condition, enemy target, effect를 섹션별 배지로 분리한다', () => {
+  it('조건은 나 기준으로 통일하고 효과 태그에 대상을 포함한다', () => {
     const condition: ActionCondition = { type: 'POSITION_FRONT' };
     const effects: ActionEffect[] = [{ type: 'DAMAGE', stat: 'atk', value: 1.2, target: Target.ENEMY_FRONT }];
 
     const model = buildActionCardBadgeModel(condition, effects);
 
-    expect(model.selfBadges).toEqual([{ text: '내 전열', tone: 'self' }]);
-    expect(model.targetBadges).toEqual([{ text: '적 전열', tone: 'enemy' }]);
-    expect(model.effectBadges).toEqual([{ text: '🗡 ATKx1.2', tone: 'effect' }]);
+    expect(model.selfBadges).toEqual([{ text: '나 전열', tone: 'self' }]);
+    expect(model.targetBadges).toEqual([]);
+    expect(model.effectBadges).toEqual([{ text: '✦ 적 전열 공격x1.2', tone: 'effect' }]);
   });
 
-  it('적 HP 조건과 자기 대상 효과를 함께 유지한다', () => {
+  it('적 HP 조건은 유지하고 자기 대상 실드는 나 실드로 표기한다', () => {
     const condition: ActionCondition = { type: 'ENEMY_HP_BELOW', value: 30 };
     const effects: ActionEffect[] = [{ type: 'SHIELD', stat: 'grd', value: 1.1, target: Target.SELF }];
 
     const model = buildActionCardBadgeModel(condition, effects);
 
     expect(model.selfBadges).toEqual([]);
-    expect(model.targetBadges).toEqual([
-      { text: '적 HP 30%↓', tone: 'enemy' },
-      { text: '자신', tone: 'self' },
-    ]);
-    expect(model.effectBadges).toEqual([{ text: '🛡 GRDx1.1', tone: 'effect' }]);
+    expect(model.targetBadges).toEqual([{ text: '적 HP 30%↓', tone: 'enemy' }]);
+    expect(model.effectBadges).toEqual([{ text: '◈ 나 실드x1.1', tone: 'effect' }]);
   });
 
-  it('복합 효과는 여러 대상 배지를 dedupe하며 swap 대상도 포함한다', () => {
-    const condition: ActionCondition = { type: 'ALLY_HP_BELOW', value: 40 };
+  it('복수 대상 효과는 각 효과에 대상을 붙여서 구분한다', () => {
+    const condition: ActionCondition = { type: 'POSITION_FRONT' };
     const effects: ActionEffect[] = [
-      { type: 'HEAL', value: 15, target: Target.ALLY_LOWEST_HP },
-      { type: 'BUFF', buffType: 'COVER', duration: 1, target: Target.ALLY_LOWEST_HP },
-      { type: 'SWAP', target: Target.ENEMY_BACK, swapTarget: Target.ENEMY_FRONT },
+      { type: 'SHIELD', stat: 'grd', value: 1.0, target: Target.SELF },
+      { type: 'SHIELD', stat: 'grd', value: 0.8, target: Target.ALLY_LOWEST_HP },
+      { type: 'BUFF', buffType: 'COVER', duration: 1, target: Target.SELF },
     ];
 
     const model = buildActionCardBadgeModel(condition, effects);
 
-    expect(model.selfBadges).toEqual([]);
-    expect(model.targetBadges).toEqual([
-      { text: '아군 HP 40%↓', tone: 'ally' },
-      { text: '아군 최저 HP', tone: 'ally' },
-      { text: '적 후열', tone: 'enemy' },
-      { text: '적 전열', tone: 'enemy' },
-    ]);
+    expect(model.selfBadges).toEqual([{ text: '나 전열', tone: 'self' }]);
+    expect(model.targetBadges).toEqual([]);
     expect(model.effectBadges).toEqual([
-      { text: '✚ 15', tone: 'effect' },
-      { text: '▲ 엄호 1T', tone: 'effect' },
-      { text: '⇄', tone: 'effect' },
+      { text: '◈ 나 실드x1', tone: 'effect' },
+      { text: '◈ 아군 최저 HP 실드x0.8', tone: 'effect' },
+      { text: '▲ 나 엄호 1T', tone: 'effect' },
+    ]);
+  });
+
+  it('이동과 밀침은 화살표 대신 문장형으로 표기한다', () => {
+    const condition: ActionCondition = { type: 'POSITION_BACK' };
+    const effects: ActionEffect[] = [
+      { type: 'MOVE', target: Target.SELF, position: 'FRONT' },
+      { type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' },
+    ];
+
+    const model = buildActionCardBadgeModel(condition, effects);
+
+    expect(model.selfBadges).toEqual([{ text: '나 후열', tone: 'self' }]);
+    expect(model.effectBadges).toEqual([
+      { text: '△ 나 전열 이동', tone: 'effect' },
+      { text: '▷ 적 전열 후열 밀침', tone: 'effect' },
     ]);
   });
 });

@@ -19,6 +19,7 @@ export interface UIPanelConfig {
 export class UIPanel {
   readonly container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Graphics;
+  private hitBlocker: Phaser.GameObjects.Rectangle;
   private titleText?: Phaser.GameObjects.Text;
   private config: Required<Pick<UIPanelConfig, 'x' | 'y' | 'width' | 'height'>> & UIPanelConfig;
 
@@ -36,6 +37,17 @@ export class UIPanel {
     this.bg = scene.add.graphics();
     this.drawBackground();
     this.container.add(this.bg);
+
+    this.hitBlocker = scene.add
+      .rectangle(this.config.width / 2, this.config.height / 2, this.config.width, this.config.height, 0x000000, 0)
+      .setInteractive();
+    this.hitBlocker.on(
+      'pointerdown',
+      (_pointer: Phaser.Input.Pointer, _lx: number, _ly: number, event: Phaser.Types.Input.EventData) => {
+        event.stopPropagation();
+      },
+    );
+    this.container.add(this.hitBlocker);
 
     // 타이틀
     if (config.title) {

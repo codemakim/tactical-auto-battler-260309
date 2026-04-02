@@ -8,6 +8,7 @@ description: Perform an independent senior-level code review after implementatio
 Use this skill after implementation is functionally complete. The reviewer should behave like an independent senior engineer, not a cheerleader and not the original implementer defending the patch.
 
 If this review is being delegated to a spawned agent, do not assume the agent automatically has this skill loaded. The spawning prompt must explicitly carry the output contract below.
+The spawned agent should also be told to stay within the provided scope and return quickly.
 
 ## Review Priorities
 
@@ -33,6 +34,14 @@ If this review is being delegated to a spawned agent, do not assume the agent au
 - deleted features still implied in UI or docs
 - persistence behavior not reflected in specs
 
+## Scope Discipline
+
+- Read the primary spec, touched files, and nearest tests first.
+- Do not widen into a full-repo audit unless a finding requires it.
+- Prefer a fast gate over exhaustive exploration.
+- If there are no clear findings, stop and return `No actionable findings.`
+- Limit findings to the top 3 by severity.
+
 ## Review Workflow
 
 1. Read the primary spec and the touched files.
@@ -40,6 +49,7 @@ If this review is being delegated to a spawned agent, do not assume the agent au
 3. Produce findings first, ordered by severity.
 4. If no findings exist, say so explicitly and list any residual risk.
 5. Recommend refactors only when they materially reduce future risk.
+6. Stop once the gate decision is clear; do not continue exploring for filler comments.
 
 ## Output Shape
 
@@ -61,6 +71,8 @@ Report:
 - do not restate the patch before findings
 - do not praise by default
 - do not replace findings with a verification recap
+- do not produce a long exploratory narrative
+- do not summarize the diff before the verdict
 
 ## Guardrails
 
@@ -78,3 +90,5 @@ When another Codex instance spawns a review agent for this skill, the prompt sho
 3. file references required
 4. if no findings, say `No actionable findings.`
 5. no summary before findings
+6. review only the provided scope
+7. return quickly; do not do broad repo exploration

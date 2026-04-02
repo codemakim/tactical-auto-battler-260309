@@ -203,6 +203,7 @@
 - `senior-reviewer`
   구현이 끝난 뒤 커밋 전에 독립 리뷰 에이전트가 한 번 점검할 때 사용한다.
   단, 실제 스폰 계약은 `.codex/agents/senior-reviewer.md`를 기준으로 한다.
+  리뷰는 제공된 spec / 파일 / 검증 범위 안에서 빠르게 끝내야 하며, 저장소 전체를 넓게 훑지 않는다.
 
 ## 12. Failure Routing
 

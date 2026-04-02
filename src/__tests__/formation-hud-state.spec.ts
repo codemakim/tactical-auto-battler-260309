@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { CharacterDefinition } from '../types';
 import { getFormationHeroHudText, getFormationSelectionHudCopy } from '../systems/FormationHudState';
+import { createCharacterDef } from '../entities/UnitFactory';
+import { CharacterClass } from '../types';
 
 function makeChar(): CharacterDefinition {
   return {
@@ -22,22 +24,24 @@ describe('FormationHudState', () => {
   });
 
   it('선택 유닛 요약 텍스트를 생성한다', () => {
+    const character = createCharacterDef('Aldric', CharacterClass.WARRIOR);
     expect(
       getFormationSelectionHudCopy({
-        character: makeChar(),
+        character,
         zoneLabel: 'FRONT',
-        actionNames: ['Shield Bash', 'Fortify', 'Advance'],
       }),
     ).toEqual({
       meta: 'Aldric / WARRIOR  HP 53  ATK 12  GRD 7  AGI 6  LINE FRONT',
-      tactics: '1. Shield Bash   2. Fortify   3. Advance',
+      actionSlots: character.baseActionSlots,
+      emptyText: null,
     });
   });
 
   it('선택된 유닛이 없으면 기본 안내를 반환한다', () => {
     expect(getFormationSelectionHudCopy({})).toEqual({
       meta: '선택한 유닛 없음',
-      tactics: '로스터나 보드에서 유닛을 선택한 뒤 TACTICS에서 행동 카드를 조정하세요.',
+      actionSlots: [],
+      emptyText: '로스터나 보드에서 유닛을 선택한 뒤 TACTICS에서 행동 카드를 조정하세요.',
     });
   });
 });

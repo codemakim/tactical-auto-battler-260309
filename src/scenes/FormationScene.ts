@@ -303,7 +303,7 @@ export class FormationScene extends Phaser.Scene {
     this.hudView.refreshSelection({
       character: char,
       zoneLabel,
-      actionNames: slotData.map((slot) => slot.action.name),
+      actionSlots: slotData.map((slot) => ({ condition: slot.condition, action: slot.action })),
     });
   }
 

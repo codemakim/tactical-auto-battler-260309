@@ -12,26 +12,27 @@
 
 ## Current Task
 
-- **액션 카드 상세 표시 개선** — 편성/병영/상점에서 배지/태그 기반 미니 카드로 액션 정보 표시
+- **액션 상세 표시 후속 정리** — 1차 아이콘 패스 완료, 다음은 상점 오버플로우/오버레이 동작
 - 담당: Codex
 
 ### 작업 요약
 
-1. `UIActionMiniCard` 공용 컴포넌트 생성 (`src/ui/UIActionMiniCard.ts`)
-2. 병영 오버레이 — ViewModel을 `ActionSlot[]`로 변경, 미니 카드 렌더링
-3. Formation HUD — `tactics` 문자열 → `actionSlots` 배열, 미니 카드 세로 나열
-4. 상점 오버레이 — 스탯 아래 미니 카드 추가, 카드/패널 높이 확장
-5. 모든 미니 카드에 마우스 오버 시 UICardVisual 확대 팝업
+1. 모노 아이콘 세트 추가 (`src/utils/actionIcons.ts`)
+2. 미니 카드 메인 요약과 효과 태그에 공통 아이콘 세트 적용
+3. `나 / 나 전열 / 나 후열` 표기와 대상 포함 효과 태그 규칙 유지
+4. 후속 체크리스트 1, 2번 완료 처리
 
 ### 핵심 원칙
 
 - 배지를 섹션 구분 없이 플랫 나열 (색상으로만 조건/대상/효과 구분)
-- 기존 `actionCardBadges.ts` + `actionText.ts` + `UICardVisual.ts` 활용, 새 유틸 함수 없음
+- 기존 `actionCardBadges.ts` + `actionText.ts` 활용, 새 변환 유틸 함수 없음
+- 확대 팝업도 `상황/대상/효과` 섹션 분리 없이 플랫 태그열 유지
 - 카드 편집 오버레이는 건드리지 않음
 
 ## Source Specs
 
 - primary: [docs/action-detail-display-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/action-detail-display-spec.md)
+- follow-up: [docs/action-detail-followup-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/action-detail-followup-checklist.md)
 - secondary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md)
 
 ## Done
@@ -68,10 +69,13 @@
 - finalizeRun 이후 저장 데이터와 타이틀 상태가 활성 런 없는 일반 저장으로 돌아가는 계약 테스트 추가 (Codex)
 - 신규 멤버 영입 상점 MVP 스펙 초안 작성, 자동 갱신 조건을 `1스테이지 이상 클리어한 런 종료`로 정의 (Codex)
 - RecruitShopState 저장 구조, 고정 모집 풀 순환 리프레시, Town 상점 오버레이, 런 종료 자동 갱신 구현 (Codex)
+- 편성 HUD / 병영 / 상점에서 액션 슬롯을 플랫 태그 기반 미니 카드 + 호버 상세로 표시하도록 개선 (Codex)
 
 ## Next
 
-- 작업 완료 후: 실제 1런 플레이 기준으로 상점 가격/후보 풀/골드 템포 QA
+- 상점 카드 태그 오버플로우 해결
+- 오버레이 내부 빈 영역 클릭 시 닫힘 방지
+- 와이드 화면 중앙 정렬 원인 점검
 
 ## Guardrails
 

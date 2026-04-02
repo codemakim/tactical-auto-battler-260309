@@ -316,7 +316,7 @@ describe('getStructuredEffect', () => {
   it('DAMAGE with stat', () => {
     const e: ActionEffect = { type: 'DAMAGE', value: 1.2, stat: 'atk', target: Target.ENEMY_FRONT };
     const s = getStructuredEffect(e);
-    expect(s.icon).toBe('\u2694');
+    expect(s.icon).toBe('✦');
     expect(s.color).toBe(0xff4444);
     expect(s.valueText).toBe('ATKx1.2');
     expect(s.targetText).toBe('적 전열');
@@ -330,7 +330,7 @@ describe('getStructuredEffect', () => {
 
   it('SHIELD with stat', () => {
     const s = getStructuredEffect({ type: 'SHIELD', value: 0.8, stat: 'grd', target: Target.SELF });
-    expect(s.icon).toBe('\u25C6');
+    expect(s.icon).toBe('◈');
     expect(s.color).toBe(0x4a9eff);
     expect(s.valueText).toBe('GRDx0.8');
     expect(s.targetText).toBe('자신');
@@ -338,28 +338,28 @@ describe('getStructuredEffect', () => {
 
   it('HEAL flat', () => {
     const s = getStructuredEffect({ type: 'HEAL', value: 15, target: Target.SELF });
-    expect(s.icon).toBe('+');
+    expect(s.icon).toBe('✚');
     expect(s.color).toBe(0x44cc44);
     expect(s.valueText).toBe('15');
   });
 
   it('MOVE', () => {
     const s = getStructuredEffect({ type: 'MOVE', target: Target.SELF, position: 'FRONT' });
-    expect(s.icon).toBe('>');
+    expect(s.icon).toBe('△');
     expect(s.valueText).toBe('전열');
     expect(s.targetText).toBe('자신');
   });
 
   it('PUSH', () => {
     const s = getStructuredEffect({ type: 'PUSH', target: Target.ENEMY_FRONT, position: 'BACK' });
-    expect(s.icon).toBe('>>');
+    expect(s.icon).toBe('▷');
     expect(s.valueText).toBe('후열');
     expect(s.targetText).toBe('적 전열');
   });
 
   it('BUFF', () => {
     const s = getStructuredEffect({ type: 'BUFF', buffType: 'COVER', duration: 1, value: 0, target: Target.SELF });
-    expect(s.icon).toBe('\u25B2');
+    expect(s.icon).toBe('▲');
     expect(s.color).toBe(0x44cc44);
     expect(s.valueText).toBe('엄호 1T');
     expect(s.targetText).toBe('자신');
@@ -373,7 +373,7 @@ describe('getStructuredEffect', () => {
       value: 2,
       target: Target.ENEMY_FRONT,
     });
-    expect(s.icon).toBe('\u25BC');
+    expect(s.icon).toBe('▼');
     expect(s.color).toBe(0xaa44ff);
     expect(s.valueText).toBe('방어력 감소 2T');
   });
@@ -390,7 +390,7 @@ describe('getStructuredEffect', () => {
 
   it('SWAP', () => {
     const s = getStructuredEffect({ type: 'SWAP', target: Target.ENEMY_BACK, swapTarget: Target.ENEMY_FRONT });
-    expect(s.icon).toBe('\u2194');
+    expect(s.icon).toBe('⇄');
     expect(s.targetText).toContain('\u2194');
     expect(s.targetText).toContain('적 후열');
     expect(s.targetText).toContain('적 전열');

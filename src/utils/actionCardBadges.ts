@@ -1,6 +1,7 @@
 import koData from '../locales/ko.json';
 import enData from '../locales/en.json';
 import type { ActionCondition, ActionEffect, ActionTargetType, Position } from '../types';
+import { getMonoEffectIcon } from './actionIcons';
 import { formatCondition, formatTarget, getDefaultLocale, type Locale } from './actionText';
 
 export type ActionBadgeTone = 'self' | 'ally' | 'enemy' | 'effect' | 'neutral';
@@ -18,49 +19,17 @@ export interface ActionCardBadgeModel {
 
 interface BadgeLocaleData {
   buffType: Record<string, string>;
-  stat: Record<string, string>;
   position: Record<string, string>;
-  effectShort: Record<string, string>;
 }
 
 const BADGE_LOCALES: Record<Locale, BadgeLocaleData> = {
   ko: {
     buffType: (koData as { buffType: Record<string, string> }).buffType,
-    stat: (koData as { stat: Record<string, string> }).stat,
     position: (koData as { position: Record<string, string> }).position,
-    effectShort: {
-      DAMAGE: '🗡',
-      HEAL: '✚',
-      SHIELD: '🛡',
-      MOVE: '→',
-      PUSH: '⇒',
-      BUFF: '▲',
-      DEBUFF: '▼',
-      DELAY_TURN: '⏳',
-      ADVANCE_TURN: '⏩',
-      REPOSITION: '↔',
-      DELAYED: '⏱',
-      SWAP: '⇄',
-    },
   },
   en: {
     buffType: (enData as { buffType: Record<string, string> }).buffType,
-    stat: (enData as { stat: Record<string, string> }).stat,
     position: (enData as { position: Record<string, string> }).position,
-    effectShort: {
-      DAMAGE: '🗡',
-      HEAL: '✚',
-      SHIELD: '🛡',
-      MOVE: '→',
-      PUSH: '⇒',
-      BUFF: '▲',
-      DEBUFF: '▼',
-      DELAY_TURN: '⏳',
-      ADVANCE_TURN: '⏩',
-      REPOSITION: '↔',
-      DELAYED: '⏱',
-      SWAP: '⇄',
-    },
   },
 };
 
@@ -81,9 +50,20 @@ function uniqueBadges(badges: ActionBadge[]): ActionBadge[] {
 function normalizeConditionText(text: string, locale?: Locale): string {
   const activeLocale = locale ?? getDefaultLocale();
   if (activeLocale === 'ko') {
-    return text.replace(/^자신 /, '내 ');
+    return text.replace(/^자신 /, '나 ').replace(/^내 /, '나 ');
   }
-  return text.replace(/^Self /, 'My ');
+  return text.replace(/^Self /, 'Self ');
+}
+
+function normalizeTargetText(text: string, locale?: Locale): string {
+  const activeLocale = locale ?? getDefaultLocale();
+  if (activeLocale === 'ko') {
+    return text
+      .replace(/^자신$/, '나')
+      .replace(/^자신 /, '나 ')
+      .replace(/^내 /, '나 ');
+  }
+  return text;
 }
 
 function formatSelfCondition(condition: ActionCondition, locale?: Locale): ActionBadge[] {
@@ -131,15 +111,18 @@ function formatTargetBadge(target?: ActionTargetType, locale?: Locale): ActionBa
   if (!target) return [];
   const activeLocale = locale ?? getDefaultLocale();
   if (target.side === 'SELF') {
-    return [{ text: activeLocale === 'en' ? 'Self' : '자신', tone: 'self' }];
+    return [{ text: activeLocale === 'en' ? 'Self' : '나', tone: 'self' }];
   }
 
   const tone: ActionBadgeTone = target.side === 'ALLY' ? 'ally' : 'enemy';
-  const formatted = formatTarget(target, activeLocale)
-    .replace('최저HP', '최저 HP')
-    .replace('최고ATK', '최고 ATK')
-    .replace('lowest HP', 'lowest HP')
-    .trim();
+  const formatted = normalizeTargetText(
+    formatTarget(target, activeLocale)
+      .replace('최저HP', '최저 HP')
+      .replace('최고ATK', '최고 ATK')
+      .replace('lowest HP', 'lowest HP')
+      .trim(),
+    activeLocale,
+  );
 
   return [{ text: formatted, tone }];
 }
@@ -151,35 +134,66 @@ function formatPercentDown(value: number | undefined, locale?: Locale): string {
 
 function formatEffectBadge(effect: ActionEffect, locale?: Locale): ActionBadge {
   const l = getBadgeLocale(locale);
-  const short = l.effectShort[effect.type] ?? effect.type;
-  const stat = effect.stat ? (l.stat[effect.stat] ?? effect.stat.toUpperCase()) : '';
   const position = effect.position ? (l.position[effect.position as Position] ?? effect.position) : '';
+  const targetText = effect.target ? (formatTargetBadge(effect.target, locale)[0]?.text ?? '') : '';
+  const targetPrefix = targetText ? `${targetText} ` : '';
+  const icon = getMonoEffectIcon(effect.type);
 
   switch (effect.type) {
     case 'DAMAGE':
+      return {
+        text: `${icon} ${targetPrefix}${locale === 'en' ? 'Attack' : '공격'}x${effect.value ?? 0}`,
+        tone: 'effect',
+      };
     case 'HEAL':
+      return {
+        text: `${icon} ${targetPrefix}${locale === 'en' ? 'Heal' : '회복'}${effect.value ?? 0}`,
+        tone: 'effect',
+      };
     case 'SHIELD':
-      return { text: stat ? `${short} ${stat}x${effect.value ?? 0}` : `${short} ${effect.value ?? 0}`, tone: 'effect' };
+      return {
+        text: `${icon} ${targetPrefix}${locale === 'en' ? 'Shield' : '실드'}x${effect.value ?? 0}`,
+        tone: 'effect',
+      };
     case 'MOVE':
+      return { text: `${icon} ${targetPrefix}${position} ${locale === 'en' ? 'Move' : '이동'}`, tone: 'effect' };
     case 'PUSH':
+      return { text: `${icon} ${targetPrefix}${position} ${locale === 'en' ? 'Push' : '밀침'}`, tone: 'effect' };
     case 'REPOSITION':
-      return { text: `${short} ${position}`, tone: 'effect' };
+      return {
+        text: `${icon} ${targetPrefix}${position} ${locale === 'en' ? 'Reposition' : '재배치'}`,
+        tone: 'effect',
+      };
     case 'BUFF':
+      return {
+        text: `${icon} ${targetPrefix}${l.buffType[effect.buffType ?? ''] ?? effect.buffType ?? ''} ${effect.duration ?? 0}T`,
+        tone: 'effect',
+      };
     case 'DEBUFF':
       return {
-        text: `${short} ${l.buffType[effect.buffType ?? ''] ?? effect.buffType ?? ''} ${effect.duration ?? 0}T`,
+        text: `${icon} ${targetPrefix}${l.buffType[effect.buffType ?? ''] ?? effect.buffType ?? ''} ${effect.duration ?? 0}T`,
         tone: 'effect',
       };
     case 'DELAY_TURN':
+      return {
+        text: `${icon} ${targetPrefix}${locale === 'en' ? 'Delay' : '행동지연'} ${effect.value ?? 0}`,
+        tone: 'effect',
+      };
     case 'ADVANCE_TURN':
-      return { text: `${short} ${effect.value ?? 0}`, tone: 'effect' };
+      return {
+        text: `${icon} ${targetPrefix}${locale === 'en' ? 'Advance' : '행동가속'} ${effect.value ?? 0}`,
+        tone: 'effect',
+      };
     case 'DELAYED':
       return {
-        text: `${short} ${effect.delayRounds ?? 0}T ${l.effectShort[effect.delayedType ?? 'DAMAGE'] ?? effect.delayedType ?? 'DAMAGE'}`,
+        text: `${icon} ${targetPrefix}${effect.delayRounds ?? 0}T ${locale === 'en' ? 'Delayed' : '지연'}`,
         tone: 'effect',
       };
     case 'SWAP':
-      return { text: short, tone: 'effect' };
+      return {
+        text: `${icon} ${targetText}${effect.swapTarget ? ` ⇄ ${formatTargetBadge(effect.swapTarget, locale)[0]?.text ?? ''}` : ''}`,
+        tone: 'effect',
+      };
     default:
       return { text: effect.type, tone: 'neutral' };
   }
@@ -193,17 +207,10 @@ export function buildActionCardBadgeModel(
   const activeLocale = locale ?? getDefaultLocale();
   const selfBadges = condition ? formatSelfCondition(condition, activeLocale) : [];
   const conditionalTargetBadges = condition ? formatTargetCondition(condition, activeLocale) : [];
-  const effectTargetBadges = effects.flatMap((effect) => {
-    const badges = formatTargetBadge(effect.target, activeLocale);
-    if (effect.type === 'SWAP' && effect.swapTarget) {
-      return badges.concat(formatTargetBadge(effect.swapTarget, activeLocale));
-    }
-    return badges;
-  });
 
   return {
     selfBadges: uniqueBadges(selfBadges),
-    targetBadges: uniqueBadges([...conditionalTargetBadges, ...effectTargetBadges]),
+    targetBadges: uniqueBadges([...conditionalTargetBadges]),
     effectBadges: effects.map((effect) => formatEffectBadge(effect, activeLocale)),
   };
 }

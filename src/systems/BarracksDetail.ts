@@ -1,4 +1,4 @@
-import type { CharacterDefinition } from '../types';
+import type { ActionSlot, CharacterDefinition } from '../types';
 
 export interface BarracksRosterSummary {
   countLabel: string;
@@ -9,7 +9,7 @@ export interface CharacterDetailViewModel {
   classLabel: string;
   trainingLabel: string;
   statsLabel: string;
-  actionsLabel: string[];
+  actionSlots: ActionSlot[];
 }
 
 export function getBarracksRosterSummary(currentCount: number, maxSlots: number): BarracksRosterSummary {
@@ -24,8 +24,6 @@ export function getCharacterDetailViewModel(character: CharacterDefinition): Cha
     classLabel: `Class: ${character.characterClass}`,
     trainingLabel: `Training: ${character.trainingsUsed}/${character.trainingPotential}`,
     statsLabel: `HP ${character.baseStats.hp}  ATK ${character.baseStats.atk}  GRD ${character.baseStats.grd}  AGI ${character.baseStats.agi}`,
-    actionsLabel: character.baseActionSlots.map(
-      (slot, index) => `${index + 1}. ${slot.condition.type} -> ${slot.action.name}`,
-    ),
+    actionSlots: character.baseActionSlots,
   };
 }

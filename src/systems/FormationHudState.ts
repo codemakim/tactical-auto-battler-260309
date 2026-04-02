@@ -1,8 +1,9 @@
-import type { CharacterDefinition } from '../types';
+import type { ActionSlot, CharacterDefinition } from '../types';
 
 export interface FormationSelectionHudCopy {
   meta: string;
-  tactics: string;
+  actionSlots: ActionSlot[];
+  emptyText: string | null;
 }
 
 export function getFormationHeroHudText(heroName: string | null, isLocked: boolean): string {
@@ -13,20 +14,22 @@ export function getFormationHeroHudText(heroName: string | null, isLocked: boole
 export function getFormationSelectionHudCopy(input: {
   character?: CharacterDefinition;
   zoneLabel?: string;
-  actionNames?: string[];
+  actionSlots?: ActionSlot[];
 }): FormationSelectionHudCopy {
   if (!input.character) {
     return {
       meta: '선택한 유닛 없음',
-      tactics: '로스터나 보드에서 유닛을 선택한 뒤 TACTICS에서 행동 카드를 조정하세요.',
+      actionSlots: [],
+      emptyText: '로스터나 보드에서 유닛을 선택한 뒤 TACTICS에서 행동 카드를 조정하세요.',
     };
   }
 
-  const { character, zoneLabel = 'UNASSIGNED', actionNames = [] } = input;
+  const { character, zoneLabel = 'UNASSIGNED', actionSlots = character.baseActionSlots } = input;
   const stats = character.baseStats;
 
   return {
     meta: `${character.name} / ${character.characterClass}  HP ${stats.hp}  ATK ${stats.atk}  GRD ${stats.grd}  AGI ${stats.agi}  LINE ${zoneLabel}`,
-    tactics: actionNames.map((name, index) => `${index + 1}. ${name}`).join('   '),
+    actionSlots,
+    emptyText: null,
   };
 }

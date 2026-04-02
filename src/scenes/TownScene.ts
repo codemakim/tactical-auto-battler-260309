@@ -9,6 +9,7 @@ import { UITheme } from '../ui/UITheme';
 import { UIModal } from '../ui/UIModal';
 import { UIPanel } from '../ui/UIPanel';
 import { UIButton } from '../ui/UIButton';
+import { UIActionMiniCard } from '../ui/UIActionMiniCard';
 import { gameState } from '../core/GameState';
 import { formatTownHeaderHeroInfo } from '../systems/TownHeader';
 import { getBarracksRosterSummary, getCharacterDetailViewModel } from '../systems/BarracksDetail';
@@ -106,6 +107,9 @@ export class TownScene extends Phaser.Scene {
   private overlayPanel?: UIPanel;
   private overlayButtons: UIButton[] = [];
   private overlayTexts: Phaser.GameObjects.Text[] = [];
+  private overlayActionCards: UIActionMiniCard[] = [];
+  private recruitTooltip?: Phaser.GameObjects.Container;
+  private recruitTooltipCards: UIActionMiniCard[] = [];
   private selectedBarracksCharacterId?: string;
   private selectedTrainingCharacterId?: string;
 
@@ -422,14 +426,19 @@ export class TownScene extends Phaser.Scene {
     this.overlayPanel.add(actionHeader);
     this.overlayTexts.push(actionHeader);
 
-    detail.actionsLabel.forEach((actionLabel, index) => {
-      const actionText = this.add.text(x, top + 204 + index * 34, actionLabel, {
-        ...UITheme.font.body,
-        color: UITheme.colors.textPrimary,
-        wordWrap: { width: 560 },
+    detail.actionSlots.forEach((slot, index) => {
+      const card = new UIActionMiniCard(this, {
+        x,
+        y: top + 204 + index * 62,
+        width: 560,
+        height: 56,
+        action: slot.action,
+        condition: slot.condition,
+        rarity: slot.action.rarity,
+        classRestriction: slot.action.classRestriction,
       });
-      this.overlayPanel!.add(actionText);
-      this.overlayTexts.push(actionText);
+      this.overlayPanel!.add(card.container);
+      this.overlayActionCards.push(card);
     });
   }
 
@@ -439,6 +448,10 @@ export class TownScene extends Phaser.Scene {
 
     this.overlayButtons.forEach((button) => button.destroy());
     this.overlayButtons = [];
+
+    this.overlayActionCards.forEach((card) => card.destroy());
+    this.overlayActionCards = [];
+    this.destroyRecruitTooltip();
 
     this.overlayPanel?.destroy();
     this.overlayPanel = undefined;
@@ -625,7 +638,7 @@ export class TownScene extends Phaser.Scene {
     this.destroyOverlay();
 
     const panelWidth = 900;
-    const panelHeight = 430;
+    const panelHeight = 500;
     const panelX = (GAME_WIDTH - panelWidth) / 2;
     const panelY = (GAME_HEIGHT - panelHeight) / 2;
     const shopState = gameState.recruitShopState;
@@ -671,12 +684,12 @@ export class TownScene extends Phaser.Scene {
 
     const startX = UITheme.panel.padding;
     const cardWidth = 252;
-    const cardHeight = 222;
+    const cardHeight = 286;
     const gap = 18;
 
     shopState.offers.forEach((offer, index) => {
       const x = startX + index * (cardWidth + gap);
-      const y = contentTop + 42;
+      const y = contentTop + 72;
       const card = this.add.graphics();
       card.fillStyle(UITheme.colors.bgPanelLight, 0.98);
       card.lineStyle(2, offer.character ? UITheme.colors.borderLight : UITheme.colors.border, 1);
@@ -726,13 +739,30 @@ export class TownScene extends Phaser.Scene {
         ...UITheme.font.body,
         color: UITheme.colors.textGold,
       });
+      priceText.setY(y + 182);
       this.overlayPanel!.add(priceText);
       this.overlayTexts.push(priceText);
+
+      const hintText = this.add.text(x + 16, y + 214, '카드 위로 마우스를 올려 전술 보기', {
+        ...UITheme.font.small,
+        color: UITheme.colors.textSecondary,
+      });
+      this.overlayPanel!.add(hintText);
+      this.overlayTexts.push(hintText);
+
+      const hoverArea = this.add
+        .rectangle(x + cardWidth / 2, y + cardHeight / 2, cardWidth, cardHeight, 0x000000, 0)
+        .setInteractive({ useHandCursor: true });
+      hoverArea.on('pointerover', () =>
+        this.showRecruitTooltip(offer.character!, x, y, cardWidth, panelWidth, contentTop),
+      );
+      hoverArea.on('pointerout', () => this.destroyRecruitTooltip());
+      this.overlayPanel!.add(hoverArea);
 
       const recruitDisabled = gameState.gold < offer.price || rosterFull;
       const recruitBtn = new UIButton(this, {
         x: x + 16,
-        y: y + 176,
+        y: y + 240,
         width: cardWidth - 32,
         height: 34,
         label: '영입',
@@ -801,5 +831,77 @@ export class TownScene extends Phaser.Scene {
 
     this.goldText.setText(`Gold: ${gameState.gold}`);
     this.openRecruitShopPanel();
+  }
+
+  private showRecruitTooltip(
+    character: CharacterDefinition,
+    cardX: number,
+    cardY: number,
+    cardWidth: number,
+    panelWidth: number,
+    contentTop: number,
+  ): void {
+    if (!this.overlayPanel) return;
+
+    this.destroyRecruitTooltip();
+
+    const tooltipWidth = 276;
+    const tooltipPadding = 12;
+    const tooltipGap = 8;
+    let tooltipHeight = 38 + tooltipPadding;
+    const tooltipX = Phaser.Math.Clamp(
+      cardX + cardWidth / 2 - tooltipWidth / 2,
+      UITheme.panel.padding,
+      panelWidth - tooltipWidth - UITheme.panel.padding,
+    );
+    character.baseActionSlots.forEach((slot) => {
+      const miniCard = new UIActionMiniCard(this, {
+        x: 12,
+        y: tooltipHeight - tooltipPadding,
+        width: tooltipWidth - 24,
+        height: 52,
+        density: 'compact',
+        autoHeight: true,
+        showTooltip: false,
+        action: slot.action,
+        condition: slot.condition,
+        rarity: slot.action.rarity,
+        classRestriction: slot.action.classRestriction,
+      });
+      this.recruitTooltipCards.push(miniCard);
+      tooltipHeight += miniCard.height + tooltipGap;
+    });
+
+    tooltipHeight -= tooltipGap;
+
+    const tooltipY = Math.max(contentTop + 34, cardY - tooltipHeight - 12);
+
+    const tooltip = this.add.container(tooltipX, tooltipY);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x101628, 0.98);
+    bg.fillRoundedRect(0, 0, tooltipWidth, tooltipHeight, 10);
+    bg.lineStyle(2, UITheme.colors.borderHighlight, 0.95);
+    bg.strokeRoundedRect(0, 0, tooltipWidth, tooltipHeight, 10);
+    tooltip.add(bg);
+
+    const title = this.add.text(12, 10, `${character.name} 전술`, {
+      ...UITheme.font.body,
+      color: UITheme.colors.textGold,
+    });
+    tooltip.add(title);
+
+    this.recruitTooltipCards.forEach((miniCard) => {
+      tooltip.add(miniCard.container);
+    });
+
+    this.overlayPanel.add(tooltip);
+    this.recruitTooltip = tooltip;
+  }
+
+  private destroyRecruitTooltip(): void {
+    this.recruitTooltipCards.forEach((card) => card.destroy());
+    this.recruitTooltipCards = [];
+    this.recruitTooltip?.destroy();
+    this.recruitTooltip = undefined;
   }
 }

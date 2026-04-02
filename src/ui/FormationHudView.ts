@@ -4,13 +4,15 @@ import { FORMATION_LAYOUT } from '../systems/FormationSceneLayout';
 import { drawRoundedFrame } from './FormationGraphics';
 import { getFormationPanelLabels } from '../systems/FormationPresentation';
 import { getFormationHeroHudText, getFormationSelectionHudCopy } from '../systems/FormationHudState';
-import type { CharacterDefinition } from '../types';
+import { UIActionMiniCard } from './UIActionMiniCard';
+import type { ActionSlot, CharacterDefinition } from '../types';
 
 export class FormationHudView {
   private readonly scene: Phaser.Scene;
   private heroText!: Phaser.GameObjects.Text;
   private unitMeta!: Phaser.GameObjects.Text;
-  private unitTactics!: Phaser.GameObjects.Text;
+  private unitEmptyText!: Phaser.GameObjects.Text;
+  private actionCards: UIActionMiniCard[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -53,7 +55,7 @@ export class FormationHudView {
       wordWrap: { width: hud.width - 36 },
     });
 
-    this.unitTactics = this.scene.add.text(hud.x + 18, hud.y + 250, '', {
+    this.unitEmptyText = this.scene.add.text(hud.x + 18, hud.y + 250, '', {
       ...UITheme.font.small,
       color: '#9fb3d8',
       wordWrap: { width: hud.width - 36 },
@@ -64,9 +66,31 @@ export class FormationHudView {
     this.heroText.setText(getFormationHeroHudText(heroName, isLocked));
   }
 
-  refreshSelection(input: { character?: CharacterDefinition; zoneLabel?: string; actionNames?: string[] }): void {
+  refreshSelection(input: { character?: CharacterDefinition; zoneLabel?: string; actionSlots?: ActionSlot[] }): void {
     const copy = getFormationSelectionHudCopy(input);
     this.unitMeta.setText(copy.meta);
-    this.unitTactics.setText(copy.tactics);
+    this.actionCards.forEach((card) => card.destroy());
+    this.actionCards = [];
+
+    if (copy.actionSlots.length === 0) {
+      this.unitEmptyText.setText(copy.emptyText ?? '');
+      return;
+    }
+
+    this.unitEmptyText.setText('');
+    const startX = FORMATION_LAYOUT.hud.x + 18;
+    const startY = FORMATION_LAYOUT.hud.y + 250;
+    const width = FORMATION_LAYOUT.hud.width - 36;
+    copy.actionSlots.forEach((slot, index) => {
+      const card = new UIActionMiniCard(this.scene, {
+        x: startX,
+        y: startY + index * 62,
+        width,
+        height: 56,
+        action: slot.action,
+        condition: slot.condition,
+      });
+      this.actionCards.push(card);
+    });
   }
 }
