@@ -12,15 +12,27 @@
 
 ## Current Task
 
-- 현재 진행 중인 작업 없음
-- 최근 완료: 영입 상점 MVP 구현
-- 다음 작업 미정
+- **액션 카드 상세 표시 개선** — 편성/병영/상점에서 배지/태그 기반 미니 카드로 액션 정보 표시
+- 담당: Codex
+
+### 작업 요약
+
+1. `UIActionMiniCard` 공용 컴포넌트 생성 (`src/ui/UIActionMiniCard.ts`)
+2. 병영 오버레이 — ViewModel을 `ActionSlot[]`로 변경, 미니 카드 렌더링
+3. Formation HUD — `tactics` 문자열 → `actionSlots` 배열, 미니 카드 세로 나열
+4. 상점 오버레이 — 스탯 아래 미니 카드 추가, 카드/패널 높이 확장
+5. 모든 미니 카드에 마우스 오버 시 UICardVisual 확대 팝업
+
+### 핵심 원칙
+
+- 배지를 섹션 구분 없이 플랫 나열 (색상으로만 조건/대상/효과 구분)
+- 기존 `actionCardBadges.ts` + `actionText.ts` + `UICardVisual.ts` 활용, 새 유틸 함수 없음
+- 카드 편집 오버레이는 건드리지 않음
 
 ## Source Specs
 
-- primary: [docs/recruit-shop-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/recruit-shop-spec.md)
+- primary: [docs/action-detail-display-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/action-detail-display-spec.md)
 - secondary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md)
-- checklist: [docs/combat-impl-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/combat-impl-checklist.md)
 
 ## Done
 
@@ -59,37 +71,7 @@
 
 ## Next
 
-다음 작업 미정.
-
-- 추천 후속: 실제 1런 플레이 기준으로 상점 가격/후보 풀/골드 템포 QA
-
-### P3-9: 병영 상세
-- 스펙: game-flow-spec.md §3-1
-- 파일: `src/scenes/TownScene.ts`
-- 목표: 캐릭터 상세 정보 확인 (스탯, 클래스, 액션 카드)
-- 완료: 병영 오버레이 추가, 목록 선택 + 상세 정보 렌더링
-
-### P3-10: 훈련소 UI
-- 스펙: game-flow-spec.md §3-2
-- 파일: `src/scenes/TownScene.ts`
-- 목표: TrainingSystem 연동, 골드 소모/훈련 가능 여부 표시
-- 완료: 훈련소 오버레이 추가, 캐릭터 선택 + 훈련 버튼 + 골드/상태 반영
-
-### P3-11: 편성 프리셋
-- 스펙: game-flow-spec.md §3-3 / 현재 GameState preset 구조
-- 파일: `src/scenes/FormationScene.ts`, `src/core/GameState.ts`
-- 목표: 프리셋 저장/불러오기 UI 연결
-- 완료: Preset 1~3 슬롯 UI, 저장/불러오기/삭제, GameState.deletePreset 추가
-
-### P3-12: 타이틀 세이브 분기
-- 스펙: game-flow-spec.md §2
-- 파일: `src/scenes/MainMenuScene.ts`
-- 목표: 세이브 없음=START, 세이브 있음=CONTINUE/NEW GAME 분기
-- 완료: `src/systems/TitleMenu.ts` 추가, MainMenuScene 버튼 분기 적용
-
-### Save UX
-- 파일: `src/systems/SaveSystem.ts`, `src/scenes/MainMenuScene.ts`
-- 완료: Delete Save, corrupted save 감지, 타이틀 안내 문구, 삭제 확인 모달
+- 작업 완료 후: 실제 1런 플레이 기준으로 상점 가격/후보 풀/골드 템포 QA
 
 ## Guardrails
 
@@ -99,10 +81,9 @@
 
 ## Verification
 
-- 마지막 완료 작업 기준:
-  - `npm test -- recruit-shop save-system run-result-calculator`
-  - `npm run format`
-  - `npx tsc --noEmit`
+- `npm test`
+- `npm run format`
+- `npx tsc --noEmit`
 
 ## Notes
 

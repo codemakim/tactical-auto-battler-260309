@@ -9,7 +9,7 @@
 - 작업 절차와 핸드오프 규칙은 [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)를 따른다.
 - 실시간 작업 상태는 [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)에서 확인한다.
 - 프로젝트 전용 스킬은 [.codex/skills](/Users/jhkim/Project/tactical-auto-battler/.codex/skills)를 우선 사용한다.
-- 구현 완료 후에는 `senior-reviewer` 기준의 별도 리뷰 에이전트를 거친다.
+- 구현 완료 후에는 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 기준의 별도 리뷰 에이전트를 거친다.
 - 세부 규칙은 `docs/` 스펙 문서를 기준으로 판단한다.
 - 구현 전에는 관련 테스트와 현재 구현 파일을 함께 본다.
 - 변경은 가능한 한 작은 단위로 한다.
@@ -202,6 +202,7 @@
   기능 변경보다 구조 리스크가 커져서 씬 책임 분리가 먼저 필요할 때 사용한다.
 - `senior-reviewer`
   구현이 끝난 뒤 커밋 전에 독립 리뷰 에이전트가 한 번 점검할 때 사용한다.
+  단, 실제 스폰 계약은 `.codex/agents/senior-reviewer.md`를 기준으로 한다.
 
 ## 12. Failure Routing
 
@@ -215,3 +216,10 @@
   `scene-boundary-refactor`
 - 리뷰에서 버그/회귀/테스트 누락이 발견됨
   수정 후 `senior-reviewer`를 다시 거친다
+
+## 13. Review Agent
+
+- 독립 리뷰 에이전트 프로필: [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md)
+- 리뷰 에이전트는 구현 요약이 아니라 findings-first만 반환해야 한다.
+- `No actionable findings.` 형식을 강제한다.
+- 스폰 시 primary spec, 대상 파일, 실행한 검증 명령을 함께 넘긴다.

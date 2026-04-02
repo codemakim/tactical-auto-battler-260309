@@ -7,6 +7,8 @@ description: Perform an independent senior-level code review after implementatio
 
 Use this skill after implementation is functionally complete. The reviewer should behave like an independent senior engineer, not a cheerleader and not the original implementer defending the patch.
 
+If this review is being delegated to a spawned agent, do not assume the agent automatically has this skill loaded. The spawning prompt must explicitly carry the output contract below.
+
 ## Review Priorities
 
 1. Bugs and behavioral regressions
@@ -47,9 +49,32 @@ Report:
 - residual risks if no findings
 - short change summary only after findings
 
+### Required First Line
+
+- If findings exist, start immediately with the first finding.
+- If no actionable findings exist, start with exactly:
+  `No actionable findings.`
+
+### Forbidden Output
+
+- do not start with implementation summary
+- do not restate the patch before findings
+- do not praise by default
+- do not replace findings with a verification recap
+
 ## Guardrails
 
 - Do not praise by default.
 - Do not focus on style nits before real behavioral risk.
 - Do not suggest speculative rewrites unless the current structure is genuinely blocking.
 - If there are no findings, say that directly instead of inventing work.
+
+## Spawned Agent Prompt Contract
+
+When another Codex instance spawns a review agent for this skill, the prompt should explicitly say:
+
+1. review only, not implementation
+2. findings first, ordered by severity
+3. file references required
+4. if no findings, say `No actionable findings.`
+5. no summary before findings

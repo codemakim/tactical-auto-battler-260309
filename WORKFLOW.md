@@ -11,7 +11,7 @@
 3. 스펙 기반 테스트 작성 또는 기존 테스트 보강
 4. 테스트를 만족하도록 구현
 5. 테스트 재검증
-6. `senior-reviewer` 기준으로 독립 리뷰 에이전트 1회 점검
+6. [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 기준으로 독립 리뷰 에이전트 1회 점검
 7. 리뷰 반영 및 필요 시 리팩터링
 8. `prettier` / `tsc` 확인
 9. 관련 문서와 체크리스트 반영
@@ -87,10 +87,21 @@
 기본 규칙:
 
 1. 메인 구현자가 직접 셀프 승인하지 않는다.
-2. 별도 리뷰 에이전트가 `senior-reviewer` 기준으로 한 번 점검한다.
+2. 별도 리뷰 에이전트가 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 프로필 기준으로 한 번 점검한다.
 3. 리뷰는 칭찬보다 버그, 회귀, 테스트 누락, 스펙 드리프트를 우선 본다.
 4. 리뷰 결과가 없으면 `명시적으로 no findings`를 남긴다.
 5. 리뷰 반영 후에만 `format` / `tsc` / 커밋 단계로 간다.
+
+리뷰 에이전트 실행 시 주의:
+
+- 로컬 스킬 본문이 서브에이전트에 자동 주입된다고 가정하지 않는다.
+- 리뷰 스폰 시에는 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 계약을 프롬프트에 직접 반영한다.
+- 특히 아래를 반드시 포함한다:
+  - review only
+  - findings first
+  - file references required
+  - implementation summary is forbidden
+  - if none, start with `No actionable findings.`
 
 ## 7. Current Mapping
 
@@ -120,6 +131,7 @@
   비대해진 씬을 단계적으로 분리
 - `senior-reviewer`
   최종 검증 전 독립 리뷰 기준
+  서브에이전트 리뷰는 `.codex/agents/senior-reviewer.md` 프로필을 우선 사용
 
 ## 9. Skill Escalation
 
