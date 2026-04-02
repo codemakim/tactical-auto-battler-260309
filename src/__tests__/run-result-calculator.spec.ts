@@ -126,6 +126,7 @@ describe('finalizeRun', () => {
   beforeEach(() => {
     mockGameState = {
       addGold: vi.fn(),
+      refreshRecruitShopAfterRun: vi.fn(),
       setRunState: vi.fn(),
     } as unknown as GameStateManager;
   });
@@ -166,5 +167,27 @@ describe('finalizeRun', () => {
     finalizeRun(runState, mockGameState);
 
     expect(mockGameState.addGold).toHaveBeenCalledWith(0);
+  });
+
+  it('1스테이지 이상 클리어한 런 종료면 상점 자동 갱신을 요청한다', () => {
+    const runState = createRunState({
+      status: RunStatus.DEFEAT,
+      currentStage: 3,
+    });
+
+    finalizeRun(runState, mockGameState);
+
+    expect(mockGameState.refreshRecruitShopAfterRun as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(2);
+  });
+
+  it('스테이지를 하나도 클리어하지 못한 런 종료면 상점 자동 갱신을 요청하지 않는다', () => {
+    const runState = createRunState({
+      status: RunStatus.DEFEAT,
+      currentStage: 1,
+    });
+
+    finalizeRun(runState, mockGameState);
+
+    expect(mockGameState.refreshRecruitShopAfterRun as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
   });
 });

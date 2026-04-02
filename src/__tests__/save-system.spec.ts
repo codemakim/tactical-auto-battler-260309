@@ -8,6 +8,7 @@ import {
   saveSaveDataToStorage,
   SAVE_STORAGE_KEY,
 } from '../systems/SaveSystem';
+import { createRecruitShopState } from '../systems/RecruitShop';
 import { finalizeRun } from '../systems/RunResultCalculator';
 import { CharacterClass, HeroType, Position, RunStatus } from '../types';
 import { createCharacterDef } from '../entities/UnitFactory';
@@ -49,6 +50,7 @@ describe('SaveSystem', () => {
   it('SaveData에는 런 진행도까지 포함되고 battleReplays는 제외된다', () => {
     gameState.setGold(777);
     gameState.setHeroType(HeroType.MAGE);
+    gameState.setRecruitShopState(createRecruitShopState(gameState.characters));
     gameState.setRunState({
       currentStage: 2,
       maxStages: 5,
@@ -66,6 +68,7 @@ describe('SaveSystem', () => {
 
     expect(saveData.gold).toBe(777);
     expect(saveData.formation.heroType).toBe(HeroType.MAGE);
+    expect(saveData.recruitShopState?.offers).toHaveLength(3);
     expect(saveData.runState).toMatchObject({
       currentStage: 2,
       maxStages: 5,
@@ -89,6 +92,7 @@ describe('SaveSystem', () => {
       heroType: HeroType.SUPPORT,
     });
     gameState.savePreset('alpha');
+    gameState.setRecruitShopState(createRecruitShopState(gameState.characters));
     gameState.setRunState({
       currentStage: 3,
       maxStages: 5,
@@ -133,6 +137,7 @@ describe('SaveSystem', () => {
     expect(restored.characters.map((c) => c.id)).toEqual(gameState.characters.map((c) => c.id));
     expect(restored.formation).toEqual(gameState.formation);
     expect(restored.presets).toEqual(gameState.presets);
+    expect(restored.recruitShopState).toEqual(gameState.recruitShopState);
     expect(restored.runState).toEqual(gameState.runState);
     expect(restored.battleReplays).toEqual([]);
   });
@@ -150,6 +155,7 @@ describe('SaveSystem', () => {
     gameState.setGold(888);
     gameState.setHeroType(HeroType.SUPPORT);
     gameState.savePreset('roundtrip');
+    gameState.setRecruitShopState(createRecruitShopState(gameState.characters));
     gameState.setRunState({
       currentStage: 2,
       maxStages: 5,
@@ -170,6 +176,7 @@ describe('SaveSystem', () => {
     expect(restored.gold).toBe(888);
     expect(restored.formation.heroType).toBe(HeroType.SUPPORT);
     expect(restored.presets.map((p) => p.name)).toContain('roundtrip');
+    expect(restored.recruitShopState?.offers).toHaveLength(3);
     expect(restored.runState).toMatchObject({
       currentStage: 2,
       seed: 444,
@@ -224,6 +231,22 @@ describe('SaveSystem', () => {
 
     storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({ version: 999 }));
     expect(getSaveDataStatus(storage)).toBe('corrupted');
+  });
+
+  it('로스터가 가득 찬 상태에서는 상점 리프레시가 실패하고 골드가 유지된다', () => {
+    gameState.setRecruitShopState(createRecruitShopState(gameState.characters));
+    gameState.setGold(500);
+    const before = gameState.recruitShopState;
+
+    gameState.addCharacter(createCharacterDef('Brakka', CharacterClass.LANCER));
+    gameState.addCharacter(createCharacterDef('Mira', CharacterClass.CONTROLLER));
+    gameState.addCharacter(createCharacterDef('Selene', CharacterClass.ASSASSIN));
+    gameState.addCharacter(createCharacterDef('Doran', CharacterClass.GUARDIAN));
+
+    expect(gameState.characters.length).toBe(gameState.maxCharacterSlots);
+    expect(gameState.refreshRecruitShop()).toBe(false);
+    expect(gameState.gold).toBe(500);
+    expect(gameState.recruitShopState).toEqual(before);
   });
 
   it('런 종료 정산 후 저장 데이터에는 활성 runState가 남지 않는다', () => {

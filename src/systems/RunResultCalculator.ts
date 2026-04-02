@@ -35,11 +35,17 @@ export function calculateRunResult(runState: RunState): RunResultData {
  * @param gameStateMgr - 게임 상태 매니저 (골드 반영, runState 제거)
  */
 export function finalizeRun(runState: RunState, gameStateMgr: GameStateManager): void {
+  const result = calculateRunResult(runState);
+
   // 골드를 영속 자원에 반영
   gameStateMgr.addGold(runState.gold);
 
   // 런 종료 처리 (파티 복원, 인벤토리 초기화)
   endRun(runState);
+
+  if (result.stagesCleared >= 1) {
+    gameStateMgr.refreshRecruitShopAfterRun(result.stagesCleared);
+  }
 
   // 런 상태 제거
   gameStateMgr.setRunState(undefined);

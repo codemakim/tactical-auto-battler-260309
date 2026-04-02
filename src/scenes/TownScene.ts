@@ -12,6 +12,7 @@ import { UIButton } from '../ui/UIButton';
 import { gameState } from '../core/GameState';
 import { formatTownHeaderHeroInfo } from '../systems/TownHeader';
 import { getBarracksRosterSummary, getCharacterDetailViewModel } from '../systems/BarracksDetail';
+import { getRecruitPurchaseFailureMessage } from '../systems/RecruitShop';
 import { applyTrainingToCharacter, getTrainingCharacterViewModel } from '../systems/TrainingGround';
 import type { CharacterDefinition, TrainableStat } from '../types';
 
@@ -67,13 +68,13 @@ const BUILDINGS: BuildingDef[] = [
   {
     id: 'shop',
     name: '상점',
-    description: '아이템과 액션 카드를 구매합니다.',
+    description: '골드로 신규 멤버를 영입합니다.',
     x: 170,
     y: 550,
     hitWidth: 220,
     hitHeight: 140,
     labelOffsetY: -70,
-    implemented: false,
+    implemented: true,
   },
   {
     id: 'settings',
@@ -284,6 +285,9 @@ export class TownScene extends Phaser.Scene {
         break;
       case 'warroom':
         this.scene.start('FormationScene');
+        break;
+      case 'shop':
+        this.openRecruitShopPanel();
         break;
       default:
         new UIModal(this, {
@@ -615,5 +619,187 @@ export class TownScene extends Phaser.Scene {
     this.goldText.setText(`Gold: ${gameState.gold}`);
     this.selectedTrainingCharacterId = result.character.id;
     this.openTrainingPanel();
+  }
+
+  private openRecruitShopPanel(): void {
+    this.destroyOverlay();
+
+    const panelWidth = 900;
+    const panelHeight = 430;
+    const panelX = (GAME_WIDTH - panelWidth) / 2;
+    const panelY = (GAME_HEIGHT - panelHeight) / 2;
+    const shopState = gameState.recruitShopState;
+    const rosterFull = gameState.characters.length >= gameState.maxCharacterSlots;
+    const canRefresh = gameState.gold >= shopState.refreshCost && !rosterFull;
+
+    this.overlayDim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
+      .setInteractive()
+      .setDepth(100);
+    this.overlayDim.on('pointerdown', () => this.destroyOverlay());
+
+    this.overlayPanel = new UIPanel(this, {
+      x: panelX,
+      y: panelY,
+      width: panelWidth,
+      height: panelHeight,
+      title: '상점',
+      borderColor: UITheme.colors.borderLight,
+    });
+    this.overlayPanel.setDepth(101);
+    const contentTop = this.overlayPanel.contentY;
+
+    const goldText = this.add.text(UITheme.panel.padding, contentTop, `Gold: ${gameState.gold}`, {
+      ...UITheme.font.body,
+      color: UITheme.colors.textGold,
+    });
+    this.overlayPanel.add(goldText);
+    this.overlayTexts.push(goldText);
+
+    const refreshText = this.add.text(
+      panelWidth - UITheme.panel.padding,
+      contentTop,
+      `Refresh ${shopState.refreshCost}G`,
+      {
+        ...UITheme.font.small,
+        color: canRefresh ? UITheme.colors.textAccent : UITheme.colors.textSecondary,
+      },
+    );
+    refreshText.setOrigin(1, 0);
+    this.overlayPanel.add(refreshText);
+    this.overlayTexts.push(refreshText);
+
+    const startX = UITheme.panel.padding;
+    const cardWidth = 252;
+    const cardHeight = 222;
+    const gap = 18;
+
+    shopState.offers.forEach((offer, index) => {
+      const x = startX + index * (cardWidth + gap);
+      const y = contentTop + 42;
+      const card = this.add.graphics();
+      card.fillStyle(UITheme.colors.bgPanelLight, 0.98);
+      card.lineStyle(2, offer.character ? UITheme.colors.borderLight : UITheme.colors.border, 1);
+      card.fillRoundedRect(x, y, cardWidth, cardHeight, 12);
+      card.strokeRoundedRect(x, y, cardWidth, cardHeight, 12);
+      this.overlayPanel!.add(card);
+
+      if (!offer.character) {
+        const emptyText = this.add.text(x + cardWidth / 2, y + 84, '영입 완료', {
+          ...UITheme.font.heading,
+          color: UITheme.colors.textSecondary,
+        });
+        emptyText.setOrigin(0.5);
+        this.overlayPanel!.add(emptyText);
+        this.overlayTexts.push(emptyText);
+        return;
+      }
+
+      const title = this.add.text(x + 16, y + 16, offer.character.name, {
+        ...UITheme.font.heading,
+        color: UITheme.colors.textPrimary,
+      });
+      this.overlayPanel!.add(title);
+      this.overlayTexts.push(title);
+
+      const classText = this.add.text(x + 16, y + 50, offer.character.characterClass, {
+        ...UITheme.font.small,
+        color: '#9dd6ff',
+      });
+      this.overlayPanel!.add(classText);
+      this.overlayTexts.push(classText);
+
+      const statsText = this.add.text(
+        x + 16,
+        y + 84,
+        `HP ${offer.character.baseStats.hp}  ATK ${offer.character.baseStats.atk}\nGRD ${offer.character.baseStats.grd}  AGI ${offer.character.baseStats.agi}`,
+        {
+          ...UITheme.font.body,
+          color: UITheme.colors.textPrimary,
+          lineSpacing: 8,
+        },
+      );
+      this.overlayPanel!.add(statsText);
+      this.overlayTexts.push(statsText);
+
+      const priceText = this.add.text(x + 16, y + 156, `${offer.price} Gold`, {
+        ...UITheme.font.body,
+        color: UITheme.colors.textGold,
+      });
+      this.overlayPanel!.add(priceText);
+      this.overlayTexts.push(priceText);
+
+      const recruitDisabled = gameState.gold < offer.price || rosterFull;
+      const recruitBtn = new UIButton(this, {
+        x: x + 16,
+        y: y + 176,
+        width: cardWidth - 32,
+        height: 34,
+        label: '영입',
+        style: 'primary',
+        disabled: recruitDisabled,
+        onClick: () => this.recruitFromShop(offer.slotIndex),
+      });
+      this.overlayPanel!.add(recruitBtn.container);
+      this.overlayButtons.push(recruitBtn);
+    });
+
+    if (rosterFull) {
+      const fullText = this.add.text(UITheme.panel.padding, panelHeight - 102, '로스터가 가득 찼습니다.', {
+        ...UITheme.font.small,
+        color: UITheme.colors.textWarning,
+      });
+      this.overlayPanel.add(fullText);
+      this.overlayTexts.push(fullText);
+    }
+
+    const refreshBtn = new UIButton(this, {
+      x: panelWidth - 308,
+      y: panelHeight - 58,
+      width: 132,
+      height: 40,
+      label: 'REFRESH',
+      style: 'secondary',
+      disabled: !canRefresh,
+      onClick: () => {
+        if (!gameState.refreshRecruitShop()) {
+          new UIModal(this, {
+            title: '상점',
+            content: rosterFull ? '로스터가 가득 차 있어 새 후보를 볼 필요가 없습니다.' : '골드가 부족합니다.',
+          });
+          return;
+        }
+        this.goldText.setText(`Gold: ${gameState.gold}`);
+        this.openRecruitShopPanel();
+      },
+    });
+    this.overlayPanel.add(refreshBtn.container);
+    this.overlayButtons.push(refreshBtn);
+
+    const closeBtn = new UIButton(this, {
+      x: panelWidth - 156,
+      y: panelHeight - 58,
+      width: 132,
+      height: 40,
+      label: '닫기',
+      style: 'secondary',
+      onClick: () => this.destroyOverlay(),
+    });
+    this.overlayPanel.add(closeBtn.container);
+    this.overlayButtons.push(closeBtn);
+  }
+
+  private recruitFromShop(slotIndex: number): void {
+    const result = gameState.recruitFromShop(slotIndex);
+    if (!result.ok) {
+      new UIModal(this, {
+        title: '상점',
+        content: getRecruitPurchaseFailureMessage(result.reason),
+      });
+      return;
+    }
+
+    this.goldText.setText(`Gold: ${gameState.gold}`);
+    this.openRecruitShopPanel();
   }
 }

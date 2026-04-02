@@ -7,6 +7,13 @@ import type { CharacterDefinition, HeroType, Position, RunState, BattleReplayEnt
 import { CharacterClass, HeroType as HT } from '../types';
 import { createCharacterDef } from '../entities/UnitFactory';
 import {
+  createRecruitShopState as buildRecruitShopState,
+  purchaseRecruitOffer,
+  refreshRecruitShopState,
+  shouldAutoRefreshRecruitShop,
+} from '../systems/RecruitShop';
+import type { RecruitShopState } from '../systems/RecruitShop';
+import {
   createGameStateDataFromSave,
   deleteSaveDataFromStorage,
   extractSaveData,
@@ -42,6 +49,7 @@ export interface GameStateData {
   maxCharacterSlots: number;
   formation: FormationData;
   presets: FormationPreset[];
+  recruitShopState: RecruitShopState;
   /** 진행 중인 런 상태 (런 밖이면 undefined) */
   runState?: RunState;
   /** 런 중 전투 리플레이 기록 */
@@ -79,6 +87,7 @@ function createInitialState(): GameStateData {
     maxCharacterSlots: 8,
     formation: createDefaultFormation(characters),
     presets: [],
+    recruitShopState: buildRecruitShopState(characters),
     battleReplays: [],
   };
 }
@@ -118,6 +127,10 @@ export class GameStateManager {
 
   get runState(): RunState | undefined {
     return this.state.runState;
+  }
+
+  get recruitShopState(): RecruitShopState {
+    return this.state.recruitShopState;
   }
 
   get battleReplays(): BattleReplayEntry[] {
@@ -174,6 +187,48 @@ export class GameStateManager {
 
   addCharacter(character: CharacterDefinition): void {
     this.state.characters.push(character);
+    this.persist();
+  }
+
+  setRecruitShopState(recruitShopState: RecruitShopState): void {
+    this.state.recruitShopState = recruitShopState;
+    this.persist();
+  }
+
+  refreshRecruitShop(): boolean {
+    if (this.state.characters.length >= this.state.maxCharacterSlots) return false;
+    if (this.state.gold < this.state.recruitShopState.refreshCost) return false;
+    this.state.gold -= this.state.recruitShopState.refreshCost;
+    this.state.recruitShopState = refreshRecruitShopState(this.state.recruitShopState, this.state.characters);
+    this.persist();
+    return true;
+  }
+
+  recruitFromShop(
+    slotIndex: number,
+  ): { ok: true } | { ok: false; reason: 'not-enough-gold' | 'roster-full' | 'empty-slot' } {
+    const result = purchaseRecruitOffer(
+      this.state.recruitShopState,
+      this.state.characters,
+      this.state.gold,
+      this.state.maxCharacterSlots,
+      slotIndex,
+    );
+
+    if (!result.ok) {
+      return { ok: false, reason: result.reason };
+    }
+
+    this.state.gold = result.updatedGold;
+    this.state.characters.push(result.recruitedCharacter);
+    this.state.recruitShopState = result.updatedShopState;
+    this.persist();
+    return { ok: true };
+  }
+
+  refreshRecruitShopAfterRun(stagesCleared: number): void {
+    if (!shouldAutoRefreshRecruitShop(stagesCleared)) return;
+    this.state.recruitShopState = refreshRecruitShopState(this.state.recruitShopState, this.state.characters);
     this.persist();
   }
 

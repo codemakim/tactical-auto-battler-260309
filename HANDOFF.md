@@ -13,7 +13,7 @@
 ## Current Task
 
 - 현재 진행 중인 작업 없음
-- 최근 완료: 영입 상점 MVP 스펙 초안 작성
+- 최근 완료: 영입 상점 MVP 구현
 - 다음 작업 미정
 
 ## Source Specs
@@ -55,12 +55,13 @@
 - RunResultScene 결과 요약에서 임시 런 카드 수 표시 제거, SortieScene 보상 예고 문구 제거 (Codex)
 - finalizeRun 이후 저장 데이터와 타이틀 상태가 활성 런 없는 일반 저장으로 돌아가는 계약 테스트 추가 (Codex)
 - 신규 멤버 영입 상점 MVP 스펙 초안 작성, 자동 갱신 조건을 `1스테이지 이상 클리어한 런 종료`로 정의 (Codex)
+- RecruitShopState 저장 구조, 고정 모집 풀 순환 리프레시, Town 상점 오버레이, 런 종료 자동 갱신 구현 (Codex)
 
 ## Next
 
 다음 작업 미정.
 
-- 추천 후속: recruit-shop-spec 기준으로 저장 구조/순수 함수부터 구현
+- 추천 후속: 실제 1런 플레이 기준으로 상점 가격/후보 풀/골드 템포 QA
 
 ### P3-9: 병영 상세
 - 스펙: game-flow-spec.md §3-1
@@ -99,7 +100,7 @@
 ## Verification
 
 - 마지막 완료 작업 기준:
-  - `npm test`
+  - `npm test -- recruit-shop save-system run-result-calculator`
   - `npm run format`
   - `npx tsc --noEmit`
 

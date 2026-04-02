@@ -1,4 +1,6 @@
 import type { GameStateData, FormationData, FormationPreset } from '../core/GameState';
+import { createRecruitShopState } from './RecruitShop';
+import type { RecruitShopState } from './RecruitShop';
 import type { Action, CardInstance, CharacterDefinition, RunState } from '../types';
 
 export const SAVE_STORAGE_KEY = 'tactical-auto-battler.save.v1';
@@ -19,6 +21,7 @@ export interface SaveData {
   maxCharacterSlots: number;
   formation: FormationData;
   presets: FormationPreset[];
+  recruitShopState?: RecruitShopState;
   runState?: RunState;
 }
 
@@ -80,6 +83,18 @@ function clonePresets(presets: FormationPreset[]): FormationPreset[] {
   }));
 }
 
+function cloneRecruitShopState(recruitShopState: RecruitShopState): RecruitShopState {
+  return {
+    refreshCost: recruitShopState.refreshCost,
+    nextRotationOffset: recruitShopState.nextRotationOffset,
+    offers: recruitShopState.offers.map((offer) => ({
+      slotIndex: offer.slotIndex,
+      price: offer.price,
+      character: offer.character ? cloneCharacter(offer.character) : null,
+    })),
+  };
+}
+
 export function extractSaveData(state: GameStateData): SaveData {
   return {
     version: SAVE_DATA_VERSION,
@@ -88,17 +103,22 @@ export function extractSaveData(state: GameStateData): SaveData {
     maxCharacterSlots: state.maxCharacterSlots,
     formation: cloneFormation(state.formation),
     presets: clonePresets(state.presets),
+    recruitShopState: cloneRecruitShopState(state.recruitShopState),
     runState: state.runState ? cloneRunState(state.runState) : undefined,
   };
 }
 
 export function createGameStateDataFromSave(saveData: SaveData): GameStateData {
+  const clonedCharacters = saveData.characters.map(cloneCharacter);
   return {
     gold: saveData.gold,
-    characters: saveData.characters.map(cloneCharacter),
+    characters: clonedCharacters,
     maxCharacterSlots: saveData.maxCharacterSlots,
     formation: cloneFormation(saveData.formation),
     presets: clonePresets(saveData.presets),
+    recruitShopState: saveData.recruitShopState
+      ? cloneRecruitShopState(saveData.recruitShopState)
+      : createRecruitShopState(clonedCharacters),
     runState: saveData.runState ? cloneRunState(saveData.runState) : undefined,
     battleReplays: [],
   };
