@@ -151,22 +151,19 @@
 
 현재 확인된 자산:
 
-- `warrior-attack.png`
-- `assassin-attack.png`
-- `archer-attack.png`
-- `guardian-attack.png`
-- `controller-attack.png`
+- `spritesheet_3x2_transparent_archer_fixed.png`
 
-전투 화면 기준 idle frame:
+전투 화면 기준 기본 유닛 프레임:
 
-- `WARRIOR` → `warrior-attack`, frame `0`
-- `ASSASSIN` → `assassin-attack`, frame `0`
-- `ARCHER` → `archer-attack`, frame `27`
-- `GUARDIAN` → `guardian-attack`, frame `0`
-- `CONTROLLER` → `controller-attack`, frame `0`
+- `GUARDIAN` → top-left cell crop
+- `WARRIOR` → top-center cell crop
+- `ARCHER` → top-right cell crop
+- `ASSASSIN` → bottom-left cell crop
+- `LANCER` → bottom-center cell crop
+- `CONTROLLER` → bottom-right cell crop
 
 즉 편성 화면도 동일 규칙을 따라
-"공격 스프라이트시트의 idle frame"을 정적 표시로 사용한다.
+합본 기본 유닛 시트의 클래스별 프레임을 정적 표시로 사용한다.
 
 ## 4.4 렌더링 원칙
 
@@ -394,4 +391,4 @@
 - 카드 편집은 오버레이
 - 프리셋도 오버레이
 - 편성 존에는 이름 대신 실제 캐릭터 스프라이트를 표시
-- 스프라이트는 전투 화면 idle frame 자산을 재사용
+- 스프라이트는 전투 화면 기본 유닛 시트 프레임을 재사용

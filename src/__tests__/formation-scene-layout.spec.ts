@@ -29,9 +29,9 @@ describe('FormationSceneLayout', () => {
 
   it('편성 화면은 고정된 영웅 타입과 스프라이트 매핑을 가진다', () => {
     expect(HERO_TYPES).toEqual([HeroType.COMMANDER, HeroType.MAGE, HeroType.SUPPORT]);
-    expect(FORMATION_SPRITE_MAP.WARRIOR).toMatchObject({ texture: 'warrior-attack', idleFrame: 0 });
-    expect(FORMATION_SPRITE_MAP.ARCHER).toMatchObject({ texture: 'archer-attack', idleFrame: 27 });
-    expect(FORMATION_SPRITE_MAP.CONTROLLER).toMatchObject({ texture: 'controller-attack', idleFrame: 0 });
+    expect(FORMATION_SPRITE_MAP.WARRIOR).toMatchObject({ texture: 'units-basic-sheet', displayHeight: 108 });
+    expect(FORMATION_SPRITE_MAP.ARCHER).toMatchObject({ texture: 'units-basic-sheet', displayHeight: 112 });
+    expect(FORMATION_SPRITE_MAP.CONTROLLER).toMatchObject({ texture: 'units-basic-sheet', displayHeight: 112 });
   });
 
   it('우측 HUD와 하단 버튼은 게임 화면 안쪽에 배치된다', () => {

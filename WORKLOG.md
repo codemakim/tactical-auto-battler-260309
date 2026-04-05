@@ -12,26 +12,26 @@
 
 ## Current Task
 
-- **병영 방출 MVP 구현** — 런 무결성을 깨지 않으면서 로스터/편성/프리셋에서 캐릭터를 정리하는 기능 연결
+- **전투 유닛 표현 2차 정리** — `basic` 단일 이미지 기준 근접 트윈/원거리 투사체 연출 연결
 - 담당: Codex
 
 ### 작업 요약
 
-1. 방출 가능 여부를 순수 helper로 계산
-2. GameState에서 characters / formation / presets를 함께 정리
-3. 병영 상세 패널에 확인 모달 포함 `방출` 버튼 연결
-4. 저장 후 로드해도 제거 상태가 유지되도록 테스트 고정
+1. `basic` 자산을 idle 기준으로 사용한다
+2. 근접은 짧게 뒤로 당겼다가 튕기듯 전진해 타격한다
+3. 원거리/컨트롤러는 투사체 도착 시점에 피격을 맞춘다
+4. 피격은 시트 교체 대신 짧은 밀림/기울기 반응으로 통일한다
 
 ### 핵심 원칙
 
-- 런 진행 중에는 방출하지 않는다
-- 최소 전투 인원 4명은 유지한다
-- 캐릭터 제거 시 현재 편성과 모든 프리셋을 함께 정리한다
+- `basic`은 단일 이미지 자산이다
+- idle은 `basic`, 공격/피격은 트윈/투사체 중심으로 처리한다
+- 근접은 짧은 탄성 전진, 원거리는 투사체 도착 타이밍을 기준으로 한다
 
 ## Source Specs
 
-- primary: [docs/barracks-dismissal-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/barracks-dismissal-spec.md)
-- secondary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md)
+- primary: [docs/battle-unit-presentation-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/battle-unit-presentation-spec.md)
+- secondary: [docs/unit-layout-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/unit-layout-spec.md)
 
 ## Done
 
@@ -59,11 +59,13 @@
 - 전장 시스템 다중 확장용 구조 스펙 초안 작성 (Codex)
 - 전장 진행 상태 저장, 첫 클리어 해금, Sortie 잠금/기록 표시, 전장별 encounter set 레지스트리 구현 (Codex)
 - 병영 상세 패널에 방출 확인 모달을 추가하고, 방출 시 characters / formation / presets를 함께 정리하도록 구현 (Codex)
+- `Recover` / `Rally` 공용 카드에 조건값 변동을 추가하고, 모집 후보는 이름/클래스는 유지하되 세부 롤은 리프레시마다 재생성되도록 수정 (Codex)
+- `basic` 단일 이미지 자산을 편성/전투 기본 표시로 전환하고, 전투는 근접 스프링 전진/원거리 투사체 연출 기준으로 리워크 시작 (Codex)
 
 ## Next
 
-- Sortie 전장 카드 UX 보강
 - 전술 유물/전술 특성 시스템 초안 정리
+- 전투 유닛 표현 3차: 컨트롤러/아처 투사체 시각 차별화, 사망 반응/히트 플래시 보강
 
 ## Guardrails
 

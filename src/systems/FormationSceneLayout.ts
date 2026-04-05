@@ -1,4 +1,5 @@
 import { HeroType, Position } from '../types';
+import { BASIC_UNIT_FRAMES } from '../data/BasicUnitSheet';
 
 export interface ZoneDef {
   key: 'BACK' | 'FRONT';
@@ -13,8 +14,10 @@ export interface ZoneDef {
 
 export interface FormationSpriteConfig {
   texture: string;
-  idleFrame: number;
-  scale: number;
+  frame: string;
+  displayHeight: number;
+  width: number;
+  height: number;
 }
 
 export const FORMATION_LAYOUT = {
@@ -93,11 +96,12 @@ export const FORMATION_LAYOUT = {
 export const HERO_TYPES = [HeroType.COMMANDER, HeroType.MAGE, HeroType.SUPPORT] as const;
 
 export const FORMATION_SPRITE_MAP: Record<string, FormationSpriteConfig> = {
-  WARRIOR: { texture: 'warrior-attack', idleFrame: 0, scale: 0.16 },
-  ASSASSIN: { texture: 'assassin-attack', idleFrame: 0, scale: 0.16 },
-  ARCHER: { texture: 'archer-attack', idleFrame: 27, scale: 0.17 },
-  GUARDIAN: { texture: 'guardian-attack', idleFrame: 0, scale: 0.18 },
-  CONTROLLER: { texture: 'controller-attack', idleFrame: 0, scale: 0.17 },
+  WARRIOR: { ...BASIC_UNIT_FRAMES.WARRIOR, displayHeight: 108 },
+  ASSASSIN: { ...BASIC_UNIT_FRAMES.ASSASSIN, displayHeight: 108 },
+  ARCHER: { ...BASIC_UNIT_FRAMES.ARCHER, displayHeight: 112 },
+  GUARDIAN: { ...BASIC_UNIT_FRAMES.GUARDIAN, displayHeight: 116 },
+  CONTROLLER: { ...BASIC_UNIT_FRAMES.CONTROLLER, displayHeight: 112 },
+  LANCER: { ...BASIC_UNIT_FRAMES.LANCER, displayHeight: 112 },
 };
 
 export function getFormationZones(): ZoneDef[] {

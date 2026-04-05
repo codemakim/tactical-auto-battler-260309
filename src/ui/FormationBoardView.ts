@@ -202,12 +202,12 @@ export class FormationBoardView {
 
     const spriteInfo = FORMATION_SPRITE_MAP[char.characterClass];
     if (spriteInfo) {
-      container.add(
-        this.scene.add
-          .sprite(0, -8, spriteInfo.texture, spriteInfo.idleFrame)
-          .setScale(spriteInfo.scale * FORMATION_LAYOUT.unitCard.spriteScaleMultiplier)
-          .setOrigin(0.5, 0.5),
-      );
+      const displayHeight = spriteInfo.displayHeight * FORMATION_LAYOUT.unitCard.spriteScaleMultiplier;
+      const displayWidth = (spriteInfo.width * displayHeight) / spriteInfo.height;
+      const sprite = this.scene.add
+        .image(0, 2, spriteInfo.texture, spriteInfo.frame)
+        .setDisplaySize(displayWidth, displayHeight);
+      container.add(sprite);
     }
 
     const nameText = this.scene.add

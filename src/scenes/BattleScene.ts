@@ -23,12 +23,7 @@ import { Team, BattlePhase, AbilityType, Difficulty, RunStatus, HeroButtonState 
 import type { BattleState, BattleUnit, BattleEvent, HeroAbility, RunState } from '../types';
 import { calculateBattleResult } from '../systems/BattleResultCalculator';
 import { extractFloatingTexts } from '../systems/FloatingTextCalculator';
-import {
-  ACTION_ANIMATION_DURATION_MS,
-  NEXT_ACTION_DELAY_MS,
-  RESULT_DELAY_MS,
-  getAnimationFrameRateForDuration,
-} from '../systems/BattleTempo';
+import { NEXT_ACTION_DELAY_MS, RESULT_DELAY_MS } from '../systems/BattleTempo';
 import {
   BattleSpeed,
   getBattleSpeedConfig,
@@ -44,6 +39,13 @@ import type { TickSnapshot, ReplaySessionData } from '../types';
 import { getRemainingTurnOrder } from '../systems/TurnIndicator';
 import { getHeroButtonPresentation } from '../systems/HeroButtonPresentation';
 import { getBattlefieldBackgroundKey } from '../data/Battlefields';
+import { BASIC_UNIT_FRAMES } from '../data/BasicUnitSheet';
+import {
+  BattleAnimationMode,
+  getBattleAnimationProfile,
+  getPrimaryEventTargetId,
+  getProjectileTravelMs,
+} from '../systems/BattleAnimation';
 
 // 유닛 시각 위치 계산용 상수
 const BATTLE_CENTER_X = GAME_WIDTH / 2;
@@ -67,54 +69,36 @@ const LAYOUT_CONFIG: LayoutConfig = {
 
 // 클래스별 스프라이트 설정
 interface ClassSpriteConfig {
-  attack: string;
-  attackAnim: string;
-  idleFrame: number;
-  hitFrame: number;
-  scale: number; // UNIT_W 기준 배율
-  idleAfterHit?: boolean; // 피격 후 idle 포즈로 자동 복귀
-  hit?: string; // 피격 스프라이트시트 키 (없으면 공용 warrior-hit 사용)
-  hitAnim?: string; // 피격 애니메이션 키
+  texture: string;
+  frame: string;
+  basicHeight: number;
+  width: number;
+  height: number;
 }
 const CLASS_SPRITE_MAP: Record<string, ClassSpriteConfig> = {
   WARRIOR: {
-    attack: 'warrior-attack',
-    attackAnim: 'warrior-attack-anim',
-    idleFrame: 0,
-    hitFrame: 12,
-    scale: 3.6,
-    idleAfterHit: true,
+    ...BASIC_UNIT_FRAMES.WARRIOR,
+    basicHeight: 156,
   },
-  ASSASSIN: { attack: 'assassin-attack', attackAnim: 'assassin-attack-anim', idleFrame: 0, hitFrame: 10, scale: 3.6 },
+  ASSASSIN: {
+    ...BASIC_UNIT_FRAMES.ASSASSIN,
+    basicHeight: 151,
+  },
   ARCHER: {
-    attack: 'archer-attack',
-    attackAnim: 'archer-attack-anim',
-    idleFrame: 27,
-    hitFrame: 20,
-    scale: 3.8,
-    hit: 'archer-hit',
-    hitAnim: 'archer-hit-anim',
-    idleAfterHit: true,
+    ...BASIC_UNIT_FRAMES.ARCHER,
+    basicHeight: 154,
   },
   GUARDIAN: {
-    attack: 'guardian-attack',
-    attackAnim: 'guardian-attack-anim',
-    idleFrame: 0,
-    hitFrame: 10,
-    scale: 4.6,
-    hit: 'guardian-hit',
-    hitAnim: 'guardian-hit-anim',
-    idleAfterHit: true,
+    ...BASIC_UNIT_FRAMES.GUARDIAN,
+    basicHeight: 161,
   },
   CONTROLLER: {
-    attack: 'controller-attack',
-    attackAnim: 'controller-attack-anim',
-    idleFrame: 0,
-    hitFrame: 10,
-    scale: 3.8,
-    hit: 'controller-hit',
-    hitAnim: 'controller-hit-anim',
-    idleAfterHit: true,
+    ...BASIC_UNIT_FRAMES.CONTROLLER,
+    basicHeight: 154,
+  },
+  LANCER: {
+    ...BASIC_UNIT_FRAMES.LANCER,
+    basicHeight: 156,
   },
 };
 
@@ -394,23 +378,20 @@ export class BattleScene extends Phaser.Scene {
     const isPlayer = unit.team === Team.PLAYER;
     const baseColor = isPlayer ? 0x1a2a4a : 0x3a1a1a;
     const borderColor = isPlayer ? 0x3b82f6 : 0xef4444;
+    const metrics = this.getUnitVisualMetrics(unit.characterClass);
 
-    // 스프라이트가 있는 클래스: 스프라이트 사용, 나머지: 기존 박스
     const spriteInfo = CLASS_SPRITE_MAP[unit.characterClass];
-    const hasSprite = !!spriteInfo && this.textures.exists(spriteInfo.attack);
+    const hasSprite =
+      !!spriteInfo &&
+      this.textures.exists(spriteInfo.texture) &&
+      this.textures.get(spriteInfo.texture).has(spriteInfo.frame);
 
     if (hasSprite && spriteInfo) {
-      const sprite = this.add.sprite(0, -8, spriteInfo.attack, spriteInfo.idleFrame);
-      // 768x448 → 유닛 영역보다 크게 표시 (캐릭터 여백 포함)
-      const scale = (UNIT_W / 768) * spriteInfo.scale;
-      sprite.setScale(scale);
-      // 적군은 좌우 반전
-      if (!isPlayer) sprite.setFlipX(true);
+      const sprite = this.add.sprite(0, metrics.spriteBaseY, spriteInfo.texture, spriteInfo.frame);
+      this.applyIdleSpritePose(sprite, unit.characterClass, isPlayer);
       container.add(sprite);
-      // sprite 참조 저장 (애니메이션용)
       (container as any).__sprite = sprite;
     } else {
-      // 기존 유닛 박스
       const body = this.add.graphics();
       body.fillStyle(baseColor, 0.9);
       body.fillRoundedRect(-UNIT_W / 2, -UNIT_H / 2, UNIT_W, UNIT_H, 6);
@@ -430,7 +411,7 @@ export class BattleScene extends Phaser.Scene {
 
     // 이름
     const nameText = this.add
-      .text(0, 2, unit.name, { fontSize: '16px', fontFamily: UITheme.font.family, color: '#ffffff' })
+      .text(0, metrics.nameY, unit.name, { fontSize: '16px', fontFamily: UITheme.font.family, color: '#ffffff' })
       .setOrigin(0.5);
     container.add(nameText);
 
@@ -440,7 +421,7 @@ export class BattleScene extends Phaser.Scene {
 
     // HP 텍스트
     const hpText = this.add
-      .text(0, UNIT_H / 2 + 20, '', {
+      .text(0, metrics.hpTextY, '', {
         fontSize: '13px',
         fontFamily: UITheme.font.family,
         color: '#88cc88',
@@ -454,7 +435,7 @@ export class BattleScene extends Phaser.Scene {
 
     // 턴 순서 배지 (유닛 위)
     const turnBadge = this.add
-      .text(0, -UNIT_H / 2 - 22, '', {
+      .text(0, metrics.turnBadgeY, '', {
         fontSize: '14px',
         fontFamily: UITheme.font.family,
         color: '#ffcc00',
@@ -481,6 +462,7 @@ export class BattleScene extends Phaser.Scene {
   private updateUnitVisual(unit: BattleUnit): void {
     const visual = this.unitVisuals.get(unit.id);
     if (!visual) return;
+    const metrics = this.getUnitVisualMetrics(unit.characterClass);
 
     const hp = unit.isAlive ? unit.stats.hp : 0;
     const maxHp = unit.stats.maxHp;
@@ -491,11 +473,11 @@ export class BattleScene extends Phaser.Scene {
     visual.hpBar.clear();
     // 배경
     visual.hpBar.fillStyle(0x333333, 1);
-    visual.hpBar.fillRect(-barW / 2, UNIT_H / 2 + 4, barW, 8);
+    visual.hpBar.fillRect(-barW / 2, metrics.hpBarY, barW, 8);
     // HP
     const hpColor = hpRatio > 0.5 ? 0x44cc44 : hpRatio > 0.25 ? 0xcccc44 : 0xcc4444;
     visual.hpBar.fillStyle(hpColor, 1);
-    visual.hpBar.fillRect(-barW / 2, UNIT_H / 2 + 4, barW * hpRatio, 8);
+    visual.hpBar.fillRect(-barW / 2, metrics.hpBarY, barW * hpRatio, 8);
 
     // HP 텍스트
     visual.hpText.setText(`${hp}/${maxHp}`);
@@ -505,7 +487,7 @@ export class BattleScene extends Phaser.Scene {
     if (unit.shield > 0) {
       const shieldRatio = Math.min(unit.shield / maxHp, 1);
       visual.shieldBar.fillStyle(0x4a9eff, 0.7);
-      visual.shieldBar.fillRect(-barW / 2, UNIT_H / 2 + 1, barW * shieldRatio, 3);
+      visual.shieldBar.fillRect(-barW / 2, metrics.shieldBarY, barW * shieldRatio, 3);
     }
 
     // 사망 유닛: tween에서 처리하므로 여기선 배지만 숨김
@@ -731,59 +713,36 @@ export class BattleScene extends Phaser.Scene {
     const actorId = actionEvent?.sourceId;
     const actorUnit = actorId ? this.battleState.units.find((u) => u.id === actorId) : undefined;
     const actorSprite = this.getUnitSprite(actorId);
-    const actorSpriteInfo = actorUnit ? CLASS_SPRITE_MAP[actorUnit.characterClass] : undefined;
+    const targetId = getPrimaryEventTargetId(newEvents, actorId);
 
-    if (
-      shouldAnimateAtBattleSpeed(this.battleSpeed) &&
-      actorSprite &&
-      actorSpriteInfo &&
-      this.anims.exists(actorSpriteInfo.attackAnim)
-    ) {
+    if (shouldAnimateAtBattleSpeed(this.battleSpeed) && actorUnit && actorSprite) {
       this.animating = true;
       let hitApplied = false;
-
-      // 기존 애니메이션 정리 후 시작
-      this.resetSpriteToIdle(actorSprite, actorId);
-
-      // 라운드/턴 큐는 즉시 갱신 (누가 행동 중인지 보여주기)
-      this.roundText.setText(`Round ${this.battleState.round}`);
-      this.phaseText.setText(this.battleState.phase);
-      this.refreshTurnQueue();
-      this.updateHeroBtn();
-
-      // 타격 프레임 — 클래스별 타이밍 (전사: 칼 내리치기, 아처: 화살 발사 등)
-      const HIT_FRAME = actorSpriteInfo.hitFrame;
-      const onAnimUpdate = (_anim: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
-        if (!hitApplied && frame.index >= HIT_FRAME) {
-          hitApplied = true;
-          this.processEvents(newEvents);
-          this.updateAllUnitVisuals();
-          this.refreshTurnQueue();
-          this.updateHeroBtn();
-        }
+      const applyImpact = () => {
+        if (hitApplied) return;
+        hitApplied = true;
+        this.processEvents(newEvents);
+        this.updateAllUnitVisuals();
+        this.refreshTurnQueue();
+        this.updateHeroBtn();
       };
-      actorSprite.on('animationupdate', onAnimUpdate);
-
-      // 공격 애니메이션 재생
-      const anim = this.anims.get(actorSpriteInfo.attackAnim);
-      const animDuration = Math.max(1, Math.round(ACTION_ANIMATION_DURATION_MS * speedConfig.timingScale));
-      const frameRate = getAnimationFrameRateForDuration(anim?.frames.length ?? 0, animDuration);
-      actorSprite.play({ key: actorSpriteInfo.attackAnim, frameRate });
-      actorSprite.once('animationcomplete', () => {
-        this.resetSpriteToIdle(actorSprite, actorId);
-        // 타격이 아직 적용 안 됐으면 (안전장치)
+      const finishAnimation = () => {
         if (!hitApplied) {
-          this.processEvents(newEvents);
-          this.updateAllUnitVisuals();
-          this.refreshTurnQueue();
-          this.updateHeroBtn();
+          applyImpact();
         }
         const resultDelay = Math.max(0, Math.round(RESULT_DELAY_MS * speedConfig.timingScale));
         this.time.delayedCall(resultDelay, () => {
           this.animating = false;
           this.onStepComplete();
         });
-      });
+      };
+
+      // 라운드/턴 큐는 즉시 갱신 (누가 행동 중인지 보여주기)
+      this.roundText.setText(`Round ${this.battleState.round}`);
+      this.phaseText.setText(this.battleState.phase);
+      this.refreshTurnQueue();
+      this.updateHeroBtn();
+      this.playActionAnimation(actorUnit, targetId, speedConfig.timingScale, applyImpact, finishAnimation);
     } else {
       // 애니메이션 없음 — 즉시 처리
       this.processEvents(newEvents);
@@ -828,15 +787,240 @@ export class BattleScene extends Phaser.Scene {
     return (visual.container as any).__sprite as Phaser.GameObjects.Sprite | undefined;
   }
 
-  /** 스프라이트를 idle 상태(해당 클래스 attack 텍스처 idle 프레임)로 즉시 복귀 */
+  private getUnitVisualMetrics(characterClass: string): {
+    spriteBaseY: number;
+    nameY: number;
+    hpBarY: number;
+    shieldBarY: number;
+    hpTextY: number;
+    turnBadgeY: number;
+    actionLabelY: number;
+    floatingY: number;
+  } {
+    const spriteHeight = CLASS_SPRITE_MAP[characterClass]?.basicHeight ?? UNIT_H;
+    const spriteBaseY = Math.round(spriteHeight * 0.54);
+    const spriteTopY = spriteBaseY - spriteHeight;
+    const hpBarY = spriteTopY - 22;
+    const shieldBarY = hpBarY - 5;
+    const hpTextY = hpBarY + 12;
+    const turnBadgeY = shieldBarY - 12;
+    return {
+      spriteBaseY,
+      nameY: spriteBaseY - 30,
+      hpBarY,
+      shieldBarY,
+      hpTextY,
+      turnBadgeY,
+      actionLabelY: turnBadgeY - 34,
+      floatingY: turnBadgeY - 24,
+    };
+  }
+
+  private applyIdleSpritePose(sprite: Phaser.GameObjects.Sprite, characterClass: string, isPlayer: boolean): void {
+    const info = CLASS_SPRITE_MAP[characterClass];
+    if (!info) return;
+    const metrics = this.getUnitVisualMetrics(characterClass);
+    const displayHeight = info.basicHeight;
+    const displayWidth = (info.width * displayHeight) / info.height;
+    sprite.setTexture(info.texture, info.frame);
+    sprite.setDisplaySize(displayWidth, displayHeight);
+    sprite.setOrigin(0.5, 1);
+    sprite.setPosition(0, metrics.spriteBaseY);
+    sprite.setFlipX(!isPlayer);
+    sprite.setAngle(0);
+  }
+
+  /** 스프라이트를 idle 상태(새 basic 스프라이트)로 즉시 복귀 */
   private resetSpriteToIdle(sprite: Phaser.GameObjects.Sprite, unitId?: string): void {
-    sprite.anims.stop();
-    sprite.removeAllListeners('animationcomplete');
-    sprite.removeAllListeners('animationupdate');
-    // 유닛 클래스에 맞는 idle 텍스처로 복귀
     const unit = unitId ? this.battleState.units.find((u) => u.id === unitId) : undefined;
-    const info = unit ? CLASS_SPRITE_MAP[unit.characterClass] : undefined;
-    sprite.setTexture(info?.attack || 'warrior-attack', info?.idleFrame ?? 0);
+    if (!unit) return;
+    this.applyIdleSpritePose(sprite, unit.characterClass, unit.team === Team.PLAYER);
+  }
+
+  private playActionAnimation(
+    actorUnit: BattleUnit,
+    targetId: string | undefined,
+    timingScale: number,
+    onImpact: () => void,
+    onComplete: () => void,
+  ): void {
+    const actorSprite = this.getUnitSprite(actorUnit.id);
+    if (!actorSprite) {
+      onImpact();
+      onComplete();
+      return;
+    }
+
+    this.resetSpriteToIdle(actorSprite, actorUnit.id);
+    const profile = getBattleAnimationProfile(actorUnit.characterClass);
+
+    if (profile.mode === BattleAnimationMode.PROJECTILE && targetId) {
+      this.playProjectileAttackAnimation(actorUnit, targetId, timingScale, onImpact, onComplete);
+      return;
+    }
+
+    this.playMeleeAttackAnimation(actorUnit, timingScale, onImpact, onComplete);
+  }
+
+  private playMeleeAttackAnimation(
+    actorUnit: BattleUnit,
+    timingScale: number,
+    onImpact: () => void,
+    onComplete: () => void,
+  ): void {
+    const actorSprite = this.getUnitSprite(actorUnit.id);
+    if (!actorSprite) {
+      onImpact();
+      onComplete();
+      return;
+    }
+
+    const profile = getBattleAnimationProfile(actorUnit.characterClass);
+    const direction = actorUnit.team === Team.PLAYER ? 1 : -1;
+    const baseX = actorSprite.x;
+    const baseY = actorSprite.y;
+    const windupMs = Math.max(1, Math.round(profile.windupMs * timingScale));
+    const strikeMs = Math.max(1, Math.round(profile.strikeMs * timingScale));
+    const recoverMs = Math.max(1, Math.round(profile.recoverMs * timingScale));
+    let impactApplied = false;
+
+    this.tweens.killTweensOf(actorSprite);
+    actorSprite.setAngle(0);
+
+    this.tweens.add({
+      targets: actorSprite,
+      x: baseX - direction * profile.backOffsetPx,
+      y: baseY + 1,
+      duration: windupMs,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: actorSprite,
+          x: baseX + direction * profile.forwardOffsetPx,
+          y: baseY - 2,
+          duration: strikeMs,
+          ease: 'Back.easeOut',
+          onStart: () => {
+            const impactDelay = Math.max(1, Math.round(strikeMs * 0.72));
+            this.time.delayedCall(impactDelay, () => {
+              if (impactApplied) return;
+              impactApplied = true;
+              onImpact();
+            });
+          },
+          onComplete: () => {
+            this.tweens.add({
+              targets: actorSprite,
+              x: baseX,
+              y: baseY,
+              duration: recoverMs,
+              ease: 'Cubic.easeOut',
+              onComplete,
+            });
+          },
+        });
+      },
+    });
+  }
+
+  private playProjectileAttackAnimation(
+    actorUnit: BattleUnit,
+    targetId: string,
+    timingScale: number,
+    onImpact: () => void,
+    onComplete: () => void,
+  ): void {
+    const actorSprite = this.getUnitSprite(actorUnit.id);
+    const actorVisual = this.unitVisuals.get(actorUnit.id);
+    const targetVisual = this.unitVisuals.get(targetId);
+    if (!actorSprite || !actorVisual || !targetVisual) {
+      onImpact();
+      onComplete();
+      return;
+    }
+
+    const profile = getBattleAnimationProfile(actorUnit.characterClass);
+    const direction = actorUnit.team === Team.PLAYER ? 1 : -1;
+    const baseX = actorSprite.x;
+    const baseY = actorSprite.y;
+    const startX = actorVisual.container.x + direction * 22;
+    const startY = actorVisual.container.y - 44;
+    const endX = targetVisual.container.x;
+    const endY = targetVisual.container.y - 34;
+    const distance = Phaser.Math.Distance.Between(startX, startY, endX, endY);
+    const travelMs = Math.max(1, Math.round(getProjectileTravelMs(distance, profile) * timingScale));
+    const recoverMs = Math.max(1, Math.round(profile.recoverMs * timingScale));
+    const projectile = this.add.circle(
+      startX,
+      startY,
+      actorUnit.characterClass === 'CONTROLLER' ? 6 : 4,
+      profile.projectileColor,
+      0.92,
+    );
+    projectile.setDepth(145);
+
+    this.tweens.killTweensOf(actorSprite);
+    actorSprite.setAngle(0);
+
+    this.tweens.add({
+      targets: actorSprite,
+      x: baseX - direction * profile.backOffsetPx,
+      duration: Math.max(1, Math.round(profile.windupMs * timingScale)),
+      ease: 'Sine.easeInOut',
+      yoyo: true,
+      repeat: 0,
+    });
+
+    this.tweens.add({
+      targets: projectile,
+      x: endX,
+      y: endY,
+      duration: travelMs,
+      ease: actorUnit.characterClass === 'CONTROLLER' ? 'Sine.easeInOut' : 'Quad.easeIn',
+      onComplete: () => {
+        projectile.destroy();
+        onImpact();
+        this.tweens.add({
+          targets: actorSprite,
+          x: baseX,
+          y: baseY,
+          duration: recoverMs,
+          ease: 'Cubic.easeOut',
+          onComplete,
+        });
+      },
+    });
+  }
+
+  private playHitReaction(targetId: string): void {
+    const targetSprite = this.getUnitSprite(targetId);
+    const targetUnit = this.battleState.units.find((unit) => unit.id === targetId);
+    if (!targetSprite || !targetUnit) return;
+
+    const profile = getBattleAnimationProfile(targetUnit.characterClass);
+    const direction = targetUnit.team === Team.PLAYER ? -1 : 1;
+    const baseX = 0;
+    const targetMetrics = this.getUnitVisualMetrics(targetUnit.characterClass);
+    const baseY = targetMetrics.spriteBaseY;
+
+    this.tweens.killTweensOf(targetSprite);
+    targetSprite.setPosition(baseX, baseY);
+    targetSprite.setAngle(0);
+
+    this.tweens.add({
+      targets: targetSprite,
+      x: baseX + direction * profile.hitPushPx,
+      angle: direction * profile.hitTiltDeg,
+      duration: Math.max(1, Math.round(profile.hitDurationMs * 0.42)),
+      ease: 'Quad.easeOut',
+      yoyo: true,
+      hold: Math.max(0, Math.round(profile.hitDurationMs * 0.16)),
+      repeat: 0,
+      onComplete: () => {
+        targetSprite.setPosition(baseX, baseY);
+        targetSprite.setAngle(0);
+      },
+    });
   }
 
   private processEvents(events: BattleEvent[]): void {
@@ -851,9 +1035,11 @@ export class BattleScene extends Phaser.Scene {
         const slotIdx = (actionEv.data?.slotIndex as number) ?? 0;
         const circled = '\u2460\u2461\u2462\u2463\u2464'[slotIdx] ?? '';
         const label = condType === 'ALWAYS' ? `${circled} ${actionName}` : `${circled} ${condText} → ${actionName}`;
+        const actorUnit = this.battleState.units.find((u) => u.id === actionEv.sourceId);
+        const metrics = this.getUnitVisualMetrics(actorUnit?.characterClass ?? 'WARRIOR');
 
         const badge = this.add
-          .text(visual.container.x, visual.container.y - UNIT_H / 2 - 52, label, {
+          .text(visual.container.x, visual.container.y + metrics.actionLabelY, label, {
             fontSize: '10px',
             fontFamily: UITheme.font.family,
             color: '#ccddee',
@@ -887,7 +1073,9 @@ export class BattleScene extends Phaser.Scene {
     for (const ft of floatingTexts) {
       const visual = this.unitVisuals.get(ft.targetUnitId);
       if (visual) {
-        new UIFloatingText(this, visual.container.x, visual.container.y - UNIT_H / 2 - 30, {
+        const targetUnit = this.battleState.units.find((u) => u.id === ft.targetUnitId);
+        const metrics = this.getUnitVisualMetrics(targetUnit?.characterClass ?? 'WARRIOR');
+        new UIFloatingText(this, visual.container.x, visual.container.y + metrics.floatingY, {
           type: ft.type,
           value: ft.value,
           label: ft.label,
@@ -899,28 +1087,7 @@ export class BattleScene extends Phaser.Scene {
     const diedIds = new Set(events.filter((e) => e.type === 'UNIT_DIED').map((e) => e.targetId));
     for (const ev of events) {
       if (ev.type === 'DAMAGE_DEALT' && ev.targetId && !diedIds.has(ev.targetId)) {
-        const targetSprite = this.getUnitSprite(ev.targetId);
-        if (targetSprite) {
-          const targetUnit = this.battleState.units.find((u) => u.id === ev.targetId);
-          const targetConfig = targetUnit ? CLASS_SPRITE_MAP[targetUnit.characterClass] : undefined;
-          // 클래스 전용 피격 애니메이션 또는 공용 warrior-hit
-          const hitAnimKey = targetConfig?.hitAnim || 'warrior-hit-anim';
-          if (this.anims.exists(hitAnimKey)) {
-            // 피격 전용 텍스처 설정 후 재생
-            this.resetSpriteToIdle(targetSprite, ev.targetId);
-            if (targetConfig?.hit) {
-              targetSprite.setTexture(targetConfig.hit, 0);
-            }
-            targetSprite.play(hitAnimKey);
-            // 피격 후 idle(공격 스프라이트 첫 프레임)로 복귀
-            if (targetConfig?.idleAfterHit) {
-              const tid = ev.targetId;
-              targetSprite.once('animationcomplete', () => {
-                this.resetSpriteToIdle(targetSprite, tid);
-              });
-            }
-          }
-        }
+        this.playHitReaction(ev.targetId);
       }
     }
 
