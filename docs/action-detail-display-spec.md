@@ -320,7 +320,7 @@ export function getFormationSelectionHudCopy(input: {
 3. **FormationHudState/View** 수정 + 호출부 정리 + 테스트
 4. **상점 오버레이** 수정 (레이아웃 확장 포함) + 테스트
 5. `npm test` / `npx tsc --noEmit` / `npm run format` 전체 검증
-6. HANDOFF.md 갱신 + 커밋
+6. WORKLOG.md 갱신 + 커밋
 
 ## 범위 외 (하지 않는 것)
 

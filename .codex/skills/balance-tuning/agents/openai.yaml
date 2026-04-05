@@ -1,0 +1,4 @@
+interface:
+  display_name: "Balance Tuning"
+  short_description: "Tune game numbers with simulation evidence."
+  default_prompt: "Use $balance-tuning to adjust game balance using simulation baselines, targeted changes, and before/after metric comparison."

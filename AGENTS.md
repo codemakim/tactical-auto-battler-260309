@@ -7,7 +7,7 @@
 
 - 기존 설계 기준은 먼저 [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md)를 읽는다.
 - 작업 절차와 핸드오프 규칙은 [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)를 따른다.
-- 실시간 작업 상태는 [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)에서 확인한다.
+- 최근 작업 이력과 다음 후보는 [WORKLOG.md](/Users/jhkim/Project/tactical-auto-battler/WORKLOG.md)에서 확인한다.
 - 프로젝트 전용 스킬은 [.codex/skills](/Users/jhkim/Project/tactical-auto-battler/.codex/skills)를 우선 사용한다.
 - 구현 완료 후에는 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 기준의 별도 리뷰 에이전트를 거친다.
 - 세부 규칙은 `docs/` 스펙 문서를 기준으로 판단한다.
@@ -183,11 +183,13 @@
 
 - `spec-to-implementation`: 기본 구현 루프
 - `meta-loop-spec-writer`: 메타/상점/진행 구조 스펙 초안
-- `handoff-closeout`: 작업 마감과 인수인계 정리
+- `task-closeout`: 작업 마감과 작업 이력 정리
 - `spec-reconciliation`: 충돌 문서 정리
 - `ui-polish-guardrail`: 게임답지 않은 UI 표현 감시
 - `feature-cut-mvp`: 큰 기능을 MVP로 자르기
 - `scene-boundary-refactor`: 비대해진 씬 구조 정리
+- `bug-fix`: 버그 재현 → 원인 → 수정 → 회귀 테스트
+- `balance-tuning`: 시뮬레이션 기반 숫자 튜닝
 - `senior-reviewer`: 구현 후 독립 리뷰 기준
 
 ## 11. Skill Routing
@@ -200,6 +202,10 @@
   여러 문서나 코드와 문서가 충돌해서 source of truth를 먼저 정해야 할 때 사용한다.
 - `scene-boundary-refactor`
   기능 변경보다 구조 리스크가 커져서 씬 책임 분리가 먼저 필요할 때 사용한다.
+- `bug-fix`
+  시작점이 스펙이 아니라 깨진 동작일 때 사용한다. 재현 → 원인 → 수정 → 회귀 테스트 순서로 진행한다.
+- `balance-tuning`
+  숫자 조정(스탯, 보상, 비용, 인카운터 구성)이 필요할 때 사용한다. sim-run 시뮬레이션으로 before/after 비교 후 커밋한다.
 - `senior-reviewer`
   구현이 끝난 뒤 커밋 전에 독립 리뷰 에이전트가 한 번 점검할 때 사용한다.
   단, 실제 스폰 계약은 `.codex/agents/senior-reviewer.md`를 기준으로 한다.
@@ -218,6 +224,10 @@
   `scene-boundary-refactor`
 - 리뷰에서 버그/회귀/테스트 누락이 발견됨
   수정 후 `senior-reviewer`를 다시 거친다
+- 버그 리포트나 깨진 동작이 시작점
+  `bug-fix`
+- 난이도/경제 밸런스 조정이 필요
+  `balance-tuning`
 
 ## 13. Review Agent
 

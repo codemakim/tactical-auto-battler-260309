@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Fix"
+  short_description: "Reproduce, root-cause, fix, and regression-test a bug."
+  default_prompt: "Use $bug-fix to drive this bug from reproduction through root cause, fix, regression test, and verification."

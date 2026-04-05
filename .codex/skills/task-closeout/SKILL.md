@@ -1,16 +1,16 @@
 ---
-name: handoff-closeout
-description: Close out a completed task by updating HANDOFF.md, checklists, source specs, verification notes, and commit-facing summaries. Use when implementation and verification are done and Codex should leave the repo ready for the next model or session without hidden context.
+name: task-closeout
+description: Close out a completed task by updating WORKLOG.md, checklists, source specs, verification notes, and commit-facing summaries. Use when implementation and verification are done and Codex should leave the repo ready for the next model or session without hidden context.
 ---
 
-# Handoff Closeout
+# Task Closeout
 
 Use this skill at the end of a task. The goal is to leave no invisible state behind.
 
 ## Workflow
 
-1. Update the live handoff board.
-- Mark the latest completed task in `HANDOFF.md`.
+1. Update the live work log.
+- Mark the latest completed task in `WORKLOG.md`.
 - Set the current source specs for the area just touched.
 - Add a short next-step recommendation, not a long roadmap.
 
@@ -36,10 +36,10 @@ Use this skill at the end of a task. The goal is to leave no invisible state beh
 
 ## Guardrails
 
-- Do not leave `HANDOFF.md` pointing at the previous task.
+- Do not leave `WORKLOG.md` pointing at stale work.
 - Do not mark checklist items done unless tests and behavior really match.
-- Do not update only the handoff board and forget the source spec.
-- Do not write long narrative recaps into handoff files.
+- Do not update only the work log and forget the source spec.
+- Do not write long narrative recaps into work log files.
 
 ## Output Shape
 

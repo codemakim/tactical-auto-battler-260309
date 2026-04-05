@@ -1,4 +1,0 @@
-interface:
-  display_name: "Handoff Closeout"
-  short_description: "Close tasks with docs and handoff updates."
-  default_prompt: "Use $handoff-closeout to update handoff files, checklists, source specs, verification notes, and closeout details for this task."

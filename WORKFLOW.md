@@ -36,8 +36,8 @@
 
 세션이 바뀔 때는 아래 형식으로 남긴다.
 
-실시간 전달은 루트 [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)를 우선 사용한다.
-읽은 모델은 내용을 비우거나 다음 작업 기준으로 갱신할 수 있다.
+최근 작업 이력은 루트 [WORKLOG.md](/Users/jhkim/Project/tactical-auto-battler/WORKLOG.md)에 남긴다.
+읽은 모델은 최신 작업 기준으로 갱신할 수 있다.
 
 ```md
 ## Current Task
@@ -113,7 +113,7 @@
 - 프로젝트 개요: [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md)
 - 작업 인덱스: [AGENTS.md](/Users/jhkim/Project/tactical-auto-battler/AGENTS.md)
 - 작업 표준: [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)
-- 실시간 핸드오프: [HANDOFF.md](/Users/jhkim/Project/tactical-auto-battler/HANDOFF.md)
+- 작업 이력: [WORKLOG.md](/Users/jhkim/Project/tactical-auto-battler/WORKLOG.md)
 - 프로젝트 전용 스킬: [.codex/skills](/Users/jhkim/Project/tactical-auto-battler/.codex/skills)
 
 ## 8. Project Skills
@@ -124,8 +124,8 @@
   구현 작업 기본 루프
 - `meta-loop-spec-writer`
   느슨한 메타 루프 아이디어를 MVP 스펙으로 정리
-- `handoff-closeout`
-  HANDOFF / 체크리스트 / 관련 스펙 마감
+- `task-closeout`
+  WORKLOG / 체크리스트 / 관련 스펙 마감
 - `spec-reconciliation`
   충돌하는 문서들 정리
 - `ui-polish-guardrail`
@@ -134,6 +134,10 @@
   커진 기능 범위를 MVP로 자르기
 - `scene-boundary-refactor`
   비대해진 씬을 단계적으로 분리
+- `bug-fix`
+  버그 재현 → 원인 → 수정 → 회귀 테스트 루프
+- `balance-tuning`
+  시뮬레이션 기반 숫자 튜닝 (스탯, 보상, 비용, 인카운터)
 - `senior-reviewer`
   최종 검증 전 독립 리뷰 기준
   서브에이전트 리뷰는 `.codex/agents/senior-reviewer.md` 프로필을 우선 사용
@@ -150,7 +154,11 @@
   `feature-cut-mvp`
 - 구조 리스크가 커짐
   `scene-boundary-refactor`
+- 버그 리포트 들어옴
+  `bug-fix`
+- 숫자 밸런스 조정 필요
+  `balance-tuning`
 - 구현 완료
   `senior-reviewer`
 - 리뷰 반영 후 마감
-  `handoff-closeout`
+  `task-closeout`
