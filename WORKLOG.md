@@ -12,25 +12,25 @@
 
 ## Current Task
 
-- **전장 진행 MVP 구현** — 전장 해금/기록/encounter set 구조를 실제 런/저장 흐름에 연결
+- **병영 방출 MVP 구현** — 런 무결성을 깨지 않으면서 로스터/편성/프리셋에서 캐릭터를 정리하는 기능 연결
 - 담당: Codex
 
 ### 작업 요약
 
-1. 전장 진행 상태를 영속 저장 구조에 추가
-2. 런 종료 시 전장 기록/해금 갱신 연결
-3. Sortie 카드가 실제 잠금/기록 상태를 읽도록 연결
-4. EnemyGenerator를 전장별 encounter set 레지스트리 구조로 전환
+1. 방출 가능 여부를 순수 helper로 계산
+2. GameState에서 characters / formation / presets를 함께 정리
+3. 병영 상세 패널에 확인 모달 포함 `방출` 버튼 연결
+4. 저장 후 로드해도 제거 상태가 유지되도록 테스트 고정
 
 ### 핵심 원칙
 
-- 전장 차이는 Scene 분기보다 데이터 레지스트리에서 읽는다
-- 해금/기록은 영속 메타 상태로 처리한다
-- 다른 전장을 추가할 때는 데이터만 늘리고 Scene 로직은 최대한 유지한다
+- 런 진행 중에는 방출하지 않는다
+- 최소 전투 인원 4명은 유지한다
+- 캐릭터 제거 시 현재 편성과 모든 프리셋을 함께 정리한다
 
 ## Source Specs
 
-- primary: [docs/battlefield-progression-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/battlefield-progression-spec.md)
+- primary: [docs/barracks-dismissal-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/barracks-dismissal-spec.md)
 - secondary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md)
 
 ## Done
@@ -58,11 +58,11 @@
 - 변방 초원 전장 배경을 런 상태와 연결해 Sortie 선택 → BattleScene 배경으로 적용 (Codex)
 - 전장 시스템 다중 확장용 구조 스펙 초안 작성 (Codex)
 - 전장 진행 상태 저장, 첫 클리어 해금, Sortie 잠금/기록 표시, 전장별 encounter set 레지스트리 구현 (Codex)
+- 병영 상세 패널에 방출 확인 모달을 추가하고, 방출 시 characters / formation / presets를 함께 정리하도록 구현 (Codex)
 
 ## Next
 
 - Sortie 전장 카드 UX 보강
-- 전장별 추가 배경/아트 적용
 - 전술 유물/전술 특성 시스템 초안 정리
 
 ## Guardrails

@@ -16,8 +16,10 @@ export class FormationRosterView {
     getFormationIds: () => Set<string>;
     getSelectedCharacterId: () => string | null;
     onSelect: (char: CharacterDefinition) => void;
+    onPress: (char: CharacterDefinition, pointer: Phaser.Input.Pointer) => void;
   };
   private readonly items: Phaser.GameObjects.Container[] = [];
+  private readonly itemBounds = new Map<string, Phaser.Geom.Rectangle>();
   private panel!: UIPanel;
 
   constructor(
@@ -27,6 +29,7 @@ export class FormationRosterView {
       getFormationIds: () => Set<string>;
       getSelectedCharacterId: () => string | null;
       onSelect: (char: CharacterDefinition) => void;
+      onPress: (char: CharacterDefinition, pointer: Phaser.Input.Pointer) => void;
     },
   ) {
     this.scene = scene;
@@ -50,6 +53,7 @@ export class FormationRosterView {
   refresh(): void {
     for (const item of this.items) item.destroy();
     this.items.length = 0;
+    this.itemBounds.clear();
 
     const entries = buildFormationRosterEntries(
       this.deps.getCharacters(),
@@ -66,9 +70,28 @@ export class FormationRosterView {
         FORMATION_LAYOUT.rosterItem.startX,
         startY + index * FORMATION_LAYOUT.rosterItem.rowGap,
       );
+      this.itemBounds.set(
+        entry.character.id,
+        new Phaser.Geom.Rectangle(
+          this.panel.container.x + FORMATION_LAYOUT.rosterItem.startX,
+          this.panel.container.y + startY + index * FORMATION_LAYOUT.rosterItem.rowGap,
+          FORMATION_LAYOUT.rosterItem.width,
+          FORMATION_LAYOUT.rosterItem.height,
+        ),
+      );
       this.panel.add(item);
       this.items.push(item);
     });
+  }
+
+  containsPoint(worldX: number, worldY: number): boolean {
+    const rect = new Phaser.Geom.Rectangle(
+      this.panel.container.x,
+      this.panel.container.y,
+      FORMATION_LAYOUT.rosterPanel.width,
+      GAME_HEIGHT - 130,
+    );
+    return rect.contains(worldX, worldY);
   }
 
   private createRosterItem(
@@ -139,7 +162,7 @@ export class FormationRosterView {
       drawRoundedFrame(bg, 0, 0, w, h, FORMATION_LAYOUT.rosterItem.radius, baseState);
     });
 
-    hitArea.on('pointerdown', () => this.deps.onSelect(char));
+    hitArea.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.deps.onPress(char, pointer));
     return container;
   }
 }

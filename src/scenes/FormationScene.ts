@@ -16,7 +16,7 @@ import { UIToast } from '../ui/UIToast';
 import { UIButton } from '../ui/UIButton';
 import { UIModal } from '../ui/UIModal';
 import { gameState } from '../core/GameState';
-import { Position, RunStatus } from '../types';
+import { RunStatus } from '../types';
 import type { CardInstance, CharacterDefinition, RunState, SlotDisplayData } from '../types';
 import { HERO_DEFINITIONS } from '../data/HeroDefinitions';
 import { getSlotDisplayData, swapBaseActionSlots, swapRunActionSlots } from '../systems/FormationCardCalculator';
@@ -28,7 +28,7 @@ import {
   getFormationTopBarTitle,
   resolveFormationFlowContext,
 } from '../systems/FormationFlow';
-import { canAddToZone, validateFormation } from '../systems/FormationValidator';
+import { validateFormation } from '../systems/FormationValidator';
 import { getFormationPanelLabels } from '../systems/FormationPresentation';
 import { FORMATION_LAYOUT } from '../systems/FormationSceneLayout';
 import { drawRoundedFrame } from '../ui/FormationGraphics';
@@ -37,6 +37,13 @@ import { getCharactersInBoardZone } from '../systems/FormationBoardState';
 import { FormationBoardView } from '../ui/FormationBoardView';
 import { FormationRosterView } from '../ui/FormationRosterView';
 import { FormationHudView } from '../ui/FormationHudView';
+import {
+  moveCharacterToZone,
+  removeCharacterFromFormation,
+  replaceCharacterInFormation,
+  swapCharactersInFormation,
+  type FormationZoneKey,
+} from '../systems/FormationInteraction';
 
 export class FormationScene extends Phaser.Scene {
   private selectedActionSlot: number | null = null;
@@ -46,6 +53,10 @@ export class FormationScene extends Phaser.Scene {
   private boardView!: FormationBoardView;
   private rosterView!: FormationRosterView;
   private hudView!: FormationHudView;
+  private dragCharacterId: string | null = null;
+  private dragStartPoint: { x: number; y: number } | null = null;
+  private dragGhost: Phaser.GameObjects.Container | null = null;
+  private isDragging = false;
 
   private isRetry = false;
   private flowContext: FormationFlowContext = 'TOWN';
@@ -75,6 +86,7 @@ export class FormationScene extends Phaser.Scene {
       getFormationIds: () => new Set(gameState.getFormationCharacterIds()),
       getSelectedCharacterId: () => this.selectedRosterCharId,
       onSelect: (char) => this.onRosterClick(char),
+      onPress: (char, pointer) => this.onCharacterPress(char, pointer),
     });
     this.rosterView.create();
 
@@ -99,8 +111,14 @@ export class FormationScene extends Phaser.Scene {
       onZoneClick: (zone) => this.onZoneClick(zone),
       onUnitSelect: (char) => this.onBoardUnitSelect(char),
       onRemoveUnit: (charId) => this.removeFromFormation(charId),
+      onUnitPress: (char, pointer) => this.onCharacterPress(char, pointer),
     });
     this.boardView.create();
+    this.registerDragHandlers();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off('pointermove', this.handlePointerMove, this);
+      this.input.off('pointerup', this.handlePointerUp, this);
+    });
     this.refreshAll();
   }
 
@@ -220,24 +238,18 @@ export class FormationScene extends Phaser.Scene {
     this.selectedActionSlot = null;
     this.refreshRoster();
     this.updateSelectionHud(char);
-    this.toast.show(`${char.name} 선택됨 — 영역을 클릭해 배치하세요`);
+    this.toast.show(`${char.name} 선택됨`);
   }
 
   private onZoneClick(zone: { key: 'FRONT' | 'BACK' }): void {
-    if (!this.selectedRosterCharId) {
-      const charsInZone = this.getCharactersInZone(zone.key);
-      if (charsInZone.length > 0) {
-        const firstChar = charsInZone[0];
-        this.selectedRosterCharId = firstChar.id;
-        this.refreshRoster();
-        this.updateSelectionHud(firstChar);
-      } else {
-        this.toast.show('좌측에서 캐릭터를 먼저 선택하세요');
-      }
-      return;
+    const charsInZone = this.getCharactersInZone(zone.key);
+    if (charsInZone.length > 0) {
+      const firstChar = charsInZone[0];
+      this.selectedRosterCharId = firstChar.id;
+      this.selectedActionSlot = null;
+      this.refreshRoster();
+      this.updateSelectionHud(firstChar);
     }
-
-    this.assignToZone(zone.key, this.selectedRosterCharId);
   }
 
   private getCharactersInZone(zoneKey: string): CharacterDefinition[] {
@@ -245,22 +257,13 @@ export class FormationScene extends Phaser.Scene {
   }
 
   private assignToZone(zoneKey: 'FRONT' | 'BACK', characterId: string): void {
-    const formation = gameState.formation;
-    const targetPosition = zoneKey === 'FRONT' ? Position.FRONT : Position.BACK;
-    const check = canAddToZone(formation, zoneKey, characterId);
-    if (!check.allowed) {
-      this.toast.show(check.reason ?? '배치할 수 없습니다');
+    const result = moveCharacterToZone(gameState.formation, characterId, zoneKey);
+    if (!result.changed) {
+      this.toast.show(result.reason === 'formation-full' ? '출전 인원이 이미 4명입니다' : '배치할 수 없습니다');
       return;
     }
 
-    const newSlots = formation.slots.filter((slot) => slot.characterId !== characterId);
-    newSlots.push({ characterId, position: targetPosition });
-
-    gameState.setFormation({
-      slots: newSlots,
-      heroType: formation.heroType,
-    });
-
+    gameState.setFormation(result.formation);
     const charName = gameState.getCharacter(characterId)?.name ?? '';
     this.selectedRosterCharId = null;
     this.refreshAll();
@@ -272,16 +275,13 @@ export class FormationScene extends Phaser.Scene {
     this.selectedActionSlot = null;
     this.refreshRoster();
     this.updateSelectionHud(char);
-    this.toast.show(`${char.name} 선택됨 — 다른 영역을 클릭해 이동하세요`);
+    this.toast.show(`${char.name} 선택됨`);
   }
 
   private removeFromFormation(characterId: string): void {
-    const formation = gameState.formation;
-    const newSlots = formation.slots.filter((slot) => slot.characterId !== characterId);
-    gameState.setFormation({
-      slots: newSlots,
-      heroType: formation.heroType,
-    });
+    const result = removeCharacterFromFormation(gameState.formation, characterId);
+    if (!result.changed) return;
+    gameState.setFormation(result.formation);
 
     const charName = gameState.getCharacter(characterId)?.name ?? '';
     this.toast.show(`${charName} 편성 해제`);
@@ -450,6 +450,124 @@ export class FormationScene extends Phaser.Scene {
   private getSelectedCharacter(): CharacterDefinition | null {
     if (!this.selectedRosterCharId) return null;
     return gameState.getCharacter(this.selectedRosterCharId) ?? null;
+  }
+
+  private onCharacterPress(char: CharacterDefinition, pointer: Phaser.Input.Pointer): void {
+    this.dragCharacterId = char.id;
+    this.dragStartPoint = { x: pointer.worldX, y: pointer.worldY };
+    this.isDragging = false;
+  }
+
+  private registerDragHandlers(): void {
+    this.input.on('pointermove', this.handlePointerMove, this);
+    this.input.on('pointerup', this.handlePointerUp, this);
+  }
+
+  private handlePointerMove(pointer: Phaser.Input.Pointer): void {
+    if (!this.dragCharacterId || !this.dragStartPoint) return;
+
+    if (!this.isDragging) {
+      const distance = Phaser.Math.Distance.Between(
+        this.dragStartPoint.x,
+        this.dragStartPoint.y,
+        pointer.worldX,
+        pointer.worldY,
+      );
+      if (distance < 10) return;
+      this.startDragVisual(this.dragCharacterId, pointer.worldX, pointer.worldY);
+      this.isDragging = true;
+    }
+
+    this.dragGhost?.setPosition(pointer.worldX + 18, pointer.worldY + 18);
+  }
+
+  private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    if (!this.dragCharacterId) return;
+
+    const char = gameState.getCharacter(this.dragCharacterId);
+    const wasDragging = this.isDragging;
+    this.clearDragState();
+    if (!char) return;
+
+    if (!wasDragging) {
+      const isAssigned = gameState.getFormationCharacterIds().includes(char.id);
+      if (isAssigned) {
+        this.onBoardUnitSelect(char);
+      } else {
+        this.onRosterClick(char);
+      }
+      return;
+    }
+
+    const targetUnit = this.boardView.getUnitAt(pointer.worldX, pointer.worldY);
+    if (targetUnit && targetUnit.id !== char.id) {
+      const isAssigned = gameState.getFormationCharacterIds().includes(char.id);
+      const result = isAssigned
+        ? swapCharactersInFormation(gameState.formation, char.id, targetUnit.id)
+        : replaceCharacterInFormation(gameState.formation, char.id, targetUnit.id);
+
+      if (result.changed) {
+        gameState.setFormation(result.formation);
+        this.selectedRosterCharId = char.id;
+        this.refreshAll();
+        this.toast.show(
+          isAssigned ? `${char.name} ⇄ ${targetUnit.name} 위치 교체` : `${char.name} 영입 → ${targetUnit.name} 교체`,
+        );
+        return;
+      }
+    }
+
+    const targetZone = this.boardView.getZoneAt(pointer.worldX, pointer.worldY);
+    if (targetZone) {
+      const result = moveCharacterToZone(gameState.formation, char.id, targetZone.key as FormationZoneKey);
+      if (result.changed) {
+        gameState.setFormation(result.formation);
+        this.selectedRosterCharId = char.id;
+        this.refreshAll();
+        this.toast.show(`${char.name} → ${targetZone.key} 배치 완료!`);
+        return;
+      }
+      this.toast.show(result.reason === 'formation-full' ? '출전 인원이 이미 4명입니다' : '배치할 수 없습니다');
+      return;
+    }
+
+    if (this.rosterView.containsPoint(pointer.worldX, pointer.worldY)) {
+      const result = removeCharacterFromFormation(gameState.formation, char.id);
+      if (result.changed) {
+        gameState.setFormation(result.formation);
+        this.selectedRosterCharId = char.id;
+        this.refreshAll();
+        this.toast.show(`${char.name} 편성 해제`);
+      }
+    }
+  }
+
+  private startDragVisual(characterId: string, worldX: number, worldY: number): void {
+    const char = gameState.getCharacter(characterId);
+    if (!char) return;
+
+    const bg = this.add.graphics();
+    drawRoundedFrame(bg, 0, 0, 112, 38, 8, {
+      backgroundColor: 0x223256,
+      borderColor: 0x7da2ff,
+      borderWidth: 1,
+      alpha: 0.92,
+    });
+
+    const label = this.add.text(56, 19, char.name, { ...UITheme.font.label, color: '#ffffff' }).setOrigin(0.5);
+
+    this.dragGhost = this.add
+      .container(worldX + 18, worldY + 18, [bg, label])
+      .setDepth(2000)
+      .setAlpha(0.95);
+  }
+
+  private clearDragState(): void {
+    this.dragCharacterId = null;
+    this.dragStartPoint = null;
+    this.isDragging = false;
+    this.dragGhost?.destroy();
+    this.dragGhost = null;
   }
 
   private refreshAll(): void {

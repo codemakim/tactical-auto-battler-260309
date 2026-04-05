@@ -59,10 +59,9 @@ export function isUnlockRuleSatisfied(
 
 function resolveUnlockedFlags(battlefieldProgress: BattlefieldProgressState): BattlefieldProgressState {
   const next = { ...battlefieldProgress };
-  const definitionsById = Object.fromEntries(BATTLEFIELDS.map((battlefield) => [battlefield.id, battlefield])) as Record<
-    BattlefieldId,
-    (typeof BATTLEFIELDS)[number]
-  >;
+  const definitionsById = Object.fromEntries(
+    BATTLEFIELDS.map((battlefield) => [battlefield.id, battlefield]),
+  ) as Record<BattlefieldId, (typeof BATTLEFIELDS)[number]>;
   const resolved = new Map<BattlefieldId, boolean>();
 
   function resolveBattlefieldUnlocked(id: BattlefieldId): boolean {

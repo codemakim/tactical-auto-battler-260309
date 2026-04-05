@@ -15,7 +15,3 @@ export function getCharactersInBoardZone(
     .map((slot: FormationData['slots'][number]) => characterMap.get(slot.characterId))
     .filter((character: CharacterDefinition | undefined): character is CharacterDefinition => !!character);
 }
-
-export function getBoardSlotMarkerStates(maxSlots: number, occupiedCount: number): boolean[] {
-  return Array.from({ length: maxSlots }, () => occupiedCount === 0);
-}

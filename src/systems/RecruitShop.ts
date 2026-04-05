@@ -22,6 +22,7 @@ export interface RecruitShopState {
   offers: RecruitShopOffer[];
   refreshCost: number;
   nextRotationOffset: number;
+  rerollCounter: number;
 }
 
 export type RecruitPurchaseFailureReason = 'not-enough-gold' | 'roster-full' | 'empty-slot';
@@ -59,9 +60,15 @@ function buildRecruitCharacter(template: RecruitTemplate): CharacterDefinition {
   return generateCharacterDef(template.name, template.characterClass, template.seed);
 }
 
-function getAvailableRecruitPool(roster: CharacterDefinition[]): CharacterDefinition[] {
+function buildRecruitCharacterForReroll(template: RecruitTemplate, rerollCounter: number): CharacterDefinition {
+  return generateCharacterDef(template.name, template.characterClass, template.seed + rerollCounter * 1000);
+}
+
+function getAvailableRecruitPool(roster: CharacterDefinition[], rerollCounter: number): CharacterDefinition[] {
   const ownedIds = new Set(roster.map((character) => character.id));
-  return RECRUIT_TEMPLATES.map(buildRecruitCharacter).filter((character) => !ownedIds.has(character.id));
+  return RECRUIT_TEMPLATES.map((template) => buildRecruitCharacterForReroll(template, rerollCounter)).filter(
+    (character) => !ownedIds.has(character.id),
+  );
 }
 
 function rotateOffers(pool: CharacterDefinition[], offset: number): CharacterDefinition[] {
@@ -84,13 +91,15 @@ function getNextOffset(currentOffset: number, poolSize: number): number {
 }
 
 export function createRecruitShopState(roster: CharacterDefinition[]): RecruitShopState {
-  const pool = getAvailableRecruitPool(roster);
+  const rerollCounter = 0;
+  const pool = getAvailableRecruitPool(roster, rerollCounter);
   const offers = rotateOffers(pool, 0);
 
   return {
     offers: createOffers(offers),
     refreshCost: RECRUIT_REFRESH_COST,
     nextRotationOffset: getNextOffset(0, pool.length),
+    rerollCounter,
   };
 }
 
@@ -98,13 +107,15 @@ export function refreshRecruitShopState(
   currentState: RecruitShopState,
   roster: CharacterDefinition[],
 ): RecruitShopState {
-  const pool = getAvailableRecruitPool(roster);
+  const rerollCounter = currentState.rerollCounter + 1;
+  const pool = getAvailableRecruitPool(roster, rerollCounter);
   const offers = rotateOffers(pool, currentState.nextRotationOffset);
 
   return {
     offers: createOffers(offers),
     refreshCost: currentState.refreshCost,
     nextRotationOffset: getNextOffset(currentState.nextRotationOffset, pool.length),
+    rerollCounter,
   };
 }
 

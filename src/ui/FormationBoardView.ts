@@ -11,7 +11,6 @@ import {
 import { getUnitCardVisualState } from '../systems/FormationSceneStyles';
 import { drawHorizontalDivider, drawRoundedFrame } from './FormationGraphics';
 import type { CharacterDefinition } from '../types';
-import { getBoardSlotMarkerStates } from '../systems/FormationBoardState';
 
 const ZONES = getFormationZones();
 
@@ -22,9 +21,11 @@ export class FormationBoardView {
     onZoneClick: (zone: ZoneDef) => void;
     onUnitSelect: (char: CharacterDefinition) => void;
     onRemoveUnit: (charId: string) => void;
+    onUnitPress: (char: CharacterDefinition, pointer: Phaser.Input.Pointer) => void;
   };
   private readonly zoneContainers = new Map<string, Phaser.GameObjects.Container>();
   private readonly zoneUnitVisuals: Phaser.GameObjects.Container[] = [];
+  private readonly unitBounds = new Map<string, Phaser.Geom.Rectangle>();
 
   constructor(
     scene: Phaser.Scene,
@@ -33,6 +34,7 @@ export class FormationBoardView {
       onZoneClick: (zone: ZoneDef) => void;
       onUnitSelect: (char: CharacterDefinition) => void;
       onRemoveUnit: (charId: string) => void;
+      onUnitPress: (char: CharacterDefinition, pointer: Phaser.Input.Pointer) => void;
     },
   ) {
     this.scene = scene;
@@ -61,17 +63,13 @@ export class FormationBoardView {
   refresh(): void {
     for (const visual of this.zoneUnitVisuals) visual.destroy();
     this.zoneUnitVisuals.length = 0;
+    this.unitBounds.clear();
 
     for (const zone of ZONES) {
       const container = this.zoneContainers.get(zone.key);
       if (!container) continue;
 
-      const emptyText = container.getData('emptyText') as Phaser.GameObjects.Text;
-      const slotMarkers = container.getData('slotMarkers') as Phaser.GameObjects.Graphics[];
       const charsInZone = this.deps.getCharactersInZone(zone.key);
-      const markerStates = getBoardSlotMarkerStates(zone.maxUnits, charsInZone.length);
-      slotMarkers.forEach((marker, index) => marker.setVisible(markerStates[index]));
-      emptyText.setVisible(charsInZone.length === 0);
       if (charsInZone.length === 0) continue;
 
       const unitIds = charsInZone.map((c) => c.id);
@@ -84,10 +82,38 @@ export class FormationBoardView {
 
       for (let i = 0; i < charsInZone.length; i++) {
         const unitVisual = this.createUnitInZone(charsInZone[i], positions[i].x, positions[i].y, zone);
+        this.unitBounds.set(
+          charsInZone[i].id,
+          new Phaser.Geom.Rectangle(
+            zone.x + positions[i].x - FORMATION_LAYOUT.unitCard.width / 2,
+            zone.y + positions[i].y - FORMATION_LAYOUT.unitCard.height / 2,
+            FORMATION_LAYOUT.unitCard.width,
+            FORMATION_LAYOUT.unitCard.height,
+          ),
+        );
         container.add(unitVisual);
         this.zoneUnitVisuals.push(unitVisual);
       }
     }
+  }
+
+  getZoneAt(worldX: number, worldY: number): ZoneDef | null {
+    for (const zone of ZONES) {
+      const rect = new Phaser.Geom.Rectangle(zone.x, zone.y, zone.width, zone.height);
+      if (rect.contains(worldX, worldY)) return zone;
+    }
+    return null;
+  }
+
+  getUnitAt(worldX: number, worldY: number): CharacterDefinition | null {
+    for (const zone of ZONES) {
+      const charsInZone = this.deps.getCharactersInZone(zone.key);
+      for (const char of charsInZone) {
+        const rect = this.unitBounds.get(char.id);
+        if (rect?.contains(worldX, worldY)) return char;
+      }
+    }
+    return null;
   }
 
   private createZoneVisual(zone: ZoneDef): void {
@@ -103,21 +129,6 @@ export class FormationBoardView {
     });
     drawHorizontalDivider(bg, 14, 44, zone.width - 14, 0xffffff, 0.06);
     container.add(bg);
-
-    const slotMarkers: Phaser.GameObjects.Graphics[] = [];
-    for (let i = 0; i < zone.maxUnits; i++) {
-      const slotX = 28 + i * ((zone.width - 56) / (zone.maxUnits - 1));
-      const marker = this.scene.add.graphics();
-      drawRoundedFrame(marker, slotX - 36, 56, 72, 88, 10, {
-        backgroundColor: 0x101522,
-        borderColor: lane.accentColor,
-        borderWidth: 1,
-        alpha: 0.34,
-      });
-      container.add(marker);
-      slotMarkers.push(marker);
-    }
-    container.setData('slotMarkers', slotMarkers);
 
     container.add(
       this.scene.add
@@ -135,17 +146,6 @@ export class FormationBoardView {
         .setOrigin(1, 0)
         .setFontSize(10),
     );
-
-    const emptyText = this.scene.add
-      .text(zone.width / 2, zone.height / 2 + 6, 'EMPTY', {
-        ...UITheme.font.small,
-        color: '#334455',
-        align: 'center',
-      })
-      .setOrigin(0.5)
-      .setFontSize(12);
-    container.add(emptyText);
-    container.setData('emptyText', emptyText);
 
     const hitArea = this.scene.add
       .rectangle(zone.width / 2, zone.height / 2, zone.width, zone.height, 0x000000, 0)
@@ -246,7 +246,7 @@ export class FormationBoardView {
 
     hitArea.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       pointer.event.stopPropagation();
-      this.deps.onUnitSelect(char);
+      this.deps.onUnitPress(char, pointer);
     });
 
     hitArea.on('pointerover', () => {

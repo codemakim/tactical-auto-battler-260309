@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateCardVariant, generateRewardFromTemplates } from '../systems/ActionCardSystem';
+import { drawInitialCards, generateCardVariant, generateRewardFromTemplates } from '../systems/ActionCardSystem';
 import { CharacterClass, Rarity, Target } from '../types';
 import type { CardTemplate } from '../types';
 import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
@@ -32,6 +32,15 @@ describe('카드 템플릿 변형 생성', () => {
         ],
       },
     ],
+  };
+
+  const conditionalVariantTemplate: CardTemplate = {
+    id: 'test_recover',
+    name: 'Recover',
+    rarity: Rarity.COMMON,
+    condition: { type: 'HP_BELOW', value: 50 },
+    conditionValuePool: [40, 50, 60],
+    effectTemplates: [{ type: 'HEAL', multiplierPool: [15, 20, 25], targetPool: [Target.SELF] }],
   };
 
   describe('generateCardVariant', () => {
@@ -128,6 +137,23 @@ describe('카드 템플릿 변형 생성', () => {
       const a1 = generateRewardFromTemplates(templates, CharacterClass.WARRIOR, 3, 99);
       const a2 = generateRewardFromTemplates(templates, CharacterClass.WARRIOR, 3, 99);
       expect(a1.map((a) => a.name)).toEqual(a2.map((a) => a.name));
+    });
+  });
+
+  describe('drawInitialCards condition variants', () => {
+    it('conditionValuePool이 있으면 조건 값도 시드 기반으로 변형된다', () => {
+      const cardsA = drawInitialCards([conditionalVariantTemplate], 1, 10);
+      const cardsB = drawInitialCards([conditionalVariantTemplate], 1, 11);
+
+      expect([40, 50, 60]).toContain(cardsA[0].condition.value);
+      expect([40, 50, 60]).toContain(cardsB[0].condition.value);
+    });
+
+    it('같은 시드는 같은 조건 값을 만든다', () => {
+      const cardsA = drawInitialCards([conditionalVariantTemplate], 1, 55);
+      const cardsB = drawInitialCards([conditionalVariantTemplate], 1, 55);
+
+      expect(cardsA[0].condition).toEqual(cardsB[0].condition);
     });
   });
 

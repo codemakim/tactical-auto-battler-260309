@@ -25,6 +25,15 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+function resolveTemplateCondition(template: CardTemplate, rand: () => number): ActionCondition {
+  if (!template.conditionValuePool?.length || template.condition.value === undefined) {
+    return { ...template.condition };
+  }
+
+  const value = template.conditionValuePool[Math.floor(rand() * template.conditionValuePool.length)];
+  return { ...template.condition, value };
+}
+
 /**
  * 카드 템플릿에서 변형 액션 생성.
  * 각 효과의 multiplierPool, targetPool에서 시드 기반으로 하나씩 선택.
@@ -172,7 +181,7 @@ export function drawInitialCards(templates: CardTemplate[], count: number, seed:
     }
 
     const action = generateCardVariant(template, seed + i + 1);
-    result.push({ condition: { ...template.condition }, action });
+    result.push({ condition: resolveTemplateCondition(template, rand), action });
   }
 
   return result;

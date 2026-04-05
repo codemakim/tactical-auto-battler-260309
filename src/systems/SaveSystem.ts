@@ -89,6 +89,7 @@ function cloneRecruitShopState(recruitShopState: RecruitShopState): RecruitShopS
   return {
     refreshCost: recruitShopState.refreshCost,
     nextRotationOffset: recruitShopState.nextRotationOffset,
+    rerollCounter: recruitShopState.rerollCounter ?? 0,
     offers: recruitShopState.offers.map((offer) => ({
       slotIndex: offer.slotIndex,
       price: offer.price,

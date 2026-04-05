@@ -287,4 +287,26 @@ describe('SaveSystem', () => {
     expect(saved?.gold).toBe(620);
     expect(saved?.battlefieldProgress?.dark_forest.unlocked).toBe(true);
   });
+
+  it('방출 후 저장/로드해도 characters, formation, presets에서 제거 상태가 유지된다', () => {
+    const extra = createCharacterDef('Guest', CharacterClass.GUARDIAN, 1, 4);
+    gameState.addCharacter(extra);
+    gameState.setFormation({
+      slots: [
+        { characterId: gameState.characters[0].id, position: Position.FRONT },
+        { characterId: extra.id, position: Position.BACK },
+      ],
+      heroType: HeroType.COMMANDER,
+    });
+    gameState.savePreset('alpha');
+
+    expect(gameState.dismissCharacter(extra.id)).toEqual({ ok: true });
+    expect(gameState.saveToStorage(storage)).toBe(true);
+
+    const restored = new GameStateManager();
+    expect(restored.loadFromStorage(storage)).toBe(true);
+    expect(restored.characters.map((character) => character.id)).not.toContain(extra.id);
+    expect(restored.formation.slots.map((slot) => slot.characterId)).not.toContain(extra.id);
+    expect(restored.presets[0].formation.slots.map((slot) => slot.characterId)).not.toContain(extra.id);
+  });
 });

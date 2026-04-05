@@ -44,6 +44,22 @@ describe('RecruitShop', () => {
     );
   });
 
+  it('같은 후보가 다시 나와도 리프레시마다 스탯이나 행동 카드 조합이 재롤된다', () => {
+    const roster = createRoster();
+    const initial = createRecruitShopState(roster);
+    const rotated = refreshRecruitShopState(initial, roster);
+    const cycled = refreshRecruitShopState(rotated, roster);
+    const cycledAgain = refreshRecruitShopState(cycled, roster);
+    const wrapped = refreshRecruitShopState(cycledAgain, roster);
+    const initialBrakka = initial.offers[0].character;
+    const wrappedBrakka = wrapped.offers[0].character;
+
+    expect(initialBrakka?.name).toBe('Brakka');
+    expect(wrappedBrakka?.name).toBe('Brakka');
+    expect(initialBrakka?.characterClass).toBe(wrappedBrakka?.characterClass);
+    expect(initialBrakka?.baseStats).not.toEqual(wrappedBrakka?.baseStats);
+  });
+
   it('영입 성공 시 골드를 차감하고 캐릭터를 반환하며 슬롯을 빈 슬롯으로 만든다', () => {
     const roster = createRoster();
     const shop = createRecruitShopState(roster);

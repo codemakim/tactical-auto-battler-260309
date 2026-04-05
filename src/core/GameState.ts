@@ -25,6 +25,7 @@ import {
   shouldAutoRefreshRecruitShop,
 } from '../systems/RecruitShop';
 import type { RecruitShopState } from '../systems/RecruitShop';
+import { dismissCharacterFromState, getBarracksDismissState } from '../systems/BarracksDismissal';
 import {
   createGameStateDataFromSave,
   deleteSaveDataFromStorage,
@@ -206,6 +207,34 @@ export class GameStateManager {
   addCharacter(character: CharacterDefinition): void {
     this.state.characters.push(character);
     this.persist();
+  }
+
+  dismissCharacter(
+    characterId: string,
+  ): { ok: true } | { ok: false; reason: 'run-active' | 'minimum-roster' | 'missing-character' } {
+    const dismissState = getBarracksDismissState({
+      hasActiveRun: !!this.state.runState,
+      rosterCount: this.state.characters.length,
+      targetExists: this.state.characters.some((character) => character.id === characterId),
+    });
+
+    if (!dismissState.canDismiss) {
+      return {
+        ok: false,
+        reason: dismissState.reason ?? 'missing-character',
+      };
+    }
+
+    const result = dismissCharacterFromState(this.state, characterId);
+    if (!result.dismissed) {
+      return { ok: false, reason: 'missing-character' };
+    }
+
+    this.state.characters = result.nextState.characters;
+    this.state.formation = result.nextState.formation;
+    this.state.presets = result.nextState.presets;
+    this.persist();
+    return { ok: true };
   }
 
   setRecruitShopState(recruitShopState: RecruitShopState): void {

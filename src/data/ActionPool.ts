@@ -40,14 +40,16 @@ export const UNIVERSAL_CARD_TEMPLATES: CardTemplate[] = [
     id: 'universal_recover',
     name: 'Recover',
     rarity: Rarity.COMMON,
-    condition: { type: 'ALWAYS' },
+    condition: { type: 'HP_BELOW', value: 50 },
+    conditionValuePool: [40, 50, 60],
     effectTemplates: [{ type: 'HEAL', multiplierPool: [15, 20, 25], targetPool: [Target.SELF] }],
   },
   {
     id: 'universal_rally',
     name: 'Rally',
     rarity: Rarity.RARE,
-    condition: { type: 'ALWAYS' },
+    condition: { type: 'ALLY_HP_BELOW', value: 50 },
+    conditionValuePool: [40, 50, 60],
     effectTemplates: [{ type: 'HEAL', multiplierPool: [10, 15, 20], targetPool: [Target.ALLY_LOWEST_HP] }],
   },
   {

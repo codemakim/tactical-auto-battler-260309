@@ -10,9 +10,15 @@ import { UIModal } from '../ui/UIModal';
 import { UIPanel } from '../ui/UIPanel';
 import { UIButton } from '../ui/UIButton';
 import { UIActionMiniCard } from '../ui/UIActionMiniCard';
+import { UIToast } from '../ui/UIToast';
 import { gameState } from '../core/GameState';
 import { formatTownHeaderHeroInfo } from '../systems/TownHeader';
-import { getBarracksRosterSummary, getCharacterDetailViewModel } from '../systems/BarracksDetail';
+import {
+  getBarracksDismissViewModel,
+  getBarracksRosterSummary,
+  getCharacterDetailViewModel,
+} from '../systems/BarracksDetail';
+import { getBarracksDismissState } from '../systems/BarracksDismissal';
 import { getRecruitPurchaseFailureMessage } from '../systems/RecruitShop';
 import { applyTrainingToCharacter, getTrainingCharacterViewModel } from '../systems/TrainingGround';
 import type { CharacterDefinition, TrainableStat } from '../types';
@@ -103,6 +109,7 @@ const BUILDINGS: BuildingDef[] = [
 
 export class TownScene extends Phaser.Scene {
   private goldText!: Phaser.GameObjects.Text;
+  private toast!: UIToast;
   private overlayDim?: Phaser.GameObjects.Rectangle;
   private overlayPanel?: UIPanel;
   private overlayButtons: UIButton[] = [];
@@ -120,6 +127,7 @@ export class TownScene extends Phaser.Scene {
   create(): void {
     this.drawBackground();
     this.drawTopBar();
+    this.toast = new UIToast(this, { y: GAME_HEIGHT - 90, duration: 1800 });
     this.createBuildings();
   }
 
@@ -390,6 +398,12 @@ export class TownScene extends Phaser.Scene {
     if (!this.overlayPanel) return;
 
     const detail = getCharacterDetailViewModel(character);
+    const dismissState = getBarracksDismissState({
+      hasActiveRun: !!gameState.runState,
+      rosterCount: gameState.characters.length,
+      targetExists: true,
+    });
+    const dismissViewModel = getBarracksDismissViewModel(dismissState);
     const titleText = this.add.text(x, top, detail.title, {
       ...UITheme.font.heading,
       color: UITheme.colors.textPrimary,
@@ -439,6 +453,59 @@ export class TownScene extends Phaser.Scene {
       });
       this.overlayPanel!.add(card.container);
       this.overlayActionCards.push(card);
+    });
+
+    if (dismissViewModel.helperLabel) {
+      const helperText = this.add.text(x, top + 400, dismissViewModel.helperLabel, {
+        ...UITheme.font.small,
+        color: UITheme.colors.textSecondary,
+        wordWrap: { width: 560 },
+      });
+      this.overlayPanel.add(helperText);
+      this.overlayTexts.push(helperText);
+    }
+
+    const dismissButton = new UIButton(this, {
+      x,
+      y: top + 438,
+      width: 180,
+      height: 40,
+      label: dismissViewModel.buttonLabel,
+      style: 'secondary',
+      disabled: dismissViewModel.disabled,
+      onClick: () => this.confirmBarracksDismiss(character),
+    }).setPaletteOverride({
+      border: 0xc76666,
+      text: dismissViewModel.disabled ? undefined : '#ffd0d0',
+    });
+    this.overlayPanel.add(dismissButton.container);
+    this.overlayButtons.push(dismissButton);
+  }
+
+  private confirmBarracksDismiss(character: CharacterDefinition): void {
+    new UIModal(this, {
+      title: '멤버 방출',
+      content: `${character.name}을(를) 로스터에서 방출합니다. 이 작업은 되돌릴 수 없습니다.`,
+      buttonLabel: '방출',
+      secondaryButtonLabel: '취소',
+      onClose: () => {
+        const result = gameState.dismissCharacter(character.id);
+        if (!result.ok) {
+          this.toast.show(
+            result.reason === 'run-active'
+              ? '런 진행 중에는 방출할 수 없습니다'
+              : result.reason === 'minimum-roster'
+                ? '최소 4명의 멤버는 유지해야 합니다'
+                : '대상 멤버를 찾을 수 없습니다',
+          );
+          return;
+        }
+
+        const nextCharacters = gameState.characters;
+        this.selectedBarracksCharacterId = nextCharacters[0]?.id;
+        this.openBarracksPanel();
+        this.toast.show(`${character.name} 방출`);
+      },
     });
   }
 

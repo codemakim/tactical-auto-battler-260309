@@ -227,6 +227,7 @@ export interface CardTemplate {
   rarity: Rarity;
   classRestriction?: CharacterClass;
   condition: ActionCondition;
+  conditionValuePool?: number[];
   effectTemplates: EffectTemplate[];
   defensivePriority?: boolean; // 생성된 Action에 전달
 }
