@@ -37,6 +37,7 @@ function createMockCharDef(id: string): CharacterDefinition {
 function createRunState(overrides: Partial<RunState> = {}): RunState {
   const party = [createMockCharDef('c1'), createMockCharDef('c2'), createMockCharDef('c3')];
   return {
+    battlefieldId: 'plains',
     currentStage: 1,
     maxStages: 5,
     seed: 42,
@@ -125,48 +126,57 @@ describe('finalizeRun', () => {
 
   beforeEach(() => {
     mockGameState = {
-      addGold: vi.fn(),
-      refreshRecruitShopAfterRun: vi.fn(),
-      setRunState: vi.fn(),
+      finalizeRunMeta: vi.fn(),
     } as unknown as GameStateManager;
   });
 
-  it('골드를 영속 자원에 반영', () => {
+  it('정산 요약을 메타 상태에 일괄 반영한다', () => {
     const runState = createRunState({ gold: 250 });
 
     finalizeRun(runState, mockGameState);
 
-    expect(mockGameState.addGold).toHaveBeenCalledWith(250);
+    expect(mockGameState.finalizeRunMeta as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(runState, 0);
   });
 
   it('런 상태를 undefined로 제거', () => {
-    const runState = createRunState();
+    const runState = createRunState({ currentStage: 2, status: RunStatus.DEFEAT });
 
     finalizeRun(runState, mockGameState);
 
-    expect(mockGameState.setRunState).toHaveBeenCalledWith(undefined);
+    expect(mockGameState.finalizeRunMeta as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(runState, 1);
   });
 
-  it('addGold → endRun → setRunState 순서로 실행', () => {
+  it('endRun 뒤에 메타 정산을 실행한다', () => {
     const callOrder: string[] = [];
     mockGameState = {
-      addGold: vi.fn(() => callOrder.push('addGold')),
-      setRunState: vi.fn(() => callOrder.push('setRunState')),
+      finalizeRunMeta: vi.fn(() => callOrder.push('finalizeRunMeta')),
     } as unknown as GameStateManager;
 
     const runState = createRunState({ gold: 100 });
     finalizeRun(runState, mockGameState);
 
-    expect(callOrder[0]).toBe('addGold');
-    expect(callOrder[callOrder.length - 1]).toBe('setRunState');
+    expect(callOrder).toEqual(['finalizeRunMeta']);
   });
 
-  it('골드 0인 경우에도 addGold 호출', () => {
+  it('런 종료 시 전장 진행도 갱신을 요청한다', () => {
+    const runState = createRunState({
+      battlefieldId: 'dark_forest',
+      currentStage: 5,
+      maxStages: 5,
+      status: RunStatus.VICTORY,
+    });
+
+    finalizeRun(runState, mockGameState);
+
+    expect(mockGameState.finalizeRunMeta as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(runState, 5);
+  });
+
+  it('골드 0인 경우에도 정산을 호출한다', () => {
     const runState = createRunState({ gold: 0 });
 
     finalizeRun(runState, mockGameState);
 
-    expect(mockGameState.addGold).toHaveBeenCalledWith(0);
+    expect(mockGameState.finalizeRunMeta as ReturnType<typeof vi.fn>).toHaveBeenCalled();
   });
 
   it('1스테이지 이상 클리어한 런 종료면 상점 자동 갱신을 요청한다', () => {
@@ -177,7 +187,7 @@ describe('finalizeRun', () => {
 
     finalizeRun(runState, mockGameState);
 
-    expect(mockGameState.refreshRecruitShopAfterRun as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(2);
+    expect(mockGameState.finalizeRunMeta as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(runState, 2);
   });
 
   it('스테이지를 하나도 클리어하지 못한 런 종료면 상점 자동 갱신을 요청하지 않는다', () => {
@@ -188,6 +198,6 @@ describe('finalizeRun', () => {
 
     finalizeRun(runState, mockGameState);
 
-    expect(mockGameState.refreshRecruitShopAfterRun as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
+    expect(mockGameState.finalizeRunMeta as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(runState, 0);
   });
 });

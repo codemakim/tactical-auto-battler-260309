@@ -10,6 +10,8 @@
 - 최근 작업 이력과 다음 후보는 [WORKLOG.md](/Users/jhkim/Project/tactical-auto-battler/WORKLOG.md)에서 확인한다.
 - 프로젝트 전용 스킬은 [.codex/skills](/Users/jhkim/Project/tactical-auto-battler/.codex/skills)를 우선 사용한다.
 - 구현 완료 후에는 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 기준의 별도 리뷰 에이전트를 거친다.
+- 별도 리뷰 에이전트를 실제로 띄울 수 없는 환경이면, 구현자가 같은 턴에서 리뷰를 대신하지 않는다.
+- 그 경우에는 staged scope / primary spec / 검증 명령만 정리해서 `별도 리뷰 필요` 상태로 넘긴다.
 - 세부 규칙은 `docs/` 스펙 문서를 기준으로 판단한다.
 - 구현 전에는 관련 테스트와 현재 구현 파일을 함께 본다.
 - 변경은 가능한 한 작은 단위로 한다.
@@ -211,6 +213,7 @@
   단, 실제 스폰 계약은 `.codex/agents/senior-reviewer.md`를 기준으로 한다.
   리뷰는 `git diff --cached`와 제공된 spec / 파일 / 검증 범위 안에서 빠르게 끝내야 한다.
   staged diff 밖의 개선 의견은 리뷰가 아니라 리팩터링으로 분리한다.
+  실제 별도 에이전트를 띄울 수 없는 환경이면 이 스킬은 `리뷰 대체`가 아니라 `리뷰 중단 및 사용자 전달`로 처리한다.
 
 ## 12. Failure Routing
 
@@ -236,3 +239,4 @@
 - `No actionable findings.` 형식을 강제한다.
 - 스폰 시 primary spec, staged 대상 파일, 실행한 검증 명령을 함께 넘긴다.
 - 리뷰 범위는 `git diff --cached`로 고정한다.
+- 구현자 본인이 같은 턴에서 이 계약을 흉내 내는 것은 허용하지 않는다.

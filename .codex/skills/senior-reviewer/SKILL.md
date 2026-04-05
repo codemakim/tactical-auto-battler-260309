@@ -23,8 +23,11 @@ The canonical review profile is [.codex/agents/senior-reviewer.md](/Users/jhkim/
 4. Spawn a review agent with the `.codex/agents/senior-reviewer.md` profile.
    - The spawning prompt must explicitly carry the output contract from the agent profile.
    - Do not assume the agent automatically has this skill loaded.
-5. If findings exist, fix and re-run the review.
-6. If no findings, proceed to `npm run format` / `npx tsc --noEmit` / commit.
+5. If the current environment cannot actually spawn a separate review agent, stop here.
+   - Do not replace the independent review with a self-review by the implementer.
+   - Return a concise handoff containing: primary spec, staged files, verification commands, and `separate review still required`.
+6. If findings exist, fix and re-run the review.
+7. If no findings, proceed to `npm run format` / `npx tsc --noEmit` / commit.
 
 ## Spawn Prompt Checklist
 
@@ -49,3 +52,11 @@ The review agent returns findings per the agent profile contract. This skill's c
 - review outcome (findings count or no findings)
 - fixes applied, if any
 - final verification status
+
+If a separate review agent could not be run, the closer must instead report:
+
+- `Independent review not executed.`
+- primary spec
+- staged scope
+- verification commands already run
+- `separate review still required`

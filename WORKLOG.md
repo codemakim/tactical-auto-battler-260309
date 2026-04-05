@@ -12,25 +12,25 @@
 
 ## Current Task
 
-- **전장 배경 연결** — 변방 초원 배경 자산을 런 선택과 전투 배경에 연결
+- **전장 진행 MVP 구현** — 전장 해금/기록/encounter set 구조를 실제 런/저장 흐름에 연결
 - 담당: Codex
 
 ### 작업 요약
 
-1. 전장 정의를 공용 데이터로 이동
-2. Sortie 선택 결과를 `RunState.battlefieldId`에 저장
-3. `BattleScene`에서 전장별 배경 이미지 적용
-4. 저장/로드 round-trip에 전장 선택 유지 추가
+1. 전장 진행 상태를 영속 저장 구조에 추가
+2. 런 종료 시 전장 기록/해금 갱신 연결
+3. Sortie 카드가 실제 잠금/기록 상태를 읽도록 연결
+4. EnemyGenerator를 전장별 encounter set 레지스트리 구조로 전환
 
 ### 핵심 원칙
 
-- 전장 배경은 `RunState`와 연결된 데이터로 처리
-- `SortieScene` 카드 정의와 전투 배경 키를 같은 소스에서 관리
-- 배경 자산이 없으면 기존 단색 전투 배경으로 폴백
+- 전장 차이는 Scene 분기보다 데이터 레지스트리에서 읽는다
+- 해금/기록은 영속 메타 상태로 처리한다
+- 다른 전장을 추가할 때는 데이터만 늘리고 Scene 로직은 최대한 유지한다
 
 ## Source Specs
 
-- primary: [docs/sortie-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/sortie-ui-spec.md)
+- primary: [docs/battlefield-progression-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/battlefield-progression-spec.md)
 - secondary: [docs/game-flow-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/game-flow-spec.md)
 
 ## Done
@@ -56,12 +56,14 @@
 - 편성 HUD / 병영 / 상점에서 액션 슬롯을 플랫 태그 기반 미니 카드 + 호버 상세로 표시하도록 개선 (Codex)
 - 상점 호버 액션 카드 높이를 동적으로 확장해 긴 태그가 영역 밖으로 넘치지 않도록 수정 (Codex)
 - 변방 초원 전장 배경을 런 상태와 연결해 Sortie 선택 → BattleScene 배경으로 적용 (Codex)
+- 전장 시스템 다중 확장용 구조 스펙 초안 작성 (Codex)
+- 전장 진행 상태 저장, 첫 클리어 해금, Sortie 잠금/기록 표시, 전장별 encounter set 레지스트리 구현 (Codex)
 
 ## Next
 
-- 변방 초원 전장 배경 적용 QA
-- 다른 전장용 배경 자산이 들어오면 같은 구조로 연결
-- 전장 시스템을 실제 데이터 분기 시스템으로 확장
+- Sortie 전장 카드 UX 보강
+- 전장별 추가 배경/아트 적용
+- 전술 유물/전술 특성 시스템 초안 정리
 
 ## Guardrails
 

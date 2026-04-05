@@ -5,16 +5,11 @@
  * generateEncounter(stage, seed) → CharacterDefinition[] + positions
  */
 
-import type { CharacterDefinition, EncounterSlot } from '../types';
+import type { BattlefieldId, CharacterDefinition, EncounterSlot } from '../types';
 import { Position } from '../types';
 import { CLASS_DEFINITIONS } from '../data/ClassDefinitions';
-import {
-  ENEMY_ARCHETYPE_DEFINITIONS,
-  STAGE_ENCOUNTERS,
-  STAGE_MULTIPLIERS,
-  BOSS_MULTIPLIER,
-  getEnemyDisplayName,
-} from '../data/EnemyDefinitions';
+import { ENEMY_ARCHETYPE_DEFINITIONS, getEnemyDisplayName } from '../data/EnemyDefinitions';
+import { getBattlefieldEncounterSet } from '../data/BattlefieldEncounters';
 
 /** 생성된 적 유닛 + 포지션 정보 */
 export interface EnemyUnit {
@@ -40,8 +35,9 @@ function seededRand(seed: number): () => number {
  * 스테이지별 적 인카운터 생성
  * 결정론적: 같은 stage + seed = 같은 적 편성
  */
-export function generateEncounter(stage: number, seed: number): EnemyUnit[] {
-  const encounter = STAGE_ENCOUNTERS.find((e) => e.stage === stage);
+export function generateEncounter(stage: number, seed: number, battlefieldId: BattlefieldId = 'plains'): EnemyUnit[] {
+  const encounterSet = getBattlefieldEncounterSet(battlefieldId);
+  const encounter = encounterSet.stageEncounters.find((entry) => entry.stage === stage);
   if (!encounter) throw new Error(`Unknown stage: ${stage}`);
 
   const rand = seededRand(seed);
@@ -55,7 +51,7 @@ export function generateEncounter(stage: number, seed: number): EnemyUnit[] {
     slots = encounter.slots;
   }
 
-  const baseMultiplier = STAGE_MULTIPLIERS[stage] ?? 1.0;
+  const baseMultiplier = encounterSet.stageMultipliers[stage] ?? 1.0;
   const enemies: EnemyUnit[] = [];
   let unitIdx = 0;
 
@@ -69,7 +65,7 @@ export function generateEncounter(stage: number, seed: number): EnemyUnit[] {
     for (let i = 0; i < slot.count; i++) {
       // 보스 판정: Stage 5의 첫 번째 유닛 (Brute)
       const isBoss = stage === 5 && unitIdx === 0;
-      const multiplier = isBoss ? BOSS_MULTIPLIER : baseMultiplier;
+      const multiplier = isBoss ? encounterSet.bossMultiplier : baseMultiplier;
 
       // 스탯 중간값 × 배율 × ±10% 시드 변동
       const variation = 0.9 + rand() * 0.2;

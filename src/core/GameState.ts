@@ -3,9 +3,21 @@
  * Town 중심의 영속 데이터를 메모리에 유지.
  * 향후 LocalStorage/IndexedDB 저장으로 확장.
  */
-import type { CharacterDefinition, HeroType, Position, RunState, BattleReplayEntry, ReplaySessionData } from '../types';
+import type {
+  BattleReplayEntry,
+  BattlefieldProgressState,
+  CharacterDefinition,
+  HeroType,
+  Position,
+  ReplaySessionData,
+  RunState,
+} from '../types';
 import { CharacterClass, HeroType as HT } from '../types';
 import { createCharacterDef } from '../entities/UnitFactory';
+import {
+  applyRunResultToBattlefieldProgress,
+  createInitialBattlefieldProgress,
+} from '../systems/BattlefieldProgression';
 import {
   createRecruitShopState as buildRecruitShopState,
   purchaseRecruitOffer,
@@ -50,6 +62,7 @@ export interface GameStateData {
   formation: FormationData;
   presets: FormationPreset[];
   recruitShopState: RecruitShopState;
+  battlefieldProgress: BattlefieldProgressState;
   /** 진행 중인 런 상태 (런 밖이면 undefined) */
   runState?: RunState;
   /** 런 중 전투 리플레이 기록 */
@@ -88,6 +101,7 @@ function createInitialState(): GameStateData {
     formation: createDefaultFormation(characters),
     presets: [],
     recruitShopState: buildRecruitShopState(characters),
+    battlefieldProgress: createInitialBattlefieldProgress(),
     battleReplays: [],
   };
 }
@@ -131,6 +145,10 @@ export class GameStateManager {
 
   get recruitShopState(): RecruitShopState {
     return this.state.recruitShopState;
+  }
+
+  get battlefieldProgress(): BattlefieldProgressState {
+    return this.state.battlefieldProgress;
   }
 
   get battleReplays(): BattleReplayEntry[] {
@@ -229,6 +247,22 @@ export class GameStateManager {
   refreshRecruitShopAfterRun(stagesCleared: number): void {
     if (!shouldAutoRefreshRecruitShop(stagesCleared)) return;
     this.state.recruitShopState = refreshRecruitShopState(this.state.recruitShopState, this.state.characters);
+    this.persist();
+  }
+
+  finalizeRunMeta(runState: RunState, stagesCleared: number): void {
+    this.state.gold += runState.gold;
+    this.state.battlefieldProgress = applyRunResultToBattlefieldProgress(this.state.battlefieldProgress, runState);
+    if (shouldAutoRefreshRecruitShop(stagesCleared)) {
+      this.state.recruitShopState = refreshRecruitShopState(this.state.recruitShopState, this.state.characters);
+    }
+    this.state.runState = undefined;
+    this.state.battleReplays = [];
+    this.persist();
+  }
+
+  updateBattlefieldProgressAfterRun(runState: RunState): void {
+    this.state.battlefieldProgress = applyRunResultToBattlefieldProgress(this.state.battlefieldProgress, runState);
     this.persist();
   }
 

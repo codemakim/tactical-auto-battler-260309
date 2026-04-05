@@ -1,7 +1,8 @@
 import type { GameStateData, FormationData, FormationPreset } from '../core/GameState';
 import { createRecruitShopState } from './RecruitShop';
 import type { RecruitShopState } from './RecruitShop';
-import type { Action, CardInstance, CharacterDefinition, RunState } from '../types';
+import { normalizeBattlefieldProgress } from './BattlefieldProgression';
+import type { Action, BattlefieldProgressState, CardInstance, CharacterDefinition, RunState } from '../types';
 
 export const SAVE_STORAGE_KEY = 'tactical-auto-battler.save.v1';
 export const SAVE_DATA_VERSION = 1 as const;
@@ -22,6 +23,7 @@ export interface SaveData {
   formation: FormationData;
   presets: FormationPreset[];
   recruitShopState?: RecruitShopState;
+  battlefieldProgress?: BattlefieldProgressState;
   runState?: RunState;
 }
 
@@ -95,6 +97,10 @@ function cloneRecruitShopState(recruitShopState: RecruitShopState): RecruitShopS
   };
 }
 
+function cloneBattlefieldProgress(battlefieldProgress: BattlefieldProgressState): BattlefieldProgressState {
+  return normalizeBattlefieldProgress(battlefieldProgress);
+}
+
 export function extractSaveData(state: GameStateData): SaveData {
   return {
     version: SAVE_DATA_VERSION,
@@ -104,6 +110,7 @@ export function extractSaveData(state: GameStateData): SaveData {
     formation: cloneFormation(state.formation),
     presets: clonePresets(state.presets),
     recruitShopState: cloneRecruitShopState(state.recruitShopState),
+    battlefieldProgress: cloneBattlefieldProgress(state.battlefieldProgress),
     runState: state.runState ? cloneRunState(state.runState) : undefined,
   };
 }
@@ -119,6 +126,7 @@ export function createGameStateDataFromSave(saveData: SaveData): GameStateData {
     recruitShopState: saveData.recruitShopState
       ? cloneRecruitShopState(saveData.recruitShopState)
       : createRecruitShopState(clonedCharacters),
+    battlefieldProgress: normalizeBattlefieldProgress(saveData.battlefieldProgress),
     runState: saveData.runState ? cloneRunState(saveData.runState) : undefined,
     battleReplays: [],
   };

@@ -11,7 +11,6 @@ import {
   Target,
   Rarity,
   type EnemyArchetypeDefinition,
-  type StageEncounter,
 } from '../types';
 
 // ═══════════════════════════════════════════
@@ -185,69 +184,6 @@ export const ENEMY_ARCHETYPE_DEFINITIONS: Record<EnemyArchetype, EnemyArchetypeD
     ],
   },
 };
-
-// ═══════════════════════════════════════════
-// 스테이지별 인카운터 편성
-// ═══════════════════════════════════════════
-
-export const STAGE_ENCOUNTERS: StageEncounter[] = [
-  {
-    stage: 1,
-    slots: [{ archetype: EnemyArchetype.BRUTE, count: 3 }],
-  },
-  {
-    stage: 2,
-    slots: [
-      { archetype: EnemyArchetype.BRUTE, count: 1 },
-      { archetype: EnemyArchetype.RANGER, count: 3 },
-    ],
-  },
-  {
-    stage: 3,
-    slots: [
-      { archetype: EnemyArchetype.GUARD, count: 1 },
-      { archetype: EnemyArchetype.RANGER, count: 3 },
-    ],
-  },
-  {
-    stage: 4,
-    slots: [
-      { archetype: EnemyArchetype.DISRUPTOR, count: 1 },
-      { archetype: EnemyArchetype.BRUTE, count: 3 },
-    ],
-    variants: [
-      // 변형 B: 디스럽터 + 레인저
-      [
-        { archetype: EnemyArchetype.DISRUPTOR, count: 1 },
-        { archetype: EnemyArchetype.RANGER, count: 3 },
-      ],
-    ],
-  },
-  {
-    stage: 5,
-    slots: [
-      { archetype: EnemyArchetype.BRUTE, count: 1 }, // 보스 (스탯 배율 별도)
-      { archetype: EnemyArchetype.GUARD, count: 1 },
-      { archetype: EnemyArchetype.RANGER, count: 2 },
-    ],
-  },
-];
-
-// ═══════════════════════════════════════════
-// 스테이지별 스탯 배율
-// ═══════════════════════════════════════════
-
-/** 일반 적 스탯 배율 */
-export const STAGE_MULTIPLIERS: Record<number, number> = {
-  1: 0.85,
-  2: 0.95,
-  3: 1.0,
-  4: 1.1,
-  5: 1.15,
-};
-
-/** 보스 스탯 배율 (Stage 5 첫 번째 유닛에만 적용) */
-export const BOSS_MULTIPLIER = 1.5;
 
 // ═══════════════════════════════════════════
 // 스테이지별 적 이름 접두어

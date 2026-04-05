@@ -73,6 +73,7 @@ describe('RunManager', () => {
       const run = createRunState(party, 42, 'dark_forest');
 
       expect(run.battlefieldId).toBe('dark_forest');
+      expect(run.maxStages).toBe(5);
     });
 
     it('4명이 아니면 에러를 던진다', () => {

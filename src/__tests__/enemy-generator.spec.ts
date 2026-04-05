@@ -68,6 +68,22 @@ describe('적 인카운터 생성 (EnemyGenerator)', () => {
       expect(guards).toHaveLength(1);
       expect(rangers).toHaveLength(2);
     });
+
+    it('어둠의 숲 Stage 1은 레인저 중심 편성을 사용한다', () => {
+      const enemies = generateEncounter(1, 42, 'dark_forest');
+
+      const rangers = enemies.filter((enemy) => enemy.definition.characterClass === 'ENEMY_RANGER');
+      expect(enemies).toHaveLength(3);
+      expect(rangers).toHaveLength(2);
+    });
+
+    it('폐허 요새 Stage 1은 가드 중심 편성을 사용한다', () => {
+      const enemies = generateEncounter(1, 42, 'ruined_fortress');
+
+      const guards = enemies.filter((enemy) => enemy.definition.characterClass === 'ENEMY_GUARD');
+      expect(enemies).toHaveLength(3);
+      expect(guards).toHaveLength(2);
+    });
   });
 
   // ═══════════════════════════════════════════

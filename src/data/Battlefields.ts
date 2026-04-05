@@ -1,4 +1,4 @@
-import type { BattlefieldId } from '../types';
+import type { BattlefieldId, BattlefieldRunConfig, BattlefieldUnlockRule } from '../types';
 
 export interface BattlefieldDefinition {
   id: BattlefieldId;
@@ -9,8 +9,9 @@ export interface BattlefieldDefinition {
   enemyPreview: string;
   color: number;
   bgColor: number;
-  unlocked: boolean;
-  unlockCondition?: string;
+  unlock: BattlefieldUnlockRule;
+  unlockLabel: string;
+  runConfig: BattlefieldRunConfig;
   battleBackgroundKey?: string;
 }
 
@@ -24,7 +25,12 @@ export const BATTLEFIELDS: BattlefieldDefinition[] = [
     enemyPreview: 'Brute, Ranger',
     color: 0x4ade80,
     bgColor: 0x1a2e1a,
-    unlocked: true,
+    unlock: { type: 'STARTER' },
+    unlockLabel: '기본 해금',
+    runConfig: {
+      maxStages: 5,
+      encounterSetId: 'plains',
+    },
     battleBackgroundKey: 'battle-bg-plains',
   },
   {
@@ -36,8 +42,12 @@ export const BATTLEFIELDS: BattlefieldDefinition[] = [
     enemyPreview: 'Ranger, Guard',
     color: 0x8b5cf6,
     bgColor: 0x1a1a2e,
-    unlocked: false,
-    unlockCondition: '변방 초원 클리어',
+    unlock: { type: 'CLEAR_BATTLEFIELD_ONCE', battlefieldId: 'plains' },
+    unlockLabel: '변방 초원 클리어',
+    runConfig: {
+      maxStages: 5,
+      encounterSetId: 'dark_forest',
+    },
   },
   {
     id: 'ruined_fortress',
@@ -48,8 +58,12 @@ export const BATTLEFIELDS: BattlefieldDefinition[] = [
     enemyPreview: 'Guard, Disruptor, Boss',
     color: 0xef4444,
     bgColor: 0x2e1a1a,
-    unlocked: false,
-    unlockCondition: '어둠의 숲 클리어',
+    unlock: { type: 'CLEAR_BATTLEFIELD_ONCE', battlefieldId: 'dark_forest' },
+    unlockLabel: '어둠의 숲 클리어',
+    runConfig: {
+      maxStages: 5,
+      encounterSetId: 'ruined_fortress',
+    },
   },
 ];
 

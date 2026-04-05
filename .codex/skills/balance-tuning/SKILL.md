@@ -13,12 +13,14 @@ Use this skill when the work is changing numbers, not adding systems. The loop i
 - What feels wrong? (too easy, too hard, too swingy, gold overflow, dead actions, etc.)
 - Which stage or scenario is affected?
 - What does "better" look like in concrete terms?
+- Pick one primary metric to optimize first. Keep secondary metrics as guardrails.
 
 2. Establish baseline.
 - Run `npx tsx src/sim-run.ts` with a fixed seed (`SIM_SEED=N`) to get reproducible results.
 - Record the key metrics: win rate, average rounds, gold earned, HP remaining, action usage.
 - Run multiple seeds (3~5) to check variance.
 - Save the exact seeds and command form used so before/after numbers are directly comparable.
+- If the current sim output cannot show the target metric, stop and add the smallest measurement helper before tuning.
 
 3. Identify the lever.
 - Which numbers control the outcome? (stat values in ClassDefinitions, reward formulas in BattleRewardSystem, encounter scaling in EnemyEncounterData, cost tables in TrainingSystem, etc.)
@@ -28,6 +30,7 @@ Use this skill when the work is changing numbers, not adding systems. The loop i
 4. Make the change.
 - Edit the data file or formula.
 - Keep the change minimal and clearly labeled in the diff.
+- Do not mix encounter composition tuning and raw stat tuning in the same pass unless one depends on the other.
 
 5. Measure the result.
 - Re-run the same seeds from step 2.
@@ -37,9 +40,10 @@ Use this skill when the work is changing numbers, not adding systems. The loop i
 - Keep the result summary compact: seed set, before, after, conclusion.
 
 6. Verify correctness.
-- Run `npm test` to ensure no contracts broke.
+- Run the most relevant tests first, then full `npm test` if the tuning touches shared balance rules.
 - Run `npm run format` and `npx tsc --noEmit`.
 - Check that the change does not violate any spec rules (damage formulas, reward caps, etc.).
+- Stage only the tuning diff before the review gate so the reviewer stays on the numeric change.
 
 7. Document the rationale.
 - In the commit message, note: what was tuned, why, and the before/after metric.
@@ -59,6 +63,7 @@ Use this skill when the work is changing numbers, not adding systems. The loop i
 - Do not tune without simulation evidence.
 - Do not commit tuning changes mixed with feature or refactor changes.
 - If the sim script cannot expose the needed metric, add the smallest measurement helper first, then tune in a second step.
+- If the requested tuning target is subjective only, define a measurable proxy before editing numbers.
 
 ## Output Shape
 
@@ -67,5 +72,6 @@ When closing out, report:
 - lever adjusted (file and field)
 - before/after metrics (seeds used)
 - tests passing
+- staged review scope
 - spec updated (if applicable)
 - unresolved risks if the tuning still needs real playtest confirmation

@@ -2,6 +2,8 @@
 
 > Source of Truth for `SortieScene`.
 > `game-flow-spec.md §5`의 상세 화면 규칙을 정의한다.
+> 전장 해금/기록/인카운터 세트 구조는
+> `docs/battlefield-progression-spec.md`를 함께 따른다.
 
 ---
 

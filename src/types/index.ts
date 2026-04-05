@@ -48,6 +48,26 @@ export const BattlefieldId = {
 } as const;
 export type BattlefieldId = (typeof BattlefieldId)[keyof typeof BattlefieldId];
 
+export type BattlefieldUnlockRule =
+  | { type: 'STARTER' }
+  | {
+      type: 'CLEAR_BATTLEFIELD_ONCE';
+      battlefieldId: BattlefieldId;
+    };
+
+export interface BattlefieldRunConfig {
+  maxStages: number;
+  encounterSetId: BattlefieldId;
+}
+
+export interface BattlefieldProgress {
+  unlocked: boolean;
+  clearedOnce: boolean;
+  bestStageReached: number;
+}
+
+export type BattlefieldProgressState = Record<BattlefieldId, BattlefieldProgress>;
+
 // === Buff Types ===
 
 export const BuffType = {

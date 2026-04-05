@@ -93,11 +93,14 @@
 5. 리뷰 반영 후에만 `format` / `tsc` / 커밋 단계로 간다.
 6. 리뷰 범위는 `git diff --cached` 기준으로 제한한다.
 7. staged diff 밖의 제안은 리뷰가 아니라 리팩터링 후속으로 분리한다.
+8. 현재 세션에서 별도 리뷰 에이전트를 실제로 스폰할 수 없으면, 구현자는 셀프 리뷰로 대체하지 않는다.
+9. 그 경우 구현자는 staged scope, primary spec, 실행한 검증 명령만 정리해서 사용자에게 `별도 리뷰 필요` 상태로 넘기고 멈춘다.
 
 리뷰 에이전트 실행 시 주의:
 
 - 로컬 스킬 본문이 서브에이전트에 자동 주입된다고 가정하지 않는다.
 - 리뷰 스폰 시에는 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 계약을 프롬프트에 직접 반영한다.
+- 별도 리뷰 에이전트를 실제로 띄울 수 없는 환경이면, 메인 구현자가 같은 턴에서 리뷰를 대신 수행하지 않는다.
 - 특히 아래를 반드시 포함한다:
   - review only
   - findings first

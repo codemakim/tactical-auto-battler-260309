@@ -21,6 +21,7 @@ import { createBattleState, runFullBattle, restorePreBattleActions } from './Bat
 import { generateEncounter } from '../systems/EnemyGenerator';
 import { generateBattleRewards } from '../systems/BattleRewardSystem';
 import { DEFAULT_GAME_CONFIG } from '../types';
+import { getBattlefieldById } from '../data/Battlefields';
 
 // ═══════════════════════════════════════════
 // 런 생성
@@ -39,10 +40,12 @@ export function createRunState(
     throw new Error(`파티는 4명이어야 합니다. 현재: ${party.length}명`);
   }
 
+  const battlefield = getBattlefieldById(battlefieldId);
+
   return {
     battlefieldId,
     currentStage: 1,
-    maxStages: DEFAULT_GAME_CONFIG.runStages,
+    maxStages: battlefield?.runConfig.maxStages ?? DEFAULT_GAME_CONFIG.runStages,
     seed,
     party: party.map((def) => ({ ...def })),
     cardInventory: [],
@@ -94,7 +97,7 @@ export function createStageBattleState(
   });
 
   // 적 생성
-  const enemyEncounter = generateEncounter(runState.currentStage, battleSeed);
+  const enemyEncounter = generateEncounter(runState.currentStage, battleSeed, runState.battlefieldId ?? 'plains');
   const enemyUnits = enemyEncounter.map((eu) => createUnit(eu.definition, Team.ENEMY, eu.position));
 
   return createBattleState(playerUnits, enemyUnits, battleSeed, heroType);

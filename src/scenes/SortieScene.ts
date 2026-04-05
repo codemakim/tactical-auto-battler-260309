@@ -12,6 +12,7 @@ import { gameState } from '../core/GameState';
 import { createRunState } from '../core/RunManager';
 import type { CharacterDefinition } from '../types';
 import { BATTLEFIELDS, type BattlefieldDefinition } from '../data/Battlefields';
+import { createSortieBattlefieldViewModel } from '../systems/SortieBattlefieldPresentation';
 
 // 카드 레이아웃 상수
 const CARD_W = 340;
@@ -74,7 +75,8 @@ export class SortieScene extends Phaser.Scene {
 
   private createCard(bf: BattlefieldDefinition, x: number, y: number): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
-    const locked = !bf.unlocked;
+    const viewModel = createSortieBattlefieldViewModel(bf, gameState.battlefieldProgress);
+    const locked = viewModel.locked;
 
     // 카드 배경
     const bg = this.add.graphics();
@@ -94,7 +96,7 @@ export class SortieScene extends Phaser.Scene {
 
     // 전장 이름
     const nameText = this.add
-      .text(CARD_W / 2, 60, bf.name, {
+      .text(CARD_W / 2, 60, viewModel.name, {
         fontSize: '24px',
         fontFamily: UITheme.font.family,
         color: locked ? '#555566' : '#ffffff',
@@ -104,7 +106,7 @@ export class SortieScene extends Phaser.Scene {
 
     // 테마
     const themeText = this.add
-      .text(CARD_W / 2, 90, bf.theme, {
+      .text(CARD_W / 2, 90, viewModel.theme, {
         ...UITheme.font.label,
         color: locked ? '#444455' : '#8888aa',
       })
@@ -119,7 +121,7 @@ export class SortieScene extends Phaser.Scene {
 
     // 설명
     const descText = this.add
-      .text(24, 130, locked ? '' : bf.description, {
+      .text(24, 130, locked ? '' : viewModel.description, {
         ...UITheme.font.body,
         color: '#bbbbcc',
         wordWrap: { width: CARD_W - 48 },
@@ -133,18 +135,24 @@ export class SortieScene extends Phaser.Scene {
       const enemyLabel = this.add.text(24, 210, '주요 적', { ...UITheme.font.small, color: '#666688' }).setFontSize(12);
       container.add(enemyLabel);
 
-      const enemyText = this.add.text(24, 228, bf.enemyPreview, {
+      const enemyText = this.add.text(24, 228, viewModel.enemyPreview, {
         ...UITheme.font.body,
         color: '#cc9966',
       });
       container.add(enemyText);
 
       // 스테이지 정보
-      const stageText = this.add.text(24, 270, '5 스테이지 런', {
+      const stageText = this.add.text(24, 270, viewModel.maxStagesLabel, {
         ...UITheme.font.label,
         color: '#7788aa',
       });
       container.add(stageText);
+
+      const recordText = this.add.text(24, 302, viewModel.recordText ?? '', {
+        ...UITheme.font.small,
+        color: '#8fa8d8',
+      });
+      container.add(recordText);
     }
 
     // 잠금 표시
@@ -155,13 +163,23 @@ export class SortieScene extends Phaser.Scene {
       container.add(lockIcon);
 
       const lockText = this.add
-        .text(CARD_W / 2, 240, bf.unlockCondition ?? '잠김', {
+        .text(CARD_W / 2, 240, viewModel.unlockText ?? '잠김', {
           ...UITheme.font.body,
           color: '#666677',
           align: 'center',
         })
         .setOrigin(0.5);
       container.add(lockText);
+
+      if (viewModel.recordText) {
+        const recordText = this.add
+          .text(CARD_W / 2, 286, viewModel.recordText, {
+            ...UITheme.font.small,
+            color: '#6677aa',
+          })
+          .setOrigin(0.5);
+        container.add(recordText);
+      }
     }
 
     // 하단 상태 바
@@ -171,7 +189,7 @@ export class SortieScene extends Phaser.Scene {
     container.add(statusBg);
 
     const statusText = this.add
-      .text(CARD_W / 2, CARD_H - 26, locked ? '잠김' : '출격 가능', {
+      .text(CARD_W / 2, CARD_H - 26, viewModel.statusText, {
         ...UITheme.font.body,
         color: locked ? '#555566' : '#44cc44',
       })
@@ -203,7 +221,7 @@ export class SortieScene extends Phaser.Scene {
   }
 
   private drawCardBg(gfx: Phaser.GameObjects.Graphics, bf: BattlefieldDefinition, hovered: boolean): void {
-    const locked = !bf.unlocked;
+    const locked = createSortieBattlefieldViewModel(bf, gameState.battlefieldProgress).locked;
     const selected = this.selectedId === bf.id;
     gfx.clear();
 

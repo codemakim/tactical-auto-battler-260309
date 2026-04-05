@@ -70,6 +70,8 @@ describe('SaveSystem', () => {
     expect(saveData.gold).toBe(777);
     expect(saveData.formation.heroType).toBe(HeroType.MAGE);
     expect(saveData.recruitShopState?.offers).toHaveLength(3);
+    expect(saveData.battlefieldProgress?.plains.unlocked).toBe(true);
+    expect(saveData.battlefieldProgress?.dark_forest.unlocked).toBe(false);
     expect(saveData.runState).toMatchObject({
       battlefieldId: 'plains',
       currentStage: 2,
@@ -141,6 +143,7 @@ describe('SaveSystem', () => {
     expect(restored.formation).toEqual(gameState.formation);
     expect(restored.presets).toEqual(gameState.presets);
     expect(restored.recruitShopState).toEqual(gameState.recruitShopState);
+    expect(restored.battlefieldProgress).toEqual(gameState.battlefieldProgress);
     expect(restored.runState).toEqual(gameState.runState);
     expect(restored.runState?.battlefieldId).toBe('dark_forest');
     expect(restored.battleReplays).toEqual([]);
@@ -182,6 +185,7 @@ describe('SaveSystem', () => {
     expect(restored.formation.heroType).toBe(HeroType.SUPPORT);
     expect(restored.presets.map((p) => p.name)).toContain('roundtrip');
     expect(restored.recruitShopState?.offers).toHaveLength(3);
+    expect(restored.battlefieldProgress.plains.unlocked).toBe(true);
     expect(restored.runState).toMatchObject({
       battlefieldId: 'plains',
       currentStage: 2,
@@ -274,10 +278,13 @@ describe('SaveSystem', () => {
     finalizeRun(runState, gameState);
     expect(gameState.runState).toBeUndefined();
     expect(gameState.gold).toBe(620);
+    expect(gameState.battlefieldProgress.plains.clearedOnce).toBe(true);
+    expect(gameState.battlefieldProgress.dark_forest.unlocked).toBe(true);
 
     expect(gameState.saveToStorage(storage)).toBe(true);
     const saved = loadSaveDataFromStorage(storage);
     expect(saved?.runState).toBeUndefined();
     expect(saved?.gold).toBe(620);
+    expect(saved?.battlefieldProgress?.dark_forest.unlocked).toBe(true);
   });
 });

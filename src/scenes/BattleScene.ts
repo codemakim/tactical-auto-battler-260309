@@ -312,7 +312,7 @@ export class BattleScene extends Phaser.Scene {
 
       const stage = 1;
       const seed = Date.now();
-      const encounter = generateEncounter(stage, seed);
+      const encounter = generateEncounter(stage, seed, 'plains');
       const enemyUnits = encounter.map((e) => createUnit(e.definition, Team.ENEMY, e.position));
 
       this.battleState = createBattleState(playerUnits, enemyUnits, seed, formation.heroType);

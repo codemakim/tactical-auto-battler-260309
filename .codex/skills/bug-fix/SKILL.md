@@ -13,6 +13,7 @@ Use this skill when the starting point is broken behavior, not a feature spec. T
 - What is the expected behavior?
 - What actually happens?
 - When did it start? (recent commit, always broken, after a specific change)
+- Name the smallest user-visible symptom first, not three related symptoms at once.
 
 2. Reproduce before touching code.
 - Write the smallest test or script that demonstrates the failure.
@@ -25,6 +26,7 @@ Use this skill when the starting point is broken behavior, not a feature spec. T
 - Trace from the reproduction to the actual fault.
 - Check the closest spec to confirm which behavior is correct.
 - If the spec is ambiguous or missing, note that explicitly before fixing.
+- If the real issue is larger than the reported bug, fix only the part required to restore the reported behavior.
 
 4. Fix at the root.
 - Prefer the smallest change that corrects the behavior.
@@ -36,6 +38,7 @@ Use this skill when the starting point is broken behavior, not a feature spec. T
 - Run related tests to check for regressions.
 - Run full `npm test` only after related tests pass or when the touched boundary is broad.
 - Run `npm run format` and `npx tsc --noEmit`.
+- Stage only the bug-fix diff before the review gate.
 
 6. Add a regression guard.
 - If step 2 was a script or manual check, convert it into a permanent test.
@@ -52,6 +55,7 @@ Use this skill when the starting point is broken behavior, not a feature spec. T
 - Do not remove or weaken existing tests to make the fix pass.
 - If multiple bugs surface during investigation, fix only the reported one and note the others for follow-up.
 - Review and commit scope should stay inside the bug fix diff. Cleanup outside that scope is follow-up work.
+- If the failing behavior only appears in a dirty worktree, isolate that first before claiming a fix.
 
 ## Output Shape
 
@@ -61,4 +65,5 @@ When closing out, report:
 - fix applied (files changed)
 - regression test added
 - verification commands run
+- staged review scope
 - residual risks if the repro still has any manual-only portion

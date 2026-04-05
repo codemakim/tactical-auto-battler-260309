@@ -303,7 +303,7 @@ function executeStageBattleWithLog(runState: RunState, heroType?: HeroType): Bat
   });
 
   // 적 생성
-  const enemyEncounter = generateEncounter(runState.currentStage, battleSeed);
+  const enemyEncounter = generateEncounter(runState.currentStage, battleSeed, runState.battlefieldId ?? 'plains');
   const enemyUnits = enemyEncounter.map((eu) => createUnit(eu.definition, Team.ENEMY, eu.position));
 
   // 전투 초기화
