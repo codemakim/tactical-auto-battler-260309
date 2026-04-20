@@ -63,9 +63,11 @@ src/
 - `docs/combat-impl-checklist.md` - 구현 상태 체크리스트 (스펙 섹션별 대응)
 
 ## Agent Handoff
-- `AGENTS.md` - 보조 에이전트용 작업 인덱스 (문서 우선순위, 코드 진입점, 테스트 맵, 작업 절차)
+- `AGENTS.md` - 보조 에이전트용 짧은 런북 (항상 읽는 최소 규칙)
 - `WORKFLOW.md` - Claude/Codex 공통 작업 표준 (스펙 우선순위, 작업 이력, 체크리스트/커밋 규칙)
 - `WORKLOG.md` - 최근 작업 이력과 다음 작업 후보 로그
+- `docs/agent/` - 하네스 구조, 코드 색인, 스킬 라우팅 상세 문서
+- `DESIGN.md` - 게임 UI 톤, 카피, 레이아웃, 아이콘 기준
 
 ## Key Commands
 - `npm run dev` - Start dev server

@@ -12,26 +12,28 @@
 
 ## Current Task
 
-- **전투 유닛 표현 2차 정리** — `basic` 단일 이미지 기준 근접 트윈/원거리 투사체 연출 연결
+- **하네스 구조 정리** — 루트 런북 축소, 상세 인덱스 분리, 디자인 기준 추가
 - 담당: Codex
 
 ### 작업 요약
 
-1. `basic` 자산을 idle 기준으로 사용한다
-2. 근접은 짧게 뒤로 당겼다가 튕기듯 전진해 타격한다
-3. 원거리/컨트롤러는 투사체 도착 시점에 피격을 맞춘다
-4. 피격은 시트 교체 대신 짧은 밀림/기울기 반응으로 통일한다
+1. `AGENTS.md`를 항상 읽는 짧은 런북으로 압축한다
+2. 코드/스펙/테스트 색인은 `docs/agent/code-index.md`로 분리한다
+3. 하네스 계층과 자동화 후보는 `docs/agent/` 문서로 관리한다
+4. 게임 UI 기준은 루트 `DESIGN.md`로 분리한다
 
 ### 핵심 원칙
 
-- `basic`은 단일 이미지 자산이다
-- idle은 `basic`, 공격/피격은 트윈/투사체 중심으로 처리한다
-- 근접은 짧은 탄성 전진, 원거리는 투사체 도착 타이밍을 기준으로 한다
+- 루트 문서는 짧게 유지한다
+- 세부 지식은 필요할 때만 여는 문서로 이동한다
+- 같은 실수는 테스트, 스펙, 스킬, 리뷰 게이트로 승격한다
+- 커밋/푸시는 사용자 요청 전에는 하지 않는다
 
 ## Source Specs
 
-- primary: [docs/battle-unit-presentation-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/battle-unit-presentation-spec.md)
-- secondary: [docs/unit-layout-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/unit-layout-spec.md)
+- primary: [docs/agent/harness.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/harness.md)
+- secondary: [AGENTS.md](/Users/jhkim/Project/tactical-auto-battler/AGENTS.md)
+- secondary: [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)
 
 ## Done
 
@@ -61,23 +63,24 @@
 - 병영 상세 패널에 방출 확인 모달을 추가하고, 방출 시 characters / formation / presets를 함께 정리하도록 구현 (Codex)
 - `Recover` / `Rally` 공용 카드에 조건값 변동을 추가하고, 모집 후보는 이름/클래스는 유지하되 세부 롤은 리프레시마다 재생성되도록 수정 (Codex)
 - `basic` 단일 이미지 자산을 편성/전투 기본 표시로 전환하고, 전투는 근접 스프링 전진/원거리 투사체 연출 기준으로 리워크 시작 (Codex)
+- 하네스 구조를 `AGENTS.md` 최소 런북 + `docs/agent/` 상세 문서 + `DESIGN.md` 게임 UI 기준으로 재정렬 (Codex)
 
 ## Next
 
-- 전술 유물/전술 특성 시스템 초안 정리
-- 전투 유닛 표현 3차: 컨트롤러/아처 투사체 시각 차별화, 사망 반응/히트 플래시 보강
+- 다음 기능 작업 전에 `docs/agent/code-index.md`에서 primary spec을 고르고 진행
+- UI 작업이면 `DESIGN.md`와 `ui-polish-guardrail`을 함께 적용
 
 ## Guardrails
 
 - `.claude/`는 현재 작업 범위 밖이다.
 - 스펙 충돌 시 `Source of Truth` 표기가 있는 문서를 우선한다.
 - 체크리스트 갱신 시 작업자와 날짜를 남긴다.
+- 현재 기본값은 검증 후 대기이며, 사용자가 요청하기 전에는 커밋하지 않는다.
 
 ## Verification
 
-- `npm test`
-- `npm run format`
-- `npx tsc --noEmit`
+- 문서/하네스 변경만 포함
+- `git diff --check`
 
 ## Notes
 

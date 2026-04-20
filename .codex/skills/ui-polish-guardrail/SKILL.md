@@ -7,6 +7,8 @@ description: Prevent game UI from drifting into tool-like, admin-like, or debug-
 
 Use this skill on game-facing screens, especially when the UI is functionally correct but feels like a tool, dashboard, or wireframe.
 
+Primary reference: [DESIGN.md](/Users/jhkim/Project/tactical-auto-battler/DESIGN.md)
+
 ## Checks
 
 1. Check copy tone.
@@ -33,6 +35,11 @@ Use this skill on game-facing screens, especially when the UI is functionally co
 - Use labels that sound like the game world or tactical framing.
 - Prefer briefing, squad, lineup, tactics, command, or similar framing when it suits the project.
 - Keep debug or spreadsheet energy out of the main play screens.
+
+6. Check shared visual language.
+- Reuse the color meanings, copy rules, icon rules, and overlay behavior from `DESIGN.md`.
+- Do not invent a new card/tag grammar for one screen if a shared grammar already exists.
+- If a screen needs a new visual rule, add it to `DESIGN.md` only when it will be reused.
 
 ## Heuristics
 

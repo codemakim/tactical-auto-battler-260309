@@ -15,7 +15,7 @@
 7. 리뷰 반영 및 필요 시 리팩터링
 8. `prettier` / `tsc` 확인
 9. 관련 문서와 체크리스트 반영
-10. 커밋 / 푸시
+10. 사용자가 요청하면 커밋 / 푸시
 
 ## 2. Spec Priority
 
@@ -79,6 +79,8 @@
 - 기능 코드와 직접 관련된 문서 갱신은 가능하면 같은 작업 단위로 묶는다.
 - 운영 문서(`AGENTS.md`, `WORKFLOW.md`, 루트 인덱스)는 별도 커밋으로 분리해도 된다.
 - 사용자가 만든 미관련 변경은 포함하지 않는다.
+- 현재 기본값은 `검증 후 대기`다. 사용자가 커밋을 요청하기 전에는 커밋하지 않는다.
+- 푸시는 커밋과 별도 지시가 있을 때만 한다.
 
 ## 6. Review Gate
 
@@ -114,9 +116,14 @@
 ## 7. Current Mapping
 
 - 프로젝트 개요: [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md)
-- 작업 인덱스: [AGENTS.md](/Users/jhkim/Project/tactical-auto-battler/AGENTS.md)
+- 짧은 작업 런북: [AGENTS.md](/Users/jhkim/Project/tactical-auto-battler/AGENTS.md)
 - 작업 표준: [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)
 - 작업 이력: [WORKLOG.md](/Users/jhkim/Project/tactical-auto-battler/WORKLOG.md)
+- 하네스 구조: [docs/agent/harness.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/harness.md)
+- 코드/스펙/테스트 색인: [docs/agent/code-index.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/code-index.md)
+- 스킬 라우팅: [docs/agent/skill-routing.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/skill-routing.md)
+- 자동화 후보: [docs/agent/automation-roadmap.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/automation-roadmap.md)
+- 게임 UI 기준: [DESIGN.md](/Users/jhkim/Project/tactical-auto-battler/DESIGN.md)
 - 프로젝트 전용 스킬: [.codex/skills](/Users/jhkim/Project/tactical-auto-battler/.codex/skills)
 
 ## 8. Project Skills

@@ -33,6 +33,7 @@ Use this skill at the end of a task. The goal is to leave no invisible state beh
 - Ensure the staged change set matches the task.
 - Avoid bundling unrelated cleanup.
 - Keep the summary aligned with the actual scope.
+- Do not commit or push unless the user asks.
 
 ## Guardrails
 
@@ -47,4 +48,4 @@ When reporting completion, include:
 - implementation outcome
 - verification commands
 - docs updated
-- commit status
+- commit readiness or commit status

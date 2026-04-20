@@ -38,12 +38,13 @@ Use this skill for this repository's disciplined spec-first workflow. Keep the l
 6. Update docs before closeout.
 - Update the source spec if behavior changed.
 - Update `docs/combat-impl-checklist.md` or the relevant checklist.
-- Update `HANDOFF.md` with the latest completion and next-step note.
+- Update `WORKLOG.md` with the latest completion and next-step note.
 - If the implementation removed or deferred behavior, say so plainly in the source doc.
 
-7. Commit intentionally.
+7. Prepare the commit boundary.
 - Keep the commit scope aligned with the feature or fix.
-- Do not push unless the user asks or the standing workflow says to.
+- Do not commit until the user asks.
+- Do not push unless the user explicitly asks.
 - Summarize outcome, verification, and remaining risk.
 
 ## Guardrails
@@ -59,4 +60,4 @@ When closing out a task, report:
 - what changed
 - what was verified
 - what doc/checklist/handoff files changed
-- whether you committed or only prepared the changes
+- whether changes are prepared, committed, or pushed
