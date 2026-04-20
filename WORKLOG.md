@@ -21,6 +21,7 @@
 2. 코드/스펙/테스트 색인은 `docs/agent/code-index.md`로 분리한다
 3. 하네스 계층과 자동화 후보는 `docs/agent/` 문서로 관리한다
 4. 게임 UI 기준은 루트 `DESIGN.md`로 분리한다
+5. `npm run agent:context` 부트스트랩 명령으로 작업 시작 컨텍스트를 터미널에 올린다
 
 ### 핵심 원칙
 
@@ -80,6 +81,7 @@
 ## Verification
 
 - 문서/하네스 변경만 포함
+- `npm run agent:context`
 - `git diff --check`
 
 ## Notes

@@ -5,6 +5,7 @@
 
 ## Current Manual Gates
 
+- 작업 시작: `npm run agent:context`
 - `npm run format`
 - `npm test`
 - `npx tsc --noEmit`

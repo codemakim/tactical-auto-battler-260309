@@ -9,6 +9,7 @@
    - `AGENTS.md`
    - 항상 읽는 최소 규칙만 둔다.
    - 길어지면 이 문서나 기능 스펙으로 내린다.
+   - 실제 작업 시작 시 `npm run agent:context`로 현재 런북 일부를 터미널 컨텍스트에 올린다.
 
 2. **Project overview**
    - `CLAUDE.md`
@@ -47,6 +48,7 @@
 
 - 루트 문서는 100~200줄 안쪽을 목표로 한다.
 - 루트 문서에는 “무엇을 읽을지”와 “절대 어기면 안 되는 규칙”만 둔다.
+- non-trivial work의 첫 명령은 `npm run agent:context`다.
 - 세부 색인은 [code-index.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/code-index.md)로 이동한다.
 - 스킬 사용 기준은 [skill-routing.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/skill-routing.md)로 이동한다.
 - 기능별 상세 판단은 각 source spec에서 한다.

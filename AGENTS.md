@@ -11,6 +11,12 @@
 
 ## Always Read
 
+First command for non-trivial work:
+
+```bash
+npm run agent:context
+```
+
 1. [CLAUDE.md](/Users/jhkim/Project/tactical-auto-battler/CLAUDE.md) — 프로젝트 개요와 명령어
 2. [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md) — 작업 순서와 리뷰 게이트
 3. [WORKLOG.md](/Users/jhkim/Project/tactical-auto-battler/WORKLOG.md) — 최근 작업과 다음 후보
@@ -50,6 +56,7 @@
 ## Commands
 
 - 개발 서버: `npm run dev`
+- 에이전트 부트스트랩: `npm run agent:context`
 - 전체 테스트: `npm test`
 - 포맷: `npm run format`
 - 타입 체크: `npx tsc --noEmit`

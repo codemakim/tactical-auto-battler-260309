@@ -73,6 +73,7 @@ src/
 - `npm run dev` - Start dev server
 - `npm run build` - Production build
 - `npm run preview` - Preview production build
+- `npm run agent:context` - 에이전트 작업 시작용 부트스트랩 컨텍스트 출력
 - `npm test` - Run tests (vitest)
 - `npm run test:watch` - Watch mode
 - `npx tsx src/sim.ts` - 전투 시뮬레이션 실행 (콘솔 로그 출력)
