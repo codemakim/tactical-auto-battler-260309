@@ -12,22 +12,21 @@
 
 ## Current Task
 
-- **전술 유물 시스템 MVP 구현** — Stage 2/4 런 한정 패시브 보상 추가
+- **런 시뮬레이션 전술 유물 반영** — 밸런스 테스트 스크립트를 실제 보상/전투 흐름과 동기화
 - 담당: Codex
 
 ### 작업 요약
 
-1. `RunState.artifactIds`와 전술 유물 정의/순수 시스템을 추가했다
-2. Stage 1/3은 카드, Stage 2/4는 전술 유물, Stage 5는 추가 보상 없음으로 분기했다
-3. `frontline_plates`, `opening_drill`, `backline_focus`, `spoils_map` 효과를 각각 전투 시작/데미지/골드 계산에 연결했다
-4. RewardScene 유물 선택 UI와 RunMap 보유 유물 요약 패널을 추가했다
-5. 저장/로드와 런 종료 제거 규칙을 테스트로 고정했다
+1. `sim-run.ts`가 `createStageBattleState()`를 사용하도록 바꿔 전술 유물 전투 시작 효과를 반영한다
+2. 보상 처리를 `calculateRewardPhase()` / `applyRewardSelections()`로 연결해 Stage 2/4 유물 선택을 시뮬레이션에 반영한다
+3. 다중 시드 통계에 평균 카드/유물 획득 수를 추가한다
+4. 단일 verbose 런에서 유물 옵션/선택/보유 로그를 출력한다
 
 ### 핵심 원칙
 
-- 전술 유물은 영구 보상이 아니라 런 한정 패시브다
-- 액션 카드는 행동 슬롯, 유물은 런 전체 규칙/수치 보정으로 역할을 분리한다
-- 런 결과 화면에서 유물을 영구 보상처럼 표시하지 않는다
+- 밸런스 테스트 스크립트는 게임 런 루프와 같은 순수 시스템을 재사용한다
+- 전투 생성/보상 처리를 시뮬레이터 내부에서 복제하지 않는다
+- UI polish보다 플레이 루프 검증 가능성을 우선한다
 
 ## Source Specs
 
@@ -67,6 +66,7 @@
 - 전술 유물 시스템 MVP 스펙 초안 작성, Stage 2/4 유물 선택과 런 종료 제거 규칙 정의 (Codex)
 - 전술 유물 시스템 MVP 구현: 정의 레지스트리, 보상 분기, 저장/로드, 전투 효과, RewardScene/RunMap 최소 UI 완료 (Codex, 2026-04-21)
 - `senior-reviewer` 서브에이전트/스킬과 독립 리뷰 게이트를 제거하고, 마감 기준을 로컬 검증 게이트로 단순화 (Codex, 2026-04-21)
+- `sim-run.ts`를 실제 런 보상/전투 생성 흐름에 맞춰 전술 유물 선택과 효과가 밸런스 통계에 반영되도록 수정 (Codex, 2026-04-21)
 
 ## Next
 
@@ -83,7 +83,8 @@
 ## Verification
 
 - `npm run agent:context`
-- `npm test -- tactical-artifact-system`
+- `SIM_SEED=42 SIM_SEEDS=5 npx tsx src/sim-run.ts`
+- `SIM_SEED=42 SIM_HERO=SUPPORT npx tsx src/sim-run.ts`
 - `npm run format`
 - `npm test`
 - `npx tsc --noEmit`

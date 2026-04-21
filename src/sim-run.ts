@@ -9,23 +9,22 @@
 
 declare const process: { env: Record<string, string | undefined> };
 
-import { createCharacterDef, createUnit, resetUnitCounter } from './entities/UnitFactory';
-import { createBattleState, stepBattle, restorePreBattleActions, queueIntervention } from './core/BattleEngine';
-import { CharacterClass, RunStatus, Team, Position, HeroType as HeroTypeEnum, BattlePhase } from './types';
+import { createCharacterDef, resetUnitCounter } from './entities/UnitFactory';
+import { stepBattle, restorePreBattleActions, queueIntervention } from './core/BattleEngine';
+import { CharacterClass, RunStatus, Team, Position, HeroType as HeroTypeEnum, BattlePhase, RewardKind } from './types';
 import type { RunState, CardInstance, BattleState, BattleEvent, BattleUnit, HeroType } from './types';
 import { formatEffects } from './utils/actionText';
 import { heroDecide } from './systems/HeroAI';
 import {
   createRunState,
-  processVictory,
   processDefeat,
-  selectCardReward,
   equipCard,
-  advanceStage,
   getEquippableCards,
+  createStageBattleState,
 } from './core/RunManager';
-import { generateEncounter } from './systems/EnemyGenerator';
+import { calculateRewardPhase, applyRewardSelections } from './systems/RewardCalculator';
 import { resetCardInstanceCounter } from './systems/BattleRewardSystem';
+import { getTacticalArtifactById } from './data/TacticalArtifacts';
 
 // ═══════════════════════════════════════════
 // 설정
@@ -93,6 +92,16 @@ function logInventory(run: RunState) {
   run.cardInventory.forEach((card) => {
     const cls = card.classRestriction ? `[${card.classRestriction}]` : '[공용]';
     log(`    ${cls} ${card.action.name} (${card.rarity})`);
+  });
+}
+
+function logArtifacts(run: RunState) {
+  if (run.artifactIds.length === 0) return;
+  log(`  전술 유물 (${run.artifactIds.length}개):`);
+  run.artifactIds.forEach((artifactId) => {
+    const artifact = getTacticalArtifactById(artifactId);
+    if (!artifact) return;
+    log(`    ${artifact.name} — ${artifact.description}`);
   });
 }
 
@@ -292,22 +301,7 @@ interface BattleOutcome {
  * 전투를 step-by-step으로 실행하면서 이벤트 로그 출력
  */
 function executeStageBattleWithLog(runState: RunState, heroType?: HeroType): BattleOutcome {
-  resetUnitCounter();
-
-  const battleSeed = runState.seed + runState.currentStage * 1000;
-
-  // 파티 → BattleUnit (4명 전원 출전)
-  const playerUnits = runState.party.map((def, i) => {
-    const unit = createUnit(def, Team.PLAYER, i < 2 ? Position.FRONT : Position.BACK);
-    return applyEquippedCards(unit, def.id, runState);
-  });
-
-  // 적 생성
-  const enemyEncounter = generateEncounter(runState.currentStage, battleSeed, runState.battlefieldId ?? 'plains');
-  const enemyUnits = enemyEncounter.map((eu) => createUnit(eu.definition, Team.ENEMY, eu.position));
-
-  // 전투 초기화
-  let current = createBattleState(playerUnits, enemyUnits, battleSeed, heroType);
+  let current = createStageBattleState(runState, heroType);
   const allInitialUnits = [...current.units].map((u) => ({ ...u }));
 
   // 적 정보 출력
@@ -368,22 +362,6 @@ function executeStageBattleWithLog(runState: RunState, heroType?: HeroType): Bat
   };
 }
 
-/** 장착된 카드를 BattleUnit에 반영 */
-function applyEquippedCards(unit: BattleUnit, defId: string, runState: RunState): BattleUnit {
-  const equipped = runState.equippedCards[defId];
-  if (!equipped) return unit;
-
-  const newSlots = unit.actionSlots.map((slot, i) => {
-    const cardId = equipped[i];
-    if (!cardId) return slot;
-    const card = runState.cardInventory.find((c) => c.instanceId === cardId);
-    if (!card) return slot;
-    return { condition: slot.condition, action: card.action };
-  });
-
-  return { ...unit, actionSlots: newSlots };
-}
-
 // ═══════════════════════════════════════════
 // 자동 카드 장착 AI
 // ═══════════════════════════════════════════
@@ -413,6 +391,7 @@ interface RunResult {
   maxStageReached: number;
   gold: number;
   cards: number;
+  artifacts: number;
 }
 
 function executeRun(runSeed: number, hero?: HeroType): RunResult {
@@ -425,6 +404,8 @@ function executeRun(runSeed: number, hero?: HeroType): RunResult {
 
   const party = PARTY_CLASSES.map((cls, i) => createCharacterDef(`${cls}_${i}`, cls));
   let run = createRunState(party, runSeed);
+  let cardsTaken = 0;
+  let artifactsTaken = 0;
   if (verbose) logParty(run);
 
   while (run.status === RunStatus.IN_PROGRESS && run.currentStage <= run.maxStages) {
@@ -449,29 +430,44 @@ function executeRun(runSeed: number, hero?: HeroType): RunResult {
 
     if (victory) {
       if (verbose) logSection('보상');
-      const { runState, reward } = processVictory(run, battleState);
-      run = runState;
+      const { rewardData, updatedRunState } = calculateRewardPhase(run, battleState);
+      run = updatedRunState;
 
       if (verbose) {
-        log(`  골드: +${reward.gold} (총 ${run.gold})`);
+        log(`  골드: +${rewardData.goldEarned} (총 ${run.gold})`);
 
-        if (reward.cardOptions.length > 0) {
-          log(`  카드 옵션 (${reward.cardOptions.length}개):`);
-          logCardOptions(reward.cardOptions);
+        if (rewardData.rewardKind === RewardKind.CARD && rewardData.cardOptions.length > 0) {
+          log(`  카드 옵션 (${rewardData.cardOptions.length}개):`);
+          logCardOptions(rewardData.cardOptions);
+        }
+
+        if (rewardData.rewardKind === RewardKind.ARTIFACT && rewardData.artifactOptions.length > 0) {
+          log(`  전술 유물 옵션 (${rewardData.artifactOptions.length}개):`);
+          rewardData.artifactOptions.forEach((artifact, i) => {
+            log(`    ${i + 1}. ${artifact.name} (${artifact.rarity}) — ${artifact.description}`);
+          });
         }
       }
 
-      if (reward.cardOptions.length > 0) {
-        const selected = reward.cardOptions[0];
-        run = selectCardReward(run, selected);
+      if (rewardData.rewardKind === RewardKind.CARD && rewardData.cardOptions.length > 0) {
+        const selected = rewardData.cardOptions[0];
+        run = applyRewardSelections(run, selected);
+        cardsTaken++;
         if (verbose) {
           const cls = selected.classRestriction ? `[${selected.classRestriction}]` : '[공용]';
           log(`  → 선택: ${cls} ${selected.action.name}`);
         }
+      } else if (rewardData.rewardKind === RewardKind.ARTIFACT && rewardData.artifactOptions.length > 0) {
+        const selected = rewardData.artifactOptions[0];
+        run = applyRewardSelections(run, null, selected.id);
+        artifactsTaken++;
+        if (verbose) log(`  → 선택: ${selected.name}`);
+      } else {
+        run = applyRewardSelections(run, null);
       }
 
       if (verbose) logInventory(run);
-      run = advanceStage(run);
+      if (verbose) logArtifacts(run);
     } else {
       run = processDefeat(run);
 
@@ -488,17 +484,23 @@ function executeRun(runSeed: number, hero?: HeroType): RunResult {
         if (verbose) logSection(`재도전 결과: ${retry.victory ? '승리' : '패배'}`);
 
         if (retry.victory) {
-          const { runState, reward } = processVictory(run, retry.battleState);
-          run = runState;
+          const { rewardData, updatedRunState } = calculateRewardPhase(run, retry.battleState);
+          run = updatedRunState;
 
-          if (verbose) log(`  골드: +${reward.gold} (총 ${run.gold})`);
-          if (reward.cardOptions.length > 0) {
-            const selected = reward.cardOptions[0];
-            run = selectCardReward(run, selected);
+          if (verbose) log(`  골드: +${rewardData.goldEarned} (총 ${run.gold})`);
+          if (rewardData.rewardKind === RewardKind.CARD && rewardData.cardOptions.length > 0) {
+            const selected = rewardData.cardOptions[0];
+            run = applyRewardSelections(run, selected);
+            cardsTaken++;
             if (verbose) log(`  → 선택: ${selected.action.name}`);
+          } else if (rewardData.rewardKind === RewardKind.ARTIFACT && rewardData.artifactOptions.length > 0) {
+            const selected = rewardData.artifactOptions[0];
+            run = applyRewardSelections(run, null, selected.id);
+            artifactsTaken++;
+            if (verbose) log(`  → 선택: ${selected.name}`);
+          } else {
+            run = applyRewardSelections(run, null);
           }
-
-          run = advanceStage(run);
         } else {
           run = processDefeat(run);
         }
@@ -515,7 +517,8 @@ function executeRun(runSeed: number, hero?: HeroType): RunResult {
     log(`  상태: ${run.status}`);
     log(`  도달 스테이지: ${run.currentStage}`);
     log(`  총 골드: ${run.gold}`);
-    log(`  보유 카드: ${run.cardInventory.length}장`);
+    log(`  이번 런 획득 카드: ${cardsTaken}장`);
+    log(`  이번 런 획득 전술 유물: ${artifactsTaken}개`);
     log('');
   }
 
@@ -523,7 +526,8 @@ function executeRun(runSeed: number, hero?: HeroType): RunResult {
     status: run.status,
     maxStageReached: run.currentStage,
     gold: run.gold,
-    cards: run.cardInventory.length,
+    cards: cardsTaken,
+    artifacts: artifactsTaken,
   };
 }
 
@@ -538,11 +542,14 @@ function main() {
       ? [undefined, heroType]
       : [undefined, HeroTypeEnum.COMMANDER, HeroTypeEnum.MAGE, HeroTypeEnum.SUPPORT];
 
-    const stats: Record<string, { wins: number; totalStages: number; totalGold: number }> = {};
+    const stats: Record<
+      string,
+      { wins: number; totalStages: number; totalGold: number; totalCards: number; totalArtifacts: number }
+    > = {};
 
     for (const ht of heroTypes) {
       const label = ht ?? 'NONE';
-      stats[label] = { wins: 0, totalStages: 0, totalGold: 0 };
+      stats[label] = { wins: 0, totalStages: 0, totalGold: 0, totalCards: 0, totalArtifacts: 0 };
 
       for (let i = 0; i < multiSeeds; i++) {
         const s = seed + i;
@@ -550,21 +557,25 @@ function main() {
         if (result.status === RunStatus.VICTORY) stats[label].wins++;
         stats[label].totalStages += result.maxStageReached;
         stats[label].totalGold += result.gold;
+        stats[label].totalCards += result.cards;
+        stats[label].totalArtifacts += result.artifacts;
       }
     }
 
     // ── 통계 출력 ──
     logHeader(`밸런스 통계 (${multiSeeds}시드, 시작 Seed: ${seed})`);
     log('');
-    log('  Hero         | 승률       | 평균 도달 스테이지 | 평균 골드');
-    log('  ' + '─'.repeat(65));
+    log('  Hero         | 승률       | 평균 도달 스테이지 | 평균 골드 | 카드 | 유물');
+    log('  ' + '─'.repeat(84));
 
     for (const [label, s] of Object.entries(stats)) {
       const winRate = ((s.wins / multiSeeds) * 100).toFixed(1);
       const avgStage = (s.totalStages / multiSeeds).toFixed(1);
       const avgGold = (s.totalGold / multiSeeds).toFixed(0);
+      const avgCards = (s.totalCards / multiSeeds).toFixed(1);
+      const avgArtifacts = (s.totalArtifacts / multiSeeds).toFixed(1);
       log(
-        `  ${label.padEnd(13)} | ${`${s.wins}/${multiSeeds}`.padEnd(4)} (${winRate.padStart(5)}%) | ${avgStage.padStart(18)} | ${avgGold.padStart(9)}`,
+        `  ${label.padEnd(13)} | ${`${s.wins}/${multiSeeds}`.padEnd(4)} (${winRate.padStart(5)}%) | ${avgStage.padStart(18)} | ${avgGold.padStart(9)} | ${avgCards.padStart(4)} | ${avgArtifacts.padStart(4)}`,
       );
     }
     log('');
