@@ -146,8 +146,10 @@ After a victory:
 
 ```
 1. Gold reward (existing calculateGoldReward)
-2. Card reward: 5 cards presented, pick 1 → added to cardInventory
-3. Guest member chance (stages 2~4 only)
+2. Reward choice by cleared stage:
+   - Stage 1/3: Card reward, 5 cards presented, pick 1 → added to cardInventory
+   - Stage 2/4: Tactical artifact reward, 3 artifacts presented, pick 1 → added to artifactIds
+   - Stage 5: no card/artifact reward; proceed to run result
 ```
 
 ## 5.3 Retry on Defeat
@@ -175,10 +177,11 @@ Note: retry returns to FORMATION PHASE, not directly to battle. The player can a
 Calculated by existing `calculateGoldReward()`.
 
 Gold accumulates across the run and is kept after run completion (win or lose).
+`spoils_map` 같은 전술 유물은 전투 승리 골드 계산 후 multiplier를 적용한다.
 
 ## 6.2 Card Reward
 
-5 cards are presented. The player picks 1.
+Stage 1/3에서 5 cards are presented. The player picks 1.
 
 Card generation pool:
 
@@ -198,16 +201,18 @@ The card display must clearly show:
 
 Seed-based deterministic generation.
 
-## 6.3 Guest Member
+## 6.3 Tactical Artifact Reward
 
-After certain stages (2~4), a guest character may appear:
+Stage 2/4에서 3개의 전술 유물 선택지를 제시한다.
 
 ```
-- Probability-based (existing generateCharacterReward logic)
-- Guest joins the bench (not auto-deployed)
-- Guest is temporary: leaves when the run ends
-- Guest can be moved to party via formation screen
+- Already-owned artifacts are excluded
+- Picked artifact id is stored in RunState.artifactIds
+- Artifacts are run-limited and removed when the run ends
+- Skip is allowed
 ```
+
+Guest member reward is removed from the active MVP reward loop.
 
 Guests use the same `CharacterDefinition` structure but are tagged as temporary.
 
@@ -327,12 +332,16 @@ Included:
 - Gold accumulation
 
 NOT included in MVP:
-- Relics / artifacts
+- Permanent relic collections or artifact upgrades
 - Hero ability upgrades during run
 - In-run shops or gold spending
 - Multiple run paths or branching
 - Difficulty selection per run (uses fixed scaling)
 - Action card upgrades or fusion
+
+Next candidate:
+- Run-limited tactical artifacts are specified separately in `docs/tactical-artifact-spec.md`.
+  They are not permanent relic collections and disappear at run end.
 
 ---
 

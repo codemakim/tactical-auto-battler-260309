@@ -24,6 +24,15 @@ describe('데미지 시스템', () => {
     expect(dmg).toBe(4);
   });
 
+  it('런 유물 damageMultiplier가 최종 DAMAGE 배율에 적용된다', () => {
+    const attacker = createUnit(createCharacterDef('Attacker', CharacterClass.WARRIOR), Team.PLAYER, Position.BACK);
+    const defender = createUnit(createCharacterDef('Defender', CharacterClass.GUARDIAN), Team.ENEMY, Position.FRONT);
+
+    const dmg = calculateDamage({ ...attacker, damageMultiplier: 1.1 }, defender, 1.0);
+
+    expect(dmg).toBe(13);
+  });
+
   it('데미지 적용 시 HP가 감소한다', () => {
     const unit = createUnit(createCharacterDef('Target', CharacterClass.WARRIOR), Team.ENEMY, Position.FRONT);
     const initialHp = unit.stats.hp; // 53

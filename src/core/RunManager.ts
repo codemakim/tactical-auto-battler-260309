@@ -22,6 +22,7 @@ import { generateEncounter } from '../systems/EnemyGenerator';
 import { generateBattleRewards } from '../systems/BattleRewardSystem';
 import { DEFAULT_GAME_CONFIG } from '../types';
 import { getBattlefieldById } from '../data/Battlefields';
+import { applyGoldArtifactMultiplier, applyStartingArtifactEffects } from '../systems/TacticalArtifactSystem';
 
 // ═══════════════════════════════════════════
 // 런 생성
@@ -50,6 +51,7 @@ export function createRunState(
     party: party.map((def) => ({ ...def })),
     cardInventory: [],
     equippedCards: {},
+    artifactIds: [],
     gold: 0,
     retryAvailable: true,
     status: RunStatus.IN_PROGRESS,
@@ -95,12 +97,13 @@ export function createStageBattleState(
     const unit = createUnit(def, Team.PLAYER, pos);
     return applyEquippedCards(unit, def.id, runState);
   });
+  const artifactPlayerUnits = applyStartingArtifactEffects(playerUnits, runState.artifactIds);
 
   // 적 생성
   const enemyEncounter = generateEncounter(runState.currentStage, battleSeed, runState.battlefieldId ?? 'plains');
   const enemyUnits = enemyEncounter.map((eu) => createUnit(eu.definition, Team.ENEMY, eu.position));
 
-  return createBattleState(playerUnits, enemyUnits, battleSeed, heroType);
+  return createBattleState(artifactPlayerUnits, enemyUnits, battleSeed, heroType);
 }
 
 /**
@@ -164,7 +167,11 @@ export function processVictory(runState: RunState, battleState: BattleState): Re
   const partyClasses = runState.party.map((def) => def.characterClass);
 
   // 보상 생성
-  const reward = generateBattleRewards(battleState, partyClasses, rewardSeed);
+  const generatedReward = generateBattleRewards(battleState, partyClasses, rewardSeed);
+  const reward: BattleReward = {
+    ...generatedReward,
+    gold: applyGoldArtifactMultiplier(generatedReward.gold, runState.artifactIds),
+  };
 
   // 골드 적용
   const newRunState: RunState = { ...runState, gold: runState.gold + reward.gold };
@@ -306,6 +313,7 @@ export function endRun(runState: RunState): RunState {
     })),
     cardInventory: [],
     equippedCards: {},
+    artifactIds: [],
     // gold는 유지 (런 밖 성장 자원)
   };
 }

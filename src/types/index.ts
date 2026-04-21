@@ -190,6 +190,36 @@ export const Rarity = {
 } as const;
 export type Rarity = (typeof Rarity)[keyof typeof Rarity];
 
+export const TacticalArtifactId = {
+  FRONTLINE_PLATES: 'frontline_plates',
+  OPENING_DRILL: 'opening_drill',
+  BACKLINE_FOCUS: 'backline_focus',
+  SPOILS_MAP: 'spoils_map',
+} as const;
+export type TacticalArtifactId = (typeof TacticalArtifactId)[keyof typeof TacticalArtifactId];
+
+export const TacticalArtifactEffectType = {
+  STARTING_SHIELD_BY_POSITION: 'STARTING_SHIELD_BY_POSITION',
+  ROUND_ONE_ATK_BUFF: 'ROUND_ONE_ATK_BUFF',
+  DAMAGE_MULTIPLIER_BY_POSITION: 'DAMAGE_MULTIPLIER_BY_POSITION',
+  GOLD_REWARD_MULTIPLIER: 'GOLD_REWARD_MULTIPLIER',
+} as const;
+export type TacticalArtifactEffectType = (typeof TacticalArtifactEffectType)[keyof typeof TacticalArtifactEffectType];
+
+export type TacticalArtifactEffect =
+  | { type: 'STARTING_SHIELD_BY_POSITION'; position: Position; amount: number }
+  | { type: 'ROUND_ONE_ATK_BUFF'; value: number; duration: number }
+  | { type: 'DAMAGE_MULTIPLIER_BY_POSITION'; position: Position; multiplier: number }
+  | { type: 'GOLD_REWARD_MULTIPLIER'; multiplier: number };
+
+export interface TacticalArtifactDefinition {
+  id: TacticalArtifactId;
+  name: string;
+  description: string;
+  rarity: Rarity;
+  effect: TacticalArtifactEffect;
+}
+
 export interface Action {
   id: string;
   name: string;
@@ -292,6 +322,8 @@ export interface BattleUnit {
   position: Position;
   stats: Stats;
   shield: number;
+  /** 런 한정 패시브 등으로 적용되는 최종 DAMAGE 배율 */
+  damageMultiplier?: number;
   buffs: Buff[];
   /** 현재 액션 슬롯 (런 중 교체 가능) */
   actionSlots: ActionSlot[];
@@ -516,6 +548,8 @@ export interface RunState {
   cardInventory: CardInstance[];
   /** 카드 장착 매핑: characterDefId → slotIndex → CardInstance.instanceId */
   equippedCards: Record<string, Record<number, string>>;
+  /** 런 중 획득한 전술 유물. 런 종료 시 제거된다. */
+  artifactIds: TacticalArtifactId[];
 
   gold: number;
   retryAvailable: boolean; // 현재 스테이지 재도전 가능 여부
@@ -558,10 +592,19 @@ export interface BattleResultData {
 
 // === Reward Phase (보상 화면 데이터) ===
 
+export const RewardKind = {
+  CARD: 'CARD',
+  ARTIFACT: 'ARTIFACT',
+  NONE: 'NONE',
+} as const;
+export type RewardKind = (typeof RewardKind)[keyof typeof RewardKind];
+
 /** 보상 화면 표시용 데이터 (순수 함수 출력) */
 export interface RewardPhaseData {
+  rewardKind: RewardKind;
   goldEarned: number;
   cardOptions: CardInstance[];
+  artifactOptions: TacticalArtifactDefinition[];
   currentStage: number;
   maxStages: number;
   isLastStage: boolean;

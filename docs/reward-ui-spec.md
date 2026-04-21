@@ -12,7 +12,10 @@
 
 ```
 1. 골드 확정 표시
-2. 카드 선택 (5장 → 1장 또는 건너뛰기)
+2. 보상 선택
+   - Stage 1/3: 카드 선택 (5장 → 1장 또는 건너뛰기)
+   - Stage 2/4: 전술 유물 선택 (3개 → 1개 또는 건너뛰기)
+   - Stage 5: 추가 카드/유물 없이 런 결과로 진행
 → "다음 스테이지" 또는 "런 완료" 버튼
 ```
 
@@ -24,8 +27,10 @@
 
 ```typescript
 interface RewardPhaseData {
+  rewardKind: 'CARD' | 'ARTIFACT' | 'NONE';
   goldEarned: number;
   cardOptions: CardInstance[];     // 5장 (빈 배열 가능)
+  artifactOptions: TacticalArtifactDefinition[];
   currentStage: number;
   maxStages: number;
   isLastStage: boolean;            // currentStage >= maxStages
@@ -41,21 +46,23 @@ interface RewardPhaseData {
 로직:
 1. processVictory(runState, battleState) 호출 → RewardResult
 2. goldEarned = reward.gold
-3. cardOptions = reward.cardOptions
-4. currentStage / maxStages = runState 값
-5. isLastStage = runState.currentStage >= runState.maxStages
+3. rewardKind = Stage 1/3 CARD, Stage 2/4 ARTIFACT, 마지막 Stage NONE
+4. CARD면 cardOptions, ARTIFACT면 artifactOptions만 채운다
+5. currentStage / maxStages = runState 값
+6. isLastStage = runState.currentStage >= runState.maxStages
 ```
 
 ### §2.3 applyRewardSelections() 순수 함수
 
 ```
-입력: runState: RunState, selectedCard: CardInstance | null
+입력: runState: RunState, selectedCard: CardInstance | null, selectedArtifactId?: TacticalArtifactId | null
 출력: RunState
 
 로직:
 1. selectedCard가 있으면 selectCardReward(runState, selectedCard)
-2. isLastStage면 advanceStage() (→ RunStatus.VICTORY + endRun)
-3. 아니면 advanceStage() (→ 다음 스테이지)
+2. selectedArtifactId가 있으면 artifactIds에 중복 없이 추가
+3. isLastStage면 advanceStage() (→ RunStatus.VICTORY + endRun)
+4. 아니면 advanceStage() (→ 다음 스테이지)
 ```
 
 ---
@@ -83,6 +90,13 @@ interface RewardPhaseData {
 - 카드 클릭 → 선택 상태 (하이라이트)
 - 선택된 카드가 있을 때 `SECURE <카드명>` 버튼 활성화
 - `PASS` 버튼으로 카드 미선택 허용
+
+### §3.2.1 전술 유물 선택 영역 (Stage 2/4)
+- 카드 대신 3개의 전술 유물 선택지를 보여준다
+- 이미 보유한 유물은 선택지에서 제외한다
+- 표시 정보는 이름, 희귀도, 짧은 효과 설명으로 제한한다
+- 선택 시 `SECURE ARTIFACT`, 건너뛰기 시 `PASS`
+- 전술 유물은 런 한정 보상이며 RunResultScene에서 영구 보상처럼 표시하지 않는다
 
 ### §3.3 하단 버튼
 - 카드 아래 동일 중심축으로 정렬
@@ -114,9 +128,10 @@ interface RewardPhaseData {
 4. `RewardScene` (scenes/RewardScene.ts) — 카드 선택 + 전이
 5. BattleScene "보상 확인" 버튼 → RewardScene 전이 연결
 
-### 이번 작업에서 제외:
+### 제외:
 - 카드 애니메이션/연출
-- RunResultScene (별도 스펙)
+- RunResultScene 리디자인
+- 유물 상세 팝업
 
 ---
 

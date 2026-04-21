@@ -18,7 +18,8 @@ import { getRewardProceedTarget } from '../systems/RewardFlow';
 import { drawRoundedFrame } from '../ui/FormationGraphics';
 import { getRewardActionLabels, getRewardEmptyStateCopy, getRewardHeaderCopy } from '../systems/RewardPresentation';
 import { getRewardCardSlots, getRewardFooterLayout } from '../systems/RewardSceneLayout';
-import type { RunState, BattleState, RewardPhaseData } from '../types';
+import { RewardKind } from '../types';
+import type { RunState, BattleState, RewardPhaseData, TacticalArtifactDefinition } from '../types';
 
 // 카드 표시 상수
 const CARD_W = 168;
@@ -36,11 +37,13 @@ export class RewardScene extends Phaser.Scene {
 
   // 선택 상태
   private selectedCardIndex: number | null = null;
+  private selectedArtifactIndex: number | null = null;
   private cardDecided: boolean = false;
 
   // UI 참조
   private cardVisuals: UICardVisual[] = [];
   private cardBaseLayouts: Array<{ y: number; depth: number }> = [];
+  private artifactVisuals: Array<{ container: Phaser.GameObjects.Container; frame: Phaser.GameObjects.Graphics }> = [];
   private confirmBtn!: UIButton;
   private proceedLabel!: Phaser.GameObjects.Text;
 
@@ -50,9 +53,11 @@ export class RewardScene extends Phaser.Scene {
 
   create(data: SceneData): void {
     this.selectedCardIndex = null;
+    this.selectedArtifactIndex = null;
     this.cardDecided = false;
     this.cardVisuals = [];
     this.cardBaseLayouts = [];
+    this.artifactVisuals = [];
 
     // 보상 데이터 계산
     const result = calculateRewardPhase(data.runState, data.battleState);
@@ -63,7 +68,7 @@ export class RewardScene extends Phaser.Scene {
 
     this.drawBackground();
     this.drawGoldSection();
-    this.drawCardSection();
+    this.drawRewardSection();
   }
 
   // ── 배경 ──
@@ -120,6 +125,17 @@ export class RewardScene extends Phaser.Scene {
         color: '#b8c8df',
       })
       .setOrigin(0.5);
+  }
+
+  // ── 보상 선택 ──
+
+  private drawRewardSection(): void {
+    if (this.rewardData.rewardKind === RewardKind.ARTIFACT) {
+      this.drawArtifactSection();
+      return;
+    }
+
+    this.drawCardSection();
   }
 
   // ── 카드 선택 ──
@@ -238,6 +254,7 @@ export class RewardScene extends Phaser.Scene {
   }
 
   private onConfirmCard(): void {
+    if (this.cardDecided) return;
     if (this.selectedCardIndex === null) return;
     this.cardDecided = true;
     this.confirmBtn.setDisabled(true);
@@ -246,6 +263,7 @@ export class RewardScene extends Phaser.Scene {
   }
 
   private onSkipCard(): void {
+    if (this.cardDecided) return;
     this.selectedCardIndex = null;
     this.cardDecided = true;
     this.confirmBtn.setDisabled(true);
@@ -253,12 +271,195 @@ export class RewardScene extends Phaser.Scene {
     this.time.delayedCall(800, () => this.onProceed());
   }
 
+  // ── 전술 유물 선택 ──
+
+  private drawArtifactSection(): void {
+    const artifacts = this.rewardData.artifactOptions;
+
+    if (artifacts.length === 0) {
+      this.add
+        .text(GAME_WIDTH / 2, 278, 'No tactical artifacts recovered. Moving out.', {
+          ...UITheme.font.body,
+          color: '#666677',
+          wordWrap: { width: 520 },
+          align: 'center',
+        })
+        .setOrigin(0.5);
+      this.cardDecided = true;
+      this.time.delayedCall(800, () => this.onProceed());
+      return;
+    }
+
+    this.add
+      .text(GAME_WIDTH / 2, 212, 'CHOOSE ONE ARTIFACT', {
+        fontSize: '16px',
+        fontFamily: UITheme.font.family,
+        color: '#d7deee',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(GAME_WIDTH / 2, 236, 'Run-limited tactical edge. Secure one passive bonus before moving on.', {
+        fontSize: '12px',
+        fontFamily: UITheme.font.family,
+        color: '#8a9cbb',
+      })
+      .setOrigin(0.5);
+
+    const width = 260;
+    const height = 170;
+    const gap = 28;
+    const totalWidth = artifacts.length * width + (artifacts.length - 1) * gap;
+    const startX = GAME_WIDTH / 2 - totalWidth / 2 + width / 2;
+
+    artifacts.forEach((artifact, index) => {
+      const visual = this.createArtifactVisual(artifact, startX + index * (width + gap), 360, width, height, index);
+      this.artifactVisuals.push(visual);
+    });
+
+    const footer = getRewardFooterLayout(GAME_WIDTH / 2, 566);
+
+    this.proceedLabel = this.add
+      .text(GAME_WIDTH / 2, footer.proceedLabelY, 'REFORM SQUAD', {
+        fontSize: '12px',
+        fontFamily: UITheme.font.family,
+        color: '#7a90b6',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    this.confirmBtn = new UIButton(this, {
+      x: footer.confirmX,
+      y: footer.y,
+      width: 180,
+      height: 44,
+      label: 'SECURE ARTIFACT',
+      style: 'primary',
+      disabled: true,
+      onClick: () => this.onConfirmArtifact(),
+    });
+
+    new UIButton(this, {
+      x: footer.skipX,
+      y: footer.y,
+      width: 140,
+      height: 44,
+      label: 'PASS',
+      style: 'secondary',
+      onClick: () => this.onSkipArtifact(),
+    });
+  }
+
+  private createArtifactVisual(
+    artifact: TacticalArtifactDefinition,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    index: number,
+  ): { container: Phaser.GameObjects.Container; frame: Phaser.GameObjects.Graphics } {
+    const container = this.add.container(x, y).setSize(width, height).setInteractive({
+      useHandCursor: true,
+    });
+    const frame = this.add.graphics();
+    this.paintArtifactFrame(frame, width, height, false);
+    container.add(frame);
+
+    container.add(
+      this.add
+        .text(0, -height / 2 + 18, artifact.rarity, {
+          fontSize: '11px',
+          fontFamily: UITheme.font.family,
+          color: artifact.rarity === 'RARE' ? '#61a8ff' : '#9aa9c2',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5),
+    );
+
+    container.add(
+      this.add
+        .text(0, -height / 2 + 48, artifact.name, {
+          fontSize: '18px',
+          fontFamily: UITheme.font.family,
+          color: '#e6edf8',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5),
+    );
+
+    container.add(
+      this.add
+        .text(0, -height / 2 + 96, artifact.description, {
+          fontSize: '13px',
+          fontFamily: UITheme.font.family,
+          color: '#aebbd4',
+          wordWrap: { width: width - 34 },
+          align: 'center',
+        })
+        .setOrigin(0.5),
+    );
+
+    container.on('pointerdown', () => {
+      if (!this.cardDecided) this.selectArtifact(index);
+    });
+
+    return { container, frame };
+  }
+
+  private paintArtifactFrame(
+    frame: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    selected: boolean,
+  ): void {
+    frame.clear();
+    frame.fillStyle(selected ? 0x1d3155 : 0x151a2e, 0.98);
+    frame.fillRoundedRect(-width / 2, -height / 2, width, height, 10);
+    frame.lineStyle(selected ? 3 : 2, selected ? 0x4a9eff : 0x4c5876, selected ? 1 : 0.78);
+    frame.strokeRoundedRect(-width / 2, -height / 2, width, height, 10);
+  }
+
+  private selectArtifact(index: number): void {
+    this.selectedArtifactIndex = index;
+
+    for (let i = 0; i < this.artifactVisuals.length; i++) {
+      const isSelected = i === index;
+      const visual = this.artifactVisuals[i];
+      this.paintArtifactFrame(visual.frame, 260, 170, isSelected);
+      visual.container.setAlpha(isSelected ? 1 : 0.88);
+      visual.container.setDepth(isSelected ? 30 : 10 + i);
+    }
+
+    this.confirmBtn.setDisabled(false);
+  }
+
+  private onConfirmArtifact(): void {
+    if (this.cardDecided) return;
+    if (this.selectedArtifactIndex === null) return;
+    this.cardDecided = true;
+    this.confirmBtn.setDisabled(true);
+    this.toast.show(`유물 획득: ${this.rewardData.artifactOptions[this.selectedArtifactIndex].name}`);
+    this.time.delayedCall(800, () => this.onProceed());
+  }
+
+  private onSkipArtifact(): void {
+    if (this.cardDecided) return;
+    this.selectedArtifactIndex = null;
+    this.cardDecided = true;
+    this.confirmBtn.setDisabled(true);
+    this.toast.show('유물 건너뛰기');
+    this.time.delayedCall(800, () => this.onProceed());
+  }
+
   // ── 전환 ──
 
   private onProceed(): void {
     const selectedCard = this.selectedCardIndex !== null ? this.rewardData.cardOptions[this.selectedCardIndex] : null;
+    const selectedArtifact =
+      this.selectedArtifactIndex !== null ? this.rewardData.artifactOptions[this.selectedArtifactIndex].id : null;
 
-    const finalRunState = applyRewardSelections(this.updatedRunState, selectedCard);
+    const finalRunState = applyRewardSelections(this.updatedRunState, selectedCard, selectedArtifact);
 
     gameState.setRunState(finalRunState);
 

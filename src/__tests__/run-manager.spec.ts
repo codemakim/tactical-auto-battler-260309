@@ -5,10 +5,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createCharacterDef, resetUnitCounter } from '../entities/UnitFactory';
-import { CharacterClass, RunStatus, Rarity } from '../types';
+import { CharacterClass, RunStatus, Rarity, Position, Team } from '../types';
 import type { CardInstance, CharacterDefinition } from '../types';
 import {
   createRunState,
+  createStageBattleState,
   executeStageBattle,
   processVictory,
   processDefeat,
@@ -63,6 +64,7 @@ describe('RunManager', () => {
       expect(run.party).toHaveLength(4);
       expect(run.battlefieldId).toBe('plains');
       expect(run.cardInventory).toHaveLength(0);
+      expect(run.artifactIds).toEqual([]);
       expect(run.gold).toBe(0);
       expect(run.retryAvailable).toBe(true);
       expect(run.status).toBe(RunStatus.IN_PROGRESS);
@@ -131,6 +133,15 @@ describe('RunManager', () => {
         expect(result.battleState.isFinished).toBe(true);
       }
     });
+
+    it('frontline_plates 보유 시 전투 시작 전열 아군에게 실드가 적용된다', () => {
+      const run = { ...createRunState(makeParty(), 42), artifactIds: ['frontline_plates' as const] };
+      const battleState = createStageBattleState(run);
+      const playerUnits = battleState.units.filter((unit) => unit.team === Team.PLAYER);
+
+      expect(playerUnits.filter((unit) => unit.position === Position.FRONT).map((unit) => unit.shield)).toEqual([6, 6]);
+      expect(playerUnits.filter((unit) => unit.position === Position.BACK).map((unit) => unit.shield)).toEqual([0, 0]);
+    });
   });
 
   // ═══════════════════════════════════════════
@@ -147,6 +158,17 @@ describe('RunManager', () => {
       expect(reward.gold).toBeGreaterThan(0);
       expect(reward.cardOptions.length).toBeGreaterThan(0);
       expect(runState.gold).toBeGreaterThan(0);
+    });
+
+    it('spoils_map 보유 시 승리 골드가 증가한다', () => {
+      const baseRun = createRunState(makeParty(), 84);
+      const artifactRun = { ...baseRun, artifactIds: ['spoils_map' as const] };
+      const { battleState } = executeStageBattle(baseRun);
+
+      const baseReward = processVictory(baseRun, battleState).reward.gold;
+      const artifactReward = processVictory(artifactRun, battleState).reward.gold;
+
+      expect(artifactReward).toBeGreaterThan(baseReward);
     });
   });
 

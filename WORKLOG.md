@@ -12,29 +12,28 @@
 
 ## Current Task
 
-- **하네스 구조 정리** — 루트 런북 축소, 상세 인덱스 분리, 디자인 기준 추가
+- **전술 유물 시스템 MVP 구현** — Stage 2/4 런 한정 패시브 보상 추가
 - 담당: Codex
 
 ### 작업 요약
 
-1. `AGENTS.md`를 항상 읽는 짧은 런북으로 압축한다
-2. 코드/스펙/테스트 색인은 `docs/agent/code-index.md`로 분리한다
-3. 하네스 계층과 자동화 후보는 `docs/agent/` 문서로 관리한다
-4. 게임 UI 기준은 루트 `DESIGN.md`로 분리한다
-5. `npm run agent:context` 부트스트랩 명령으로 작업 시작 컨텍스트를 터미널에 올린다
+1. `RunState.artifactIds`와 전술 유물 정의/순수 시스템을 추가했다
+2. Stage 1/3은 카드, Stage 2/4는 전술 유물, Stage 5는 추가 보상 없음으로 분기했다
+3. `frontline_plates`, `opening_drill`, `backline_focus`, `spoils_map` 효과를 각각 전투 시작/데미지/골드 계산에 연결했다
+4. RewardScene 유물 선택 UI와 RunMap 보유 유물 요약 패널을 추가했다
+5. 저장/로드와 런 종료 제거 규칙을 테스트로 고정했다
 
 ### 핵심 원칙
 
-- 루트 문서는 짧게 유지한다
-- 세부 지식은 필요할 때만 여는 문서로 이동한다
-- 같은 실수는 테스트, 스펙, 스킬, 리뷰 게이트로 승격한다
-- 커밋/푸시는 사용자 요청 전에는 하지 않는다
+- 전술 유물은 영구 보상이 아니라 런 한정 패시브다
+- 액션 카드는 행동 슬롯, 유물은 런 전체 규칙/수치 보정으로 역할을 분리한다
+- 런 결과 화면에서 유물을 영구 보상처럼 표시하지 않는다
 
 ## Source Specs
 
-- primary: [docs/agent/harness.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/harness.md)
-- secondary: [AGENTS.md](/Users/jhkim/Project/tactical-auto-battler/AGENTS.md)
-- secondary: [WORKFLOW.md](/Users/jhkim/Project/tactical-auto-battler/WORKFLOW.md)
+- primary: [docs/tactical-artifact-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/tactical-artifact-spec.md)
+- secondary: [docs/run-system-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-system-spec.md)
+- secondary: [docs/reward-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/reward-ui-spec.md)
 
 ## Done
 
@@ -65,11 +64,14 @@
 - `Recover` / `Rally` 공용 카드에 조건값 변동을 추가하고, 모집 후보는 이름/클래스는 유지하되 세부 롤은 리프레시마다 재생성되도록 수정 (Codex)
 - `basic` 단일 이미지 자산을 편성/전투 기본 표시로 전환하고, 전투는 근접 스프링 전진/원거리 투사체 연출 기준으로 리워크 시작 (Codex)
 - 하네스 구조를 `AGENTS.md` 최소 런북 + `docs/agent/` 상세 문서 + `DESIGN.md` 게임 UI 기준으로 재정렬 (Codex)
+- 전술 유물 시스템 MVP 스펙 초안 작성, Stage 2/4 유물 선택과 런 종료 제거 규칙 정의 (Codex)
+- 전술 유물 시스템 MVP 구현: 정의 레지스트리, 보상 분기, 저장/로드, 전투 효과, RewardScene/RunMap 최소 UI 완료 (Codex, 2026-04-21)
+- `senior-reviewer` 서브에이전트/스킬과 독립 리뷰 게이트를 제거하고, 마감 기준을 로컬 검증 게이트로 단순화 (Codex, 2026-04-21)
 
 ## Next
 
-- 다음 기능 작업 전에 `docs/agent/code-index.md`에서 primary spec을 고르고 진행
-- UI 작업이면 `DESIGN.md`와 `ui-polish-guardrail`을 함께 적용
+- 전술 유물 플레이 확인 후 수치 밸런스 조정 필요 시 `balance-tuning`으로 진행
+- 다음 큰 기능 후보는 플레이 흐름에서 막히는 지점 확인 후 선정
 
 ## Guardrails
 
@@ -80,9 +82,11 @@
 
 ## Verification
 
-- 문서/하네스 변경만 포함
 - `npm run agent:context`
-- `git diff --check`
+- `npm test -- tactical-artifact-system`
+- `npm run format`
+- `npm test`
+- `npx tsc --noEmit`
 
 ## Notes
 

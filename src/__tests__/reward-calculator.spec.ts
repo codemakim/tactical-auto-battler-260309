@@ -14,7 +14,7 @@ import { createRunState } from '../core/RunManager';
 import { createBattleState, runFullBattle } from '../core/BattleEngine';
 import { createCharacterDef, createUnit, resetUnitCounter } from '../entities/UnitFactory';
 import { resetCardInstanceCounter } from '../systems/BattleRewardSystem';
-import { CharacterClass, RunStatus, Team, Position, Rarity } from '../types';
+import { CharacterClass, RunStatus, Team, Position, Rarity, RewardKind } from '../types';
 import type { RunState, BattleState, CardInstance, CharacterDefinition } from '../types';
 
 // ─── 헬퍼 ────────────────────────────────
@@ -89,6 +89,31 @@ describe('calculateRewardPhase', () => {
     }
   });
 
+  it('Stage 2 보상은 카드 대신 전술 유물 3개를 반환한다', () => {
+    const party = makeParty();
+    const runState = { ...createRunState(party, 250), currentStage: 2 };
+    const battleState = makeVictoryBattle(party, 251);
+
+    const { rewardData } = calculateRewardPhase(runState, battleState);
+
+    expect(rewardData.rewardKind).toBe(RewardKind.ARTIFACT);
+    expect(rewardData.cardOptions).toHaveLength(0);
+    expect(rewardData.artifactOptions).toHaveLength(3);
+  });
+
+  it('마지막 스테이지 보상은 런 종료만 처리하고 카드/유물을 표시하지 않는다', () => {
+    const party = makeParty();
+    const runState = { ...createRunState(party, 260), currentStage: 5 };
+    const battleState = makeVictoryBattle(party, 261);
+
+    const { rewardData } = calculateRewardPhase(runState, battleState);
+
+    expect(rewardData.rewardKind).toBe(RewardKind.NONE);
+    expect(rewardData.cardOptions).toHaveLength(0);
+    expect(rewardData.artifactOptions).toHaveLength(0);
+    expect(rewardData.isLastStage).toBe(true);
+  });
+
   it('isLastStage: Stage < maxStages → false', () => {
     const party = makeParty();
     const runState = { ...createRunState(party, 500), currentStage: 2 };
@@ -153,6 +178,18 @@ describe('applyRewardSelections', () => {
     const result = applyRewardSelections(updatedRunState, null);
 
     expect(result.cardInventory).toHaveLength(0);
+  });
+
+  it('유물 선택 시 artifactIds에 추가되고 다음 스테이지로 진행한다', () => {
+    const party = makeParty();
+    const runState = { ...createRunState(party, 1200), currentStage: 2 };
+    const battleState = makeVictoryBattle(party, 1201);
+    const { rewardData, updatedRunState } = calculateRewardPhase(runState, battleState);
+
+    const result = applyRewardSelections(updatedRunState, null, rewardData.artifactOptions[0].id);
+
+    expect(result.artifactIds).toEqual([rewardData.artifactOptions[0].id]);
+    expect(result.currentStage).toBe(3);
   });
 
   it('다음 스테이지 진행 (Stage 1 → 2)', () => {

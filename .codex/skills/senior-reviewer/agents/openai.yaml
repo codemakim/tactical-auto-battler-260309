@@ -1,4 +1,0 @@
-interface:
-  display_name: "Senior Reviewer"
-  short_description: "Run an independent senior review before commit."
-  default_prompt: "Use $senior-reviewer to review this completed implementation for bugs, regressions, missing tests, spec drift, and risky complexity before final verification and commit."

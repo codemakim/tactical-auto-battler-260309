@@ -10,8 +10,9 @@ import { UIButton } from '../ui/UIButton';
 import { gameState } from '../core/GameState';
 import { createRunMapFormationSceneData } from '../systems/FormationFlow';
 import { calculateStageNodes } from '../systems/RunMapCalculator';
+import { getTacticalArtifactById } from '../data/TacticalArtifacts';
 import { StageNodeStatus, RunStatus } from '../types';
-import type { StageNodeState, BattleReplayEntry } from '../types';
+import type { StageNodeState, BattleReplayEntry, TacticalArtifactId } from '../types';
 
 // 노드 시각 상수
 const NODE_RADIUS = 28;
@@ -46,6 +47,7 @@ export class RunMapScene extends Phaser.Scene {
 
     this.renderHeader(runState.currentStage, runState.maxStages, runState.gold);
     this.renderNodes(nodes);
+    this.renderArtifactPanel(runState.artifactIds);
     this.renderButtons();
   }
 
@@ -179,6 +181,55 @@ export class RunMapScene extends Phaser.Scene {
         });
       }
     }
+  }
+
+  private renderArtifactPanel(artifactIds: TacticalArtifactId[]): void {
+    const panelW = 520;
+    const panelH = 104;
+    const px = (GAME_WIDTH - panelW) / 2;
+    const py = 430;
+    const g = this.add.graphics();
+
+    g.fillStyle(0x111827, 0.72);
+    g.fillRoundedRect(px, py, panelW, panelH, 12);
+    g.lineStyle(1, 0x2d4266, 0.9);
+    g.strokeRoundedRect(px, py, panelW, panelH, 12);
+
+    this.add.text(px + 22, py + 16, 'TACTICAL ARTIFACTS', {
+      fontSize: '12px',
+      fontFamily: UITheme.font.family,
+      color: '#7c95bf',
+      fontStyle: 'bold',
+    });
+
+    if (artifactIds.length === 0) {
+      this.add.text(px + 22, py + 46, 'No run artifacts secured yet.', {
+        fontSize: '15px',
+        fontFamily: UITheme.font.family,
+        color: '#6f7f9e',
+      });
+      return;
+    }
+
+    artifactIds.forEach((artifactId, index) => {
+      const artifact = getTacticalArtifactById(artifactId);
+      if (!artifact) return;
+
+      const x = px + 22 + index * 160;
+      const y = py + 46;
+      const chip = this.add.graphics();
+      chip.fillStyle(artifact.rarity === 'RARE' ? 0x16304f : 0x1b2436, 0.95);
+      chip.fillRoundedRect(x, y, 144, 36, 8);
+      chip.lineStyle(1, artifact.rarity === 'RARE' ? 0x4a9eff : 0x4c5876, 0.9);
+      chip.strokeRoundedRect(x, y, 144, 36, 8);
+
+      this.add.text(x + 12, y + 9, artifact.name, {
+        fontSize: '13px',
+        fontFamily: UITheme.font.family,
+        color: '#d7deee',
+        fontStyle: 'bold',
+      });
+    });
   }
 
   private renderButtons(): void {

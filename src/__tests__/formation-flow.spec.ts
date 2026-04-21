@@ -46,6 +46,7 @@ function createRunState(overrides: Partial<RunState> = {}): RunState {
     party,
     cardInventory: [],
     equippedCards: {},
+    artifactIds: [],
     gold: 100,
     retryAvailable: true,
     status: RunStatus.IN_PROGRESS,

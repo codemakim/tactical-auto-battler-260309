@@ -24,16 +24,6 @@
 하지 말 것:
 - 긴 회고나 개발 로그를 `WORKLOG.md`에 넣지 않는다.
 
-### `senior-reviewer`
-
-사용 시점:
-- 구현 완료 후 커밋 전
-- staged diff를 독립 리뷰 에이전트에게 맡길 때
-
-주의:
-- 스킬만으로 충분하지 않다.
-- 실제 리뷰는 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 프로필을 명시해 별도 에이전트로 수행한다.
-
 ## Planning Skills
 
 ### `meta-loop-spec-writer`
@@ -125,5 +115,4 @@
 - 씬 구조 리스크 → `scene-boundary-refactor`
 - 게임 UI 톤 리스크 → `ui-polish-guardrail`
 - 숫자 밸런스 이슈 → `balance-tuning`
-- 구현 완료 → `senior-reviewer`
-- 리뷰 반영 후 마감 → `task-closeout`
+- 구현 완료 후 마감 → `task-closeout`

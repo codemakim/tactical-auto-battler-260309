@@ -22,6 +22,7 @@ function makeRunState(): RunState {
     party,
     cardInventory: [],
     equippedCards: {},
+    artifactIds: [],
     gold: 10,
     retryAvailable: true,
     status: RunStatus.IN_PROGRESS,

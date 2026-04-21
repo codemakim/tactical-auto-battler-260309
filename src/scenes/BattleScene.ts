@@ -1398,6 +1398,7 @@ export class BattleScene extends Phaser.Scene {
         party: [],
         cardInventory: [],
         equippedCards: {},
+        artifactIds: [],
         gold: 0,
         retryAvailable: false,
         status: RunStatus.IN_PROGRESS,

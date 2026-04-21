@@ -17,7 +17,7 @@
 
 3. **Workflow**
    - `WORKFLOW.md`
-   - 스펙 → 테스트 → 구현 → 리뷰 → 검증 → 문서 → 커밋 순서.
+   - 스펙 → 테스트 → 구현 → 검증 → 문서 → 커밋 순서.
 
 4. **Live handoff**
    - `WORKLOG.md`
@@ -32,15 +32,11 @@
    - `.codex/skills/*/SKILL.md`
    - 반복 작업 절차를 progressive disclosure 방식으로 분리한다.
 
-7. **Review agent**
-   - `.codex/agents/senior-reviewer.md`
-   - 구현자와 분리된 커밋 전 게이트.
-
-8. **Design system prompt**
+7. **Design system prompt**
    - `DESIGN.md`
    - 화면이 개발툴처럼 흐르지 않게 하는 게임 UI 기준.
 
-9. **Automation roadmap**
+8. **Automation roadmap**
    - `docs/agent/automation-roadmap.md`
    - 아직 hook으로 강제하지 않은 검증 후보.
 
@@ -61,7 +57,7 @@
 - **테스트**: 깨진 동작을 자동으로 막을 수 있을 때
 - **스펙**: 게임 규칙이나 UX 계약이 애매할 때
 - **스킬**: 반복 절차가 필요할 때
-- **리뷰 게이트**: 구현자가 놓치기 쉬운 위험일 때
+- **자동 검증**: 반복 검증을 사람이 계속 잊을 때
 - **디자인 규칙**: UI 톤이나 레이아웃 실패가 반복될 때
 - **시뮬레이션**: 숫자 감각이 주관적으로 흐를 때
 
@@ -78,13 +74,6 @@
 자동 hook이 없더라도, 이 순서를 작업 게이트로 취급한다.
 실제 hook을 붙일 때는 먼저 `format:check`, targeted tests, `tsc --noEmit`처럼 실패 비용이 낮은 것부터 붙인다.
 후보 목록은 [automation-roadmap.md](/Users/jhkim/Project/tactical-auto-battler/docs/agent/automation-roadmap.md)에 기록한다.
-
-## Subagent Policy
-
-- 구현 전체를 무작정 병렬화하지 않는다.
-- 별도 에이전트는 리뷰, 조사, 대안 비교처럼 관점 분리가 명확할 때 쓴다.
-- 리뷰 에이전트는 staged diff와 지정 spec만 본다.
-- 메인 구현자는 리뷰 에이전트의 finding을 반영하되, 범위 밖 제안은 후속 작업으로 남긴다.
 
 ## MCP And Web Policy
 

@@ -12,11 +12,9 @@
 3. 스펙 기반 테스트 작성 또는 기존 테스트 보강
 4. 테스트를 만족하도록 구현
 5. 테스트 재검증
-6. staged diff 기준으로 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 독립 리뷰 에이전트 1회 점검
-7. 리뷰 반영 및 필요 시 리팩터링
-8. `prettier` / `tsc` 확인
-9. 관련 문서와 체크리스트 반영
-10. 사용자가 요청하면 커밋 / 푸시
+6. `npm run format`, `npm test`, `npx tsc --noEmit`
+7. 관련 문서와 체크리스트 반영
+8. 사용자가 요청하면 커밋 / 푸시
 
 ## 2. Spec Priority
 
@@ -83,36 +81,16 @@
 - 현재 기본값은 `검증 후 대기`다. 사용자가 커밋을 요청하기 전에는 커밋하지 않는다.
 - 푸시는 커밋과 별도 지시가 있을 때만 한다.
 
-## 6. Review Gate
+## 6. Verification Gate
 
-구현이 끝나면 최종 커밋 전에 독립 리뷰를 한 번 거친다.
+구현이 끝나면 커밋 전에 로컬 검증을 통과시킨다.
 
 기본 규칙:
 
-1. 메인 구현자가 직접 셀프 승인하지 않는다.
-2. 별도 리뷰 에이전트가 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 프로필 기준으로 한 번 점검한다.
-3. 리뷰는 칭찬보다 버그, 회귀, 테스트 누락, 스펙 드리프트를 우선 본다.
-4. 리뷰 결과가 없으면 `명시적으로 no findings`를 남긴다.
-5. 리뷰 반영 후에만 `format` / `tsc` / 커밋 단계로 간다.
-6. 리뷰 범위는 `git diff --cached` 기준으로 제한한다.
-7. staged diff 밖의 제안은 리뷰가 아니라 리팩터링 후속으로 분리한다.
-8. 현재 세션에서 별도 리뷰 에이전트를 실제로 스폰할 수 없으면, 구현자는 셀프 리뷰로 대체하지 않는다.
-9. 그 경우 구현자는 staged scope, primary spec, 실행한 검증 명령만 정리해서 사용자에게 `별도 리뷰 필요` 상태로 넘기고 멈춘다.
-
-리뷰 에이전트 실행 시 주의:
-
-- 로컬 스킬 본문이 서브에이전트에 자동 주입된다고 가정하지 않는다.
-- 리뷰 스폰 시에는 [.codex/agents/senior-reviewer.md](/Users/jhkim/Project/tactical-auto-battler/.codex/agents/senior-reviewer.md) 계약을 프롬프트에 직접 반영한다.
-- 별도 리뷰 에이전트를 실제로 띄울 수 없는 환경이면, 메인 구현자가 같은 턴에서 리뷰를 대신 수행하지 않는다.
-- 특히 아래를 반드시 포함한다:
-  - review only
-  - findings first
-  - file references required
-  - implementation summary is forbidden
-  - if none, start with `No actionable findings.`
-  - review only the provided scope
-  - review the staged diff only
-  - return quickly; do not do broad repo exploration
+1. 관련 테스트를 먼저 실행한다.
+2. 전체 마감 시 `npm run format`, `npm test`, `npx tsc --noEmit`을 실행한다.
+3. 실패하면 원인 수정 후 같은 명령을 다시 실행한다.
+4. 검증 결과와 남은 리스크는 `WORKLOG.md` 또는 최종 응답에 짧게 남긴다.
 
 ## 7. Current Mapping
 
@@ -149,9 +127,6 @@
   버그 재현 → 원인 → 수정 → 회귀 테스트 루프
 - `balance-tuning`
   시뮬레이션 기반 숫자 튜닝 (스탯, 보상, 비용, 인카운터)
-- `senior-reviewer`
-  최종 검증 전 독립 리뷰 기준
-  서브에이전트 리뷰는 `.codex/agents/senior-reviewer.md` 프로필을 우선 사용
 
 ## 9. Skill Escalation
 
@@ -169,7 +144,5 @@
   `bug-fix`
 - 숫자 밸런스 조정 필요
   `balance-tuning`
-- 구현 완료
-  `senior-reviewer`
-- 리뷰 반영 후 마감
+- 구현 완료 후 마감
   `task-closeout`

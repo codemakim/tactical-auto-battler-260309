@@ -9,7 +9,7 @@ import { findCoverUnit } from './CoverSystem';
  */
 export function calculateDamage(attacker: BattleUnit, _defender: BattleUnit, multiplier: number): number {
   const atkStats = getEffectiveStats(attacker);
-  return Math.floor(atkStats.atk * multiplier);
+  return Math.floor(atkStats.atk * multiplier * (attacker.damageMultiplier ?? 1));
 }
 
 /**

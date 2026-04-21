@@ -10,7 +10,6 @@
 - `npm test`
 - `npx tsc --noEmit`
 - 필요 시 `npx tsx src/sim-run.ts`
-- 커밋 전 별도 `senior-reviewer` 에이전트
 
 ## Hook Candidates
 
@@ -44,13 +43,12 @@
 ### Evidence Pack Candidate
 
 목표:
-- 작업 마감 시 리뷰어/다음 세션이 볼 증거를 짧게 남긴다.
+- 작업 마감 시 다음 세션이 볼 증거를 짧게 남긴다.
 
 내용:
 - primary spec
 - touched files
 - tests run
-- reviewer result
 - unresolved risks
 
 저장 위치 후보:

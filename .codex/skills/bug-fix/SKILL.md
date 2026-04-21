@@ -38,7 +38,7 @@ Use this skill when the starting point is broken behavior, not a feature spec. T
 - Run related tests to check for regressions.
 - Run full `npm test` only after related tests pass or when the touched boundary is broad.
 - Run `npm run format` and `npx tsc --noEmit`.
-- Stage only the bug-fix diff before the review gate.
+- Keep the bug-fix diff isolated from unrelated cleanup.
 
 6. Add a regression guard.
 - If step 2 was a script or manual check, convert it into a permanent test.
@@ -65,5 +65,4 @@ When closing out, report:
 - fix applied (files changed)
 - regression test added
 - verification commands run
-- staged review scope
 - residual risks if the repro still has any manual-only portion

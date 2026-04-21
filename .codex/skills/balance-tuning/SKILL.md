@@ -43,7 +43,7 @@ Use this skill when the work is changing numbers, not adding systems. The loop i
 - Run the most relevant tests first, then full `npm test` if the tuning touches shared balance rules.
 - Run `npm run format` and `npx tsc --noEmit`.
 - Check that the change does not violate any spec rules (damage formulas, reward caps, etc.).
-- Stage only the tuning diff before the review gate so the reviewer stays on the numeric change.
+- Keep the tuning diff isolated from unrelated feature or refactor changes.
 
 7. Document the rationale.
 - In the commit message, note: what was tuned, why, and the before/after metric.
@@ -72,6 +72,5 @@ When closing out, report:
 - lever adjusted (file and field)
 - before/after metrics (seeds used)
 - tests passing
-- staged review scope
 - spec updated (if applicable)
 - unresolved risks if the tuning still needs real playtest confirmation

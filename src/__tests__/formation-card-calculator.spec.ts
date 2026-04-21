@@ -64,6 +64,7 @@ function createRunState(charDef: CharacterDefinition, overrides: Partial<RunStat
     party: [charDef],
     cardInventory: [],
     equippedCards: {},
+    artifactIds: [],
     gold: 0,
     retryAvailable: true,
     status: RunStatus.IN_PROGRESS,

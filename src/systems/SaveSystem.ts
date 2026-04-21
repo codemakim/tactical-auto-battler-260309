@@ -61,6 +61,7 @@ function cloneRunState(runState: RunState): RunState {
     ...runState,
     party: runState.party.map(cloneCharacter),
     cardInventory: runState.cardInventory.map(cloneCardInstance),
+    artifactIds: [...(runState.artifactIds ?? [])],
     equippedCards: Object.fromEntries(
       Object.entries(runState.equippedCards).map(([characterId, slots]) => [
         characterId,
@@ -135,7 +136,9 @@ export function createGameStateDataFromSave(saveData: SaveData): GameStateData {
 
 export function getDefaultStorage(): StorageLike | null {
   if (typeof globalThis === 'undefined' || !('localStorage' in globalThis)) return null;
-  return globalThis.localStorage as StorageLike;
+  const storage = globalThis.localStorage as Partial<StorageLike>;
+  if (typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') return null;
+  return storage as StorageLike;
 }
 
 export function hasSaveDataInStorage(storage: StorageLike | null = getDefaultStorage()): boolean {

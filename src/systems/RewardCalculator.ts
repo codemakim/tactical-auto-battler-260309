@@ -5,9 +5,11 @@
  * Phaser 의존 없이 테스트 가능
  */
 
-import type { RunState, BattleState, RewardPhaseData, CardInstance } from '../types';
+import type { RunState, BattleState, RewardPhaseData, CardInstance, TacticalArtifactId } from '../types';
 import { processVictory, selectCardReward, advanceStage } from '../core/RunManager';
 import type { RewardResult } from '../core/RunManager';
+import { addTacticalArtifact, createArtifactRewardOptions, getRewardKindForStage } from './TacticalArtifactSystem';
+import { RewardKind } from '../types';
 
 /**
  * 보상 화면 데이터 계산
@@ -20,10 +22,15 @@ export function calculateRewardPhase(
   battleState: BattleState,
 ): { rewardData: RewardPhaseData; updatedRunState: RunState } {
   const result: RewardResult = processVictory(runState, battleState);
+  const rewardKind = getRewardKindForStage(runState.currentStage, runState.maxStages);
+  const artifactSeed = runState.seed + runState.currentStage * 3000;
 
   const rewardData: RewardPhaseData = {
+    rewardKind,
     goldEarned: result.reward.gold,
-    cardOptions: result.reward.cardOptions,
+    cardOptions: rewardKind === RewardKind.CARD ? result.reward.cardOptions : [],
+    artifactOptions:
+      rewardKind === RewardKind.ARTIFACT ? createArtifactRewardOptions(artifactSeed, result.runState.artifactIds) : [],
     currentStage: runState.currentStage,
     maxStages: runState.maxStages,
     isLastStage: runState.currentStage >= runState.maxStages,
@@ -37,12 +44,20 @@ export function calculateRewardPhase(
  *
  * 카드 선택 + 다음 스테이지 진행을 한번에 처리.
  */
-export function applyRewardSelections(runState: RunState, selectedCard: CardInstance | null): RunState {
+export function applyRewardSelections(
+  runState: RunState,
+  selectedCard: CardInstance | null,
+  selectedArtifactId: TacticalArtifactId | null = null,
+): RunState {
   let state = runState;
 
   // 카드 선택
   if (selectedCard) {
     state = selectCardReward(state, selectedCard);
+  }
+
+  if (selectedArtifactId) {
+    state = addTacticalArtifact(state, selectedArtifactId);
   }
 
   // 다음 스테이지 진행 (또는 런 완료)

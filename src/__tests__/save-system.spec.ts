@@ -59,6 +59,7 @@ describe('SaveSystem', () => {
       party: gameState.characters.slice(0, 2),
       cardInventory: [],
       equippedCards: {},
+      artifactIds: ['frontline_plates'],
       gold: 50,
       retryAvailable: true,
       status: RunStatus.IN_PROGRESS,
@@ -80,6 +81,7 @@ describe('SaveSystem', () => {
       gold: 50,
       retryAvailable: true,
       status: RunStatus.IN_PROGRESS,
+      artifactIds: ['frontline_plates'],
     });
     expect('battleReplays' in saveData).toBe(false);
   });
@@ -124,6 +126,7 @@ describe('SaveSystem', () => {
         },
       ],
       equippedCards: { [gameState.characters[0].id]: { 0: 'card-1' } },
+      artifactIds: ['frontline_plates', 'spoils_map'],
       gold: 45,
       retryAvailable: false,
       status: RunStatus.IN_PROGRESS,
@@ -145,6 +148,7 @@ describe('SaveSystem', () => {
     expect(restored.recruitShopState).toEqual(gameState.recruitShopState);
     expect(restored.battlefieldProgress).toEqual(gameState.battlefieldProgress);
     expect(restored.runState).toEqual(gameState.runState);
+    expect(restored.runState?.artifactIds).toEqual(['frontline_plates', 'spoils_map']);
     expect(restored.runState?.battlefieldId).toBe('dark_forest');
     expect(restored.battleReplays).toEqual([]);
   });
@@ -171,6 +175,7 @@ describe('SaveSystem', () => {
       party: gameState.characters.slice(0, 4),
       cardInventory: [],
       equippedCards: {},
+      artifactIds: ['spoils_map'],
       gold: 12,
       retryAvailable: true,
       status: RunStatus.IN_PROGRESS,
@@ -191,6 +196,7 @@ describe('SaveSystem', () => {
       currentStage: 2,
       seed: 444,
       gold: 12,
+      artifactIds: ['spoils_map'],
       status: RunStatus.IN_PROGRESS,
     });
   });
@@ -268,6 +274,7 @@ describe('SaveSystem', () => {
       party: gameState.characters.slice(0, 4),
       cardInventory: [],
       equippedCards: {},
+      artifactIds: ['frontline_plates' as const],
       gold: 120,
       retryAvailable: false,
       status: RunStatus.VICTORY,

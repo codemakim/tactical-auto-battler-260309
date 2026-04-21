@@ -44,6 +44,7 @@ function makeRunState(overrides?: Partial<RunState>): RunState {
     status: RunStatus.IN_PROGRESS,
     preRunPartySnapshot: [],
     ...overrides,
+    artifactIds: overrides?.artifactIds ?? [],
   };
 }
 

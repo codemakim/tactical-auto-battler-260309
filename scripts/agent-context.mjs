@@ -42,7 +42,7 @@ printBlock("Skill Triggers", section(agents, "## Skill Triggers"));
 printBlock("Current Worklog Task", section(worklog, "## Current Task"));
 printBlock("Current Source Specs", section(worklog, "## Source Specs"));
 printBlock("Next", section(worklog, "## Next"));
-printBlock("Workflow Review Gate", section(workflow, "## 6. Review Gate"));
+printBlock("Workflow Verification Gate", section(workflow, "## 6. Verification Gate"));
 
 console.log("\n## Just-In-Time References\n");
 console.log("- Code/spec/test index: docs/agent/code-index.md");
