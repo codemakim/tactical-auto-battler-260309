@@ -12,27 +12,27 @@
 
 ## Current Task
 
-- **런 시뮬레이션 전술 유물 반영** — 밸런스 테스트 스크립트를 실제 보상/전투 흐름과 동기화
+- **플랫폼 UI 기준선 정리** — 데스크톱 브라우저 16:9 기준에서 중앙 정렬, 오버레이 닫기, 미니카드 오버플로우를 안정화
 - 담당: Codex
 
 ### 작업 요약
 
-1. `sim-run.ts`가 `createStageBattleState()`를 사용하도록 바꿔 전술 유물 전투 시작 효과를 반영한다
-2. 보상 처리를 `calculateRewardPhase()` / `applyRewardSelections()`로 연결해 Stage 2/4 유물 선택을 시뮬레이션에 반영한다
-3. 다중 시드 통계에 평균 카드/유물 획득 수를 추가한다
-4. 단일 verbose 런에서 유물 옵션/선택/보유 로그를 출력한다
+1. 타겟 플랫폼을 데스크톱 브라우저 16:9 고정 캔버스 기준으로 문서화한다
+2. 와이드 모니터에서 DOM 루트와 캔버스가 중앙 정렬되도록 CSS 기준을 고정한다
+3. 병영/훈련소/상점/편성 오버레이는 패널 바깥 딤 클릭만 닫힘으로 처리한다
+4. 상점 액션 미니카드는 태그가 많은 경우 카드 내부에서 `+N`으로 축약한다
 
 ### 핵심 원칙
 
-- 밸런스 테스트 스크립트는 게임 런 루프와 같은 순수 시스템을 재사용한다
-- 전투 생성/보상 처리를 시뮬레이터 내부에서 복제하지 않는다
-- UI polish보다 플레이 루프 검증 가능성을 우선한다
+- 현재 1차 타겟은 모바일이 아니라 데스크톱 브라우저다
+- UI polish 전체 리디자인이 아니라 플레이를 방해하는 기준선 문제만 처리한다
+- 게임 UI는 설명을 늘리지 않고, 넘침/닫힘/정렬 같은 기본 동작을 안정화한다
 
 ## Source Specs
 
-- primary: [docs/tactical-artifact-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/tactical-artifact-spec.md)
-- secondary: [docs/run-system-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/run-system-spec.md)
-- secondary: [docs/reward-ui-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/reward-ui-spec.md)
+- primary: [docs/platform-ui-baseline-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/platform-ui-baseline-spec.md)
+- secondary: [DESIGN.md](/Users/jhkim/Project/tactical-auto-battler/DESIGN.md)
+- secondary: [docs/action-detail-followup-checklist.md](/Users/jhkim/Project/tactical-auto-battler/docs/action-detail-followup-checklist.md)
 
 ## Done
 
@@ -67,6 +67,7 @@
 - 전술 유물 시스템 MVP 구현: 정의 레지스트리, 보상 분기, 저장/로드, 전투 효과, RewardScene/RunMap 최소 UI 완료 (Codex, 2026-04-21)
 - `senior-reviewer` 서브에이전트/스킬과 독립 리뷰 게이트를 제거하고, 마감 기준을 로컬 검증 게이트로 단순화 (Codex, 2026-04-21)
 - `sim-run.ts`를 실제 런 보상/전투 생성 흐름에 맞춰 전술 유물 선택과 효과가 밸런스 통계에 반영되도록 수정 (Codex, 2026-04-21)
+- 데스크톱 브라우저 16:9 플랫폼 기준 스펙을 추가하고, 중앙 정렬/오버레이 닫기/상점 미니카드 태그 오버플로우 기준선을 정리 (Codex, 2026-04-21)
 
 ## Next
 
@@ -85,6 +86,7 @@
 - `npm run agent:context`
 - `SIM_SEED=42 SIM_SEEDS=5 npx tsx src/sim-run.ts`
 - `SIM_SEED=42 SIM_HERO=SUPPORT npx tsx src/sim-run.ts`
+- `npx vitest run src/__tests__/action-mini-card-layout.spec.ts src/__tests__/modal-hit-test.spec.ts`
 - `npm run format`
 - `npm test`
 - `npx tsc --noEmit`

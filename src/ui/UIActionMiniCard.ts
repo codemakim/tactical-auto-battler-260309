@@ -72,7 +72,8 @@ export class UIActionMiniCard {
     const gapY = compact ? 2 : 3;
     const badgeHeight = compact ? 14 : 16;
     const badgeFontSize = compact ? 9 : 10;
-    const maxBadgeRows = this.config.autoHeight ? undefined : compact ? 2 : 3;
+    const rowsThatFit = Math.max(1, Math.floor((height - badgeStartY - 8 + gapY) / (badgeHeight + gapY)));
+    const maxBadgeRows = this.config.autoHeight ? undefined : Math.min(compact ? 2 : 3, rowsThatFit);
 
     const badgeModel = buildActionCardBadgeModel(condition, action.effects);
     const structuredCondition = getStructuredCondition(condition);
@@ -83,7 +84,8 @@ export class UIActionMiniCard {
       ...badgeModel.targetBadges.map((badge) => ({ badge, kind: 'standard' as const })),
       ...badgeModel.effectBadges.map((badge) => ({ badge, kind: 'standard' as const })),
     ];
-    const badgeWidths = badges.map((entry) => this.measureBadgeWidth(entry.badge.text, badgeFontSize));
+    const badgeTexts = badges.map((entry) => this.fitBadgeText(entry.badge.text, badgeFontSize, maxWidth));
+    const badgeWidths = badgeTexts.map((text) => this.measureBadgeWidth(text, badgeFontSize));
     const layout = calculateMiniCardBadgeLayout(badgeWidths, {
       startX: padX,
       startY: badgeStartY,
@@ -92,6 +94,7 @@ export class UIActionMiniCard {
       gapY,
       badgeHeight,
       maxRows: maxBadgeRows,
+      overflowMarkerWidth: this.measureBadgeWidth('+99', badgeFontSize),
     });
     const requiredHeight = layout.finalCursorY + badgeHeight + 8;
     const actualHeight = this.config.autoHeight ? requiredHeight : height;
@@ -122,6 +125,7 @@ export class UIActionMiniCard {
 
     layout.placements.forEach((placement, index) => {
       const entry = badges[index];
+      const text = badgeTexts[index]!;
       const palette = entry.kind === 'condition' ? CONDITION_PALETTE : this.getBadgePalette(entry.badge.tone);
       const bg = this.scene.add.graphics();
       bg.fillStyle(palette.fill, 0.96);
@@ -130,7 +134,7 @@ export class UIActionMiniCard {
       bg.strokeRoundedRect(placement.x, placement.y, placement.width, badgeHeight, 4);
       this.container.add(bg);
 
-      const label = this.scene.add.text(placement.x + 6, placement.y + 2, entry.badge.text, {
+      const label = this.scene.add.text(placement.x + 6, placement.y + 2, text, {
         fontFamily: UITheme.font.family,
         fontSize: `${badgeFontSize}px`,
         color: palette.text,
@@ -138,8 +142,8 @@ export class UIActionMiniCard {
       this.container.add(label);
     });
 
-    if (layout.overflowed) {
-      this.renderOverflowMarker(padX, layout.finalCursorY, badgeHeight, badgeFontSize);
+    if (layout.overflowMarker) {
+      this.renderOverflowMarker(layout.overflowMarker, `+${layout.hiddenCount}`, badgeHeight, badgeFontSize);
     }
 
     if (!showTooltip) return actualHeight;
@@ -213,37 +217,48 @@ export class UIActionMiniCard {
       ...badgeModel.effectBadges.map((badge) => ({ badge, kind: 'standard' as const })),
     ];
 
-    let cursorX = 10;
-    let cursorY = 58;
     const gapX = 4;
     const gapY = 4;
     const maxWidth = tooltipWidth - 20;
     const badgeHeight = 18;
     const badgeFontSize = 11;
+    const badgeTexts = badges.map((entry) => this.fitBadgeText(entry.badge.text, badgeFontSize, maxWidth));
+    const layout = calculateMiniCardBadgeLayout(
+      badgeTexts.map((text) => this.measureBadgeWidth(text, badgeFontSize)),
+      {
+        startX: 10,
+        startY: 58,
+        maxWidth,
+        gapX,
+        gapY,
+        badgeHeight,
+        maxRows: 3,
+        overflowMarkerWidth: this.measureBadgeWidth('+99', badgeFontSize),
+      },
+    );
 
-    for (const entry of badges) {
-      const badgeWidth = this.measureBadgeWidth(entry.badge.text, badgeFontSize);
-      if (cursorX !== 10 && cursorX + badgeWidth > 10 + maxWidth) {
-        cursorX = 10;
-        cursorY += badgeHeight + gapY;
-      }
+    layout.placements.forEach((placement, index) => {
+      const entry = badges[index];
+      const text = badgeTexts[index]!;
 
       const palette = entry.kind === 'condition' ? CONDITION_PALETTE : this.getBadgePalette(entry.badge.tone);
       const bg = this.scene.add.graphics();
       bg.fillStyle(palette.fill, 0.96);
-      bg.fillRoundedRect(cursorX, cursorY, badgeWidth, badgeHeight, 4);
+      bg.fillRoundedRect(placement.x, placement.y, placement.width, badgeHeight, 4);
       bg.lineStyle(1, palette.border, 0.95);
-      bg.strokeRoundedRect(cursorX, cursorY, badgeWidth, badgeHeight, 4);
+      bg.strokeRoundedRect(placement.x, placement.y, placement.width, badgeHeight, 4);
       tooltip.add(bg);
 
-      const label = this.scene.add.text(cursorX + 6, cursorY + 2, entry.badge.text, {
+      const label = this.scene.add.text(placement.x + 6, placement.y + 2, text, {
         fontFamily: UITheme.font.family,
         fontSize: `${badgeFontSize}px`,
         color: palette.text,
       });
       tooltip.add(label);
+    });
 
-      cursorX += badgeWidth + gapX;
+    if (layout.overflowMarker) {
+      this.renderOverflowMarkerOn(tooltip, layout.overflowMarker, `+${layout.hiddenCount}`, badgeHeight, badgeFontSize);
     }
 
     tooltip.setDepth(this.container.depth + 100);
@@ -311,22 +326,47 @@ export class UIActionMiniCard {
     return Math.max(38, width);
   }
 
-  private renderOverflowMarker(x: number, y: number, badgeHeight: number, badgeFontSize: number): void {
+  private fitBadgeText(text: string, fontSize: number, maxWidth: number): string {
+    if (this.measureBadgeWidth(text, fontSize) <= maxWidth) return text;
+
+    for (let length = text.length - 1; length > 0; length -= 1) {
+      const candidate = `${text.slice(0, length)}…`;
+      if (this.measureBadgeWidth(candidate, fontSize) <= maxWidth) return candidate;
+    }
+
+    return '…';
+  }
+
+  private renderOverflowMarker(
+    placement: { x: number; y: number; width: number },
+    text: string,
+    badgeHeight: number,
+    badgeFontSize: number,
+  ): void {
+    this.renderOverflowMarkerOn(this.container, placement, text, badgeHeight, badgeFontSize);
+  }
+
+  private renderOverflowMarkerOn(
+    target: Phaser.GameObjects.Container,
+    placement: { x: number; y: number; width: number },
+    text: string,
+    badgeHeight: number,
+    badgeFontSize: number,
+  ): void {
     const palette = this.getBadgePalette('neutral');
-    const width = this.measureBadgeWidth('…', badgeFontSize);
     const bg = this.scene.add.graphics();
     bg.fillStyle(palette.fill, 0.96);
-    bg.fillRoundedRect(x, y, width, badgeHeight, 4);
+    bg.fillRoundedRect(placement.x, placement.y, placement.width, badgeHeight, 4);
     bg.lineStyle(1, palette.border, 0.95);
-    bg.strokeRoundedRect(x, y, width, badgeHeight, 4);
-    this.container.add(bg);
+    bg.strokeRoundedRect(placement.x, placement.y, placement.width, badgeHeight, 4);
+    target.add(bg);
 
-    const label = this.scene.add.text(x + 6, y + 1, '…', {
+    const label = this.scene.add.text(placement.x + 6, placement.y + 1, text, {
       fontFamily: UITheme.font.family,
       fontSize: `${badgeFontSize}px`,
       color: palette.text,
     });
-    this.container.add(label);
+    target.add(label);
   }
 
   private getBadgePalette(tone: ActionBadgeTone): BadgePalette {

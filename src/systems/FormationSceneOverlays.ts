@@ -9,6 +9,7 @@ import { UITheme } from '../ui/UITheme';
 import { UIPanel } from '../ui/UIPanel';
 import { UIButton } from '../ui/UIButton';
 import { UICardVisual } from '../ui/UICardVisual';
+import { shouldCloseModalFromBackdrop } from '../ui/ModalHitTest';
 import { getFormationPanelLabels } from './FormationPresentation';
 import { getFormationPresetSlots, getFormationPresetSlotName } from './FormationPresetSlots';
 import { formatSlotsSummary } from '../utils/actionText';
@@ -366,7 +367,11 @@ export class FormationSceneOverlays {
       )
       .setInteractive()
       .setDepth(100);
-    this.overlayDim.on('pointerdown', () => this.destroy());
+    this.overlayDim.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (shouldCloseModalFromBackdrop({ x: pointer.x, y: pointer.y }, { x: panelX, y: panelY, width, height })) {
+        this.destroy();
+      }
+    });
 
     this.overlayPanel = new UIPanel(this.scene, {
       x: panelX,

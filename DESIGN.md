@@ -2,6 +2,7 @@
 
 이 문서는 게임 화면을 만들 때 따르는 시각/카피 기준이다.
 목표는 “기능이 보이는 UI”가 아니라 “플레이어가 게임 안의 전술 화면으로 받아들이는 UI”다.
+플랫폼/해상도 기준은 [docs/platform-ui-baseline-spec.md](/Users/jhkim/Project/tactical-auto-battler/docs/platform-ui-baseline-spec.md)를 따른다.
 
 ## Product Tone
 
@@ -31,7 +32,7 @@
 
 - 카드, 배지, 버튼은 같은 축과 간격을 공유한다.
 - 배지는 텍스트 실제 폭 + 고정 패딩으로 만든다. 상자에 텍스트를 억지로 맞추지 않는다.
-- 태그가 많은 카드는 줄 수를 제한하고 `…`로 넘김을 표시한다.
+- 태그가 많은 카드는 줄 수를 제한하고 `+N`으로 숨겨진 태그 수를 표시한다.
 - 오버레이는 바깥 dim 영역 클릭으로 닫을 수 있지만, 오버레이 내부 빈 공간 클릭으로 닫히면 안 된다.
 
 ## Color And Emphasis

@@ -11,6 +11,7 @@ import { UIPanel } from '../ui/UIPanel';
 import { UIButton } from '../ui/UIButton';
 import { UIActionMiniCard } from '../ui/UIActionMiniCard';
 import { UIToast } from '../ui/UIToast';
+import { shouldCloseModalFromBackdrop } from '../ui/ModalHitTest';
 import { gameState } from '../core/GameState';
 import { formatTownHeaderHeroInfo } from '../systems/TownHeader';
 import {
@@ -329,11 +330,7 @@ export class TownScene extends Phaser.Scene {
     const selectedId = this.selectedBarracksCharacterId ?? characters[0].id;
     const selectedCharacter = characters.find((character) => character.id === selectedId) ?? characters[0];
 
-    this.overlayDim = this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
-      .setInteractive()
-      .setDepth(100);
-    this.overlayDim.on('pointerdown', () => this.destroyOverlay());
+    this.createOverlayBackdrop(panelX, panelY, panelWidth, panelHeight);
 
     this.overlayPanel = new UIPanel(this, {
       x: panelX,
@@ -547,11 +544,7 @@ export class TownScene extends Phaser.Scene {
     const selectedCharacter = characters.find((character) => character.id === selectedId) ?? characters[0];
     const viewModel = getTrainingCharacterViewModel(selectedCharacter, gameState.gold);
 
-    this.overlayDim = this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
-      .setInteractive()
-      .setDepth(100);
-    this.overlayDim.on('pointerdown', () => this.destroyOverlay());
+    this.createOverlayBackdrop(panelX, panelY, panelWidth, panelHeight);
 
     this.overlayPanel = new UIPanel(this, {
       x: panelX,
@@ -712,11 +705,7 @@ export class TownScene extends Phaser.Scene {
     const rosterFull = gameState.characters.length >= gameState.maxCharacterSlots;
     const canRefresh = gameState.gold >= shopState.refreshCost && !rosterFull;
 
-    this.overlayDim = this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
-      .setInteractive()
-      .setDepth(100);
-    this.overlayDim.on('pointerdown', () => this.destroyOverlay());
+    this.createOverlayBackdrop(panelX, panelY, panelWidth, panelHeight);
 
     this.overlayPanel = new UIPanel(this, {
       x: panelX,
@@ -926,9 +915,9 @@ export class TownScene extends Phaser.Scene {
         x: 12,
         y: tooltipHeight - tooltipPadding,
         width: tooltipWidth - 24,
-        height: 52,
+        height: 68,
         density: 'compact',
-        autoHeight: true,
+        autoHeight: false,
         showTooltip: false,
         action: slot.action,
         condition: slot.condition,
@@ -970,5 +959,18 @@ export class TownScene extends Phaser.Scene {
     this.recruitTooltipCards = [];
     this.recruitTooltip?.destroy();
     this.recruitTooltip = undefined;
+  }
+
+  private createOverlayBackdrop(panelX: number, panelY: number, panelWidth: number, panelHeight: number): void {
+    const panelBounds = { x: panelX, y: panelY, width: panelWidth, height: panelHeight };
+    this.overlayDim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
+      .setInteractive()
+      .setDepth(100);
+    this.overlayDim.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (shouldCloseModalFromBackdrop({ x: pointer.x, y: pointer.y }, panelBounds)) {
+        this.destroyOverlay();
+      }
+    });
   }
 }
